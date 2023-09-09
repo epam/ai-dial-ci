@@ -1,0 +1,93 @@
+name: Java test build
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      java_version:
+        type: string
+        default: '17'
+        description: Java version to use
+      java_distribution:
+        type: string
+        default: 'temurin'
+        description: Java distribution to use
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  style_checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: PR title check
+        uses: thehanimo/pr-title-checker@0cf5902181e78341bb97bb06646396e5bd354b3f #v1.4.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - name: Set up JDK
+        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 #v3.12.0
+        with:
+          java-version: ${{ github.event.inputs.java_version }}
+          distribution: ${{ github.event.inputs.java_distribution }}
+      - name: Codestyle
+        continue-on-error: ${{ github.event.inputs.bypass_checks }}
+        run: |
+          ./gradlew checkstyleMain || ( echo "::error::Checkstyle failed" && exit 1)
+
+  code_checks:
+    runs-on: ubuntu-latest
+    #TODO: cache for libs
+    steps:
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - name: Set up JDK
+        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 #v3.12.0
+        with:
+          java-version: ${{ github.event.inputs.java_version }}
+          distribution: ${{ github.event.inputs.java_distribution }}
+      - name: Test
+        continue-on-error: ${{ github.event.inputs.bypass_checks }}
+        run: ./gradlew test || ( echo "::error::Tests failed" && exit 1)
+      - name: Build
+        run: ./gradlew build -x test -x processTestAot -x checkstyleMain -x checkstyleTest -x checkstyleAot -x checkstyleAotTest
+
+  docker_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - name: Build  Docker image
+        uses: docker/build-push-action@0a97817b6ade9f46837855d676c4cca3a2471fc9 #v4.2.1
+        with:
+          context: .
+          push: false
+          tags: ghcr.io/${{ env.IMAGE_NAME }}:test
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #0.12.0
+        with:
+          image-ref: 'ghcr.io/${{ env.IMAGE_NAME }}:test'
+          format: 'table'
+          exit-code: '1'
+          #ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+  ort_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Use HTTPS instead of SSH for Git cloning
+        run: git config --global url.https://github.com/.insteadOf ssh://git@github.com/
+      - name: Checkout project
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - name: Run GitHub Action for ORT
+        id: ort_scan
+        uses: oss-review-toolkit/ort-ci-github-action@b6d71a83acba8619f16b30c008f212a7a572f8e8 #v1
+        continue-on-error: ${{ github.event.inputs.bypass_checks }}
+        with:
+          allow-dynamic-versions: 'true'
+          fail-on: 'violations'
