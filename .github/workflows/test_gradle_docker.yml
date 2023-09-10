@@ -53,13 +53,20 @@ jobs:
         continue-on-error: ${{ github.event.inputs.bypass_checks }}
         run: ./gradlew test || ( echo "::error::Tests failed" && exit 1)
       - name: Build
-        run: ./gradlew build -x test -x processTestAot -x checkstyleMain -x checkstyleTest -x checkstyleAot -x checkstyleAotTest
+        run: ./gradlew build -x test
 
   docker_build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - name: Set up JDK
+        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 #v3.12.0
+        with:
+          java-version: ${{ github.event.inputs.java_version }}
+          distribution: ${{ github.event.inputs.java_distribution }}
+      - name: Build
+        run: ./gradlew build -x test
       - name: Build  Docker image
         uses: docker/build-push-action@0a97817b6ade9f46837855d676c4cca3a2471fc9 #v4.2.1
         with:
