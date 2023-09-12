@@ -56,7 +56,10 @@ jobs:
         uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc #v2.8.0
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
-        run: ./gradlew test || ( echo "::error::Tests failed" && exit 1)
+        run: |
+          set -x
+          jar -tvf ./gradle/wrapper/gradle-wrapper.jar
+          ./gradlew test || ( echo "::error::Tests failed" && exit 1)
       - name: Build
         run: ./gradlew build -x test
 
