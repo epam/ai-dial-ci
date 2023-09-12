@@ -18,6 +18,7 @@ on:
 
 env:
   IMAGE_NAME: ${{ github.repository }}
+  GRADLE_USER_HOME: ${GITHUB_ACTION_PATH}/.gradle
 
 jobs:
   style_checks:
@@ -37,7 +38,7 @@ jobs:
       - name: Codestyle
         continue-on-error: ${{ github.event.inputs.bypass_checks }}
         run: |
-          gradle checkstyleMain || ( echo "::error::Checkstyle failed" && exit 1)
+          ./gradlew checkstyleMain || ( echo "::error::Checkstyle failed" && exit 1)
 
   code_checks:
     runs-on: ubuntu-latest
@@ -51,9 +52,9 @@ jobs:
           distribution: ${{ inputs.java_distribution }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
-        run: gradle test || ( echo "::error::Tests failed" && exit 1)
+        run: ./gradlew test || ( echo "::error::Tests failed" && exit 1)
       - name: Build
-        run: gradle build -x test
+        run: ./gradlew build -x test
 
   docker_build:
     runs-on: ubuntu-latest
@@ -75,7 +76,7 @@ jobs:
           java-version: ${{ inputs.java_version }}
           distribution: ${{ inputs.java_distribution }}
       - name: Build
-        run: gradle build -x test
+        run: ./gradlew build -x test
       - name: Build  Docker image
         uses: docker/build-push-action@0a97817b6ade9f46837855d676c4cca3a2471fc9 #v4.2.1
         with:
