@@ -57,14 +57,11 @@ jobs:
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
         run: |
-          gradle wrapper
+#          gradle wrapper
+          find ./gradle -type f -ls
+          jar -tvf ./gradle/wrapper/gradle-wrapper.jar
           ./gradlew test || ( echo "::error::Tests failed" && exit 1)
           find ./build -type f -ls
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: my-artifact
-          path: gradle/wrapper/gradle-wrapper.jar
       - name: Build
         run: ./gradlew build -x test
 
