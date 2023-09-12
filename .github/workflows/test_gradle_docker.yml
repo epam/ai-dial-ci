@@ -52,7 +52,11 @@ jobs:
           distribution: ${{ inputs.java_distribution }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
-        run: ./gradlew test || ( echo "::error::Tests failed" && exit 1)
+        run: |
+          find ./gradle -type f -ls
+          gradle
+          find ./gradle -type f -ls
+          ./gradlew test || ( echo "::error::Tests failed" && exit 1)
       - name: Build
         run: ./gradlew build -x test
 
