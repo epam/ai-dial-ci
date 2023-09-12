@@ -58,9 +58,9 @@ jobs:
         continue-on-error: ${{ inputs.bypass_checks }}
         run: |
           jar -tvf ./gradle/wrapper/gradle-wrapper.jar || true
-          gradle wrapper
-          jar -tvf ./gradle/wrapper/gradle-wrapper.jar
-          git diff
+          #gradle wrapper
+          #jar -tvf ./gradle/wrapper/gradle-wrapper.jar
+          #git diff
           ./gradlew test || ( echo "::error::Tests failed" && exit 1)
 
       - uses: actions/upload-artifact@v3
