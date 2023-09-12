@@ -57,7 +57,7 @@ jobs:
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
         run: |
-          jar -tvf ./gradle/wrapper/gradle-wrapper.jar
+          jar -tvf ./gradle/wrapper/gradle-wrapper.jar || true
           gradle wrapper
           jar -tvf ./gradle/wrapper/gradle-wrapper.jar
           git diff
