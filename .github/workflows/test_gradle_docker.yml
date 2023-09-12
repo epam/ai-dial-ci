@@ -62,6 +62,11 @@ jobs:
           jar -tvf ./gradle/wrapper/gradle-wrapper.jar
           git diff
           ./gradlew test || ( echo "::error::Tests failed" && exit 1)
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: my-artifact
+          path: gradle/wrapper/gradle-wrapper.jar
       - name: Build
         run: ./gradlew build -x test
 
