@@ -21,6 +21,8 @@ runs:
       run: git config --global url.https://github.com/.insteadOf ssh://git@github.com/
     - name: Checkout project
       uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      with:
+        lfs: true
     - name: Run GitHub Action for ORT
       id: ort_scan
       uses: oss-review-toolkit/ort-ci-github-action@b6d71a83acba8619f16b30c008f212a7a572f8e8 #v1
