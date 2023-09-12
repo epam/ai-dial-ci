@@ -57,7 +57,10 @@ jobs:
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
         run: |
-          find ./gradle -type f -ls
+          jar -tvf ./gradle/wrapper/gradle-wrapper.jar
+          gradle wrapper
+          jar -tvf ./gradle/wrapper/gradle-wrapper.jar
+          git diff
           ./gradlew test || ( echo "::error::Tests failed" && exit 1)
       - name: Build
         run: ./gradlew build -x test
