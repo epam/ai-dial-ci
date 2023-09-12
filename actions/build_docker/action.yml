@@ -1,0 +1,47 @@
+name: 'Build docker'
+description: 'Build a docker image, scan it, tag it and push it to the registry'
+inputs:
+  push:
+    description: 'Push the image to the registry'
+    required: false
+    default: true
+  scan:
+    description: 'Scan the image with Trivy'
+    required: false
+    default: true
+  scan_severity:
+    description: 'Severity of vulnerabilities to fail the build'
+    required: false
+    default: 'CRITICAL,HIGH'
+  scan_vuln_type:
+    description: 'Type of vulnerabilities to scan'
+    required: false
+    default: 'os,library'
+  image_name:
+    description: 'Name of the image to build'
+    required: true
+  image_tag:
+    description: 'Tag of the image to build'
+    required: true
+#outputs:
+#  random-number:
+#    description: "Random number"
+#    value: ${{ steps.random-number-generator.outputs.random-number }}
+runs:
+  using: "composite"
+  steps:
+    - name: Build  Docker image
+      uses: docker/build-push-action@0a97817b6ade9f46837855d676c4cca3a2471fc9 #v4.2.1
+      with:
+        context: .
+        push: ${{ inputs.push }}
+        tags: ghcr.io/${{ inputs.image_name }}:${{ inputs.image_tag }}
+    - name: Run Trivy vulnerability scanner
+      if: ${{ inputs.scan }}
+      uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #0.12.0
+      with:
+        image-ref: 'ghcr.io/${{ inputs.image_name }}:${{ inputs.image_tag }}'
+        format: 'table'
+        exit-code: '1'
+        vuln-type: ${{ inputs.scan_vuln_type }}
+        severity: ${{ inputs.scan_severity }}
