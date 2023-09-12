@@ -91,7 +91,7 @@ jobs:
             ${{ runner.os }}-gradle-caches-
       - name: Build
         run: ./gradlew build -x test
-      - uses: ./actions/build_docker
+      - uses: epam/ai-dial-ci/actions/build_docker@feat/test-ci
         with:
           image_name: ${{ env.IMAGE_NAME }}
           image_tag: test
@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: ./actions/ort
+      - uses: epam/ai-dial-ci/actions/ort@feat/test-ci
 #      - name: Use HTTPS instead of SSH for Git cloning
 #        run: git config --global url.https://github.com/.insteadOf ssh://git@github.com/
 #      - name: Checkout project
