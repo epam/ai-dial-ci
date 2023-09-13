@@ -20,7 +20,11 @@ runs:
         else
             git log "${LAST_TAG}"..HEAD --pretty=format:"%s" > /tmp/my_commits_log_all
         fi
-
+        
+        echo "================================================================================"
+        wc -l /tmp/my_commits_log_all
+        echo "================================================================================"
+        
         cat /tmp/my_commits_log_all | sort > /tmp/my_commits_log
 
         echo -n '' > /tmp/my_changelog_features

@@ -79,3 +79,4 @@ runs:
 
         echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
         echo "next_version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
+        cat $GITHUB_OUTPUT
