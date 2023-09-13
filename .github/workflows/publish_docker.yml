@@ -64,7 +64,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: epam/ai-dial-ci/actions/prepare_java@feat/test-ci
       - name: Build
-        run: ./gradlew build -x test
+        run: |
+          ls -alh gradle/wrapper
+          jar -tvf gradle/wrapper/gradle-wrapper.jar
+          ./gradlew build -x test
       - uses: epam/ai-dial-ci/actions/build_docker@feat/test-ci
         with:
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
