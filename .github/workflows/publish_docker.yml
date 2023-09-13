@@ -70,7 +70,7 @@ jobs:
         run: |
           git lfs fetch # TODO: figure out why checkout lfs files are not pulled (it works a few lines above)
           ls -alh gradle/wrapper
-          jar -tvf gradle/wrapper/gradle-wrapper.jar
+          cat gradle/wrapper/gradle-wrapper.jar || true
           ./gradlew build -x test
       - uses: epam/ai-dial-ci/actions/build_docker@feat/test-ci
         with:
