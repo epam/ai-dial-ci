@@ -1,4 +1,4 @@
-name: Java test build
+name: Python test build
 
 on:
   workflow_call:
@@ -7,14 +7,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if checks failed
-      java_version:
+      python_version:
         type: string
-        default: '17'
-        description: Java version to use
-      java_distribution:
-        type: string
-        default: 'temurin'
-        description: Java distribution to use
+        default: '3.11'
+        description: Python version to use
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -28,6 +24,8 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+        with:
+          python_version: ${{ inputs.python_version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
         run: |
