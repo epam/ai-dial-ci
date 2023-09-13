@@ -55,15 +55,10 @@ jobs:
       packages: write
 
     steps:
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@feat/test-ci
       - uses: epam/ai-dial-ci/actions/prepare_java@feat/test-ci
       - name: Build
-        run: |
-          # TODO: figure out why lfs is not working if settled after generate_release_notes
-          ls -alh gradle/wrapper
-          file gradle/wrapper/gradle-wrapper.jar 
-          exit 1
-          ./gradlew build -x test
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@feat/test-ci
+        run: ./gradlew build -x test
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc #v2.2.0
         with:
