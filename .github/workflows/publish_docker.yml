@@ -57,7 +57,7 @@ jobs:
     steps:
       - uses: epam/ai-dial-ci/actions/generate_release_notes@feat/test-ci
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc #v2.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -72,7 +72,7 @@ jobs:
           push: true
           scan: false
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 #v1
         with:
           target_commitish: ${{ github.sha }}
           tag_name: ${{ needs.calculate_version.outputs.next_version }}

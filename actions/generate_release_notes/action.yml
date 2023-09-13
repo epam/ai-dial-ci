@@ -5,7 +5,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
       with:
         fetch-depth: 0
     - name: Generate changelog
@@ -21,11 +21,10 @@ runs:
             git log "${LAST_TAG}"..HEAD --pretty=format:"%s" > /tmp/my_commits_log_all
         fi
         
-        echo "================================================================================"
-        wc -l /tmp/my_commits_log_all
-        echo "================================================================================"
-        
         cat /tmp/my_commits_log_all | sort > /tmp/my_commits_log
+        echo "================================================================================"
+        cat /tmp/my_commits_log
+        echo "================================================================================"
 
         echo -n '' > /tmp/my_changelog_features
         echo -n '' > /tmp/my_changelog_fixes
@@ -35,19 +34,19 @@ runs:
         FEATURES_REGEX="^feat:|^feature:"
         FIXES_REGEX="^fix:|^hotfix:"
 
-        egrep "${FEATURES_REGEX}" /tmp/my_commits_log | while read l; do
+        egrep "${FEATURES_REGEX}" /tmp/my_commits_log || true | while read l; do
             DESCRIPTION=$(echo "${l}" | sed "s/^feat://;s/^feature://")
             echo "* ${DESCRIPTION}" >> /tmp/my_changelog_features
             export FEATURES_ENABLED=1
         done
 
-        egrep "${FIXES_REGEX}" /tmp/my_commits_log | while read l; do
+        egrep "${FIXES_REGEX}" /tmp/my_commits_log || true | while read l; do
             DESCRIPTION=$(echo "${l}" | sed "s/^fix://;s/^hotfix://")
             echo "* ${DESCRIPTION}" >> /tmp/my_changelog_fixes
             export FIXES_ENABLED=1
         done
 
-        egrep -v "${FEATURES_REGEX}|${FIXES_REGEX}" /tmp/my_commits_log | while read l; do
+        egrep -v "${FEATURES_REGEX}|${FIXES_REGEX}" /tmp/my_commits_log || true | while read l; do
             echo "* ${l}" >> /tmp/my_changelog_other
             export OTHER_ENABLED=1
         done
