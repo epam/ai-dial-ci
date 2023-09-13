@@ -56,14 +56,12 @@ jobs:
 
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_java@feat/test-ci
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
-        with:
-          lfs: true
       - name: Build
         run: |
-          # TODO: figure out why checkout lfs files are not pulled (it works a few lines above)
+          # TODO: figure out why lfs is not working if settled after generate_release_notes
           ls -alh gradle/wrapper
-          cat gradle/wrapper/gradle-wrapper.jar || true
+          file gradle/wrapper/gradle-wrapper.jar 
+          exit 1
           ./gradlew build -x test
       - uses: epam/ai-dial-ci/actions/generate_release_notes@feat/test-ci
       - name: Login to GitHub Container Registry
