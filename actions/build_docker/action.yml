@@ -35,12 +35,12 @@ runs:
       with:
         context: .
         push: ${{ inputs.push }}
-        tags: ghcr.io/${{ inputs.image_name }}:${{ inputs.image_tag }}
+        tags: ${{ inputs.image_name }}:${{ inputs.image_tag }}
     - name: Run Trivy vulnerability scanner
       if: ${{ inputs.scan }}
       uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #0.12.0
       with:
-        image-ref: 'ghcr.io/${{ inputs.image_name }}:${{ inputs.image_tag }}'
+        image-ref: '${{ inputs.image_name }}:${{ inputs.image_tag }}'
         format: 'table'
         exit-code: '1'
         vuln-type: ${{ inputs.scan_vuln_type }}

@@ -1,0 +1,81 @@
+name: 'Calculate version'
+description: 'Calculate version based on semantic versioning @ conventional commits'
+
+outputs:
+  current_version:
+    description: 'Current version'
+    value: ${{ steps.semantic.outputs.current_version }}
+  next_version:
+    description: 'Next version'
+    value: ${{ steps.semantic.outputs.next_version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Calculate version
+      id: semantic
+      shell: bash
+      run: |
+        function bump_version {
+          # Split the version string into Major, Minor and Patch numbers
+          local VERSION
+          IFS='.' read -r -a VERSION <<< $(echo ${1//"v"})
+          local BRANCH_NAME="$2"
+          local MAJOR=${VERSION[0]}
+          local MINOR=${VERSION[1]}
+          local PATCH=${VERSION[2]}
+
+          # Increment the version number
+          if [[ "$BRANCH_NAME" == "development" ]]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            rc="-rc"
+          elif [[ "$BRANCH_NAME" == release-* ]]; then
+            PATCH=$((PATCH + 1))
+            rc=""
+          fi
+
+          # Build the new version string
+          echo "v${MAJOR}.${MINOR}.${PATCH}${rc}"
+        }
+
+        CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
+        CURRENT_BRANCH=${CURRENT_BRANCH##refs/heads/}
+        CURRENT_BRANCH=${CURRENT_BRANCH:-HEAD}
+        git fetch --tags
+
+        TAGS=$(git tag)
+        HAS_TAGS=$(echo "$TAGS" | wc -l | tr -d ' ')
+
+        if [[ "$HAS_TAGS" -eq 0 ]]; then
+          # No tags found
+          if [[ "$CURRENT_BRANCH" == "development" ]]; then
+            # For development branch with no tags, set the next version to 0.1.0-rc
+            NEXT_VERSION="v0.1.0-rc"
+          fi
+        else
+          # Tags found
+          if [[ "$CURRENT_BRANCH" == "development" ]]; then
+            CURRENT_VERSION=$(git tag | sort -V | tail -1)
+            NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" "${CURRENT_BRANCH}")
+          elif [[ "${CURRENT_BRANCH}" == release-* ]]; then
+            # For release branch with tags, bump patch version, e.g. v2.3.4 -> v2.3.5
+            CURRENT_VERSION=$(git tag | grep "^v${CURRENT_BRANCH#'release-'}.*" | sort -V | tail -1)
+            if [[ -n "$CURRENT_VERSION" ]]; then
+              NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" "${CURRENT_BRANCH}")
+            else
+              # If no tags match the release branch, set the next version to release number with 0 patch version, e.g. v-0.1.0
+              NEXT_VERSION="v${CURRENT_BRANCH#'release-'}.0"
+            fi
+          else
+            exit 2
+          fi
+        fi
+
+        echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+        echo "next_version=${NEXT_VERSION}" >> $GITHUB_OUTPUT

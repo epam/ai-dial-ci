@@ -37,8 +37,6 @@ jobs:
         continue-on-error: ${{ inputs.bypass_checks }}
         run: |
           ./gradlew check || ( echo "::error::Tests failed" && exit 1)
-      - name: Build
-        run: ./gradlew build -x test
 
   docker_build:
     runs-on: ubuntu-latest
@@ -48,7 +46,7 @@ jobs:
         run: ./gradlew build -x test
       - uses: epam/ai-dial-ci/actions/build_docker@feat/test-ci
         with:
-          image_name: ${{ env.IMAGE_NAME }}
+          image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: test
           push: false
           scan: true
