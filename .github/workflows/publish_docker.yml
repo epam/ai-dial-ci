@@ -65,6 +65,7 @@ jobs:
       - uses: epam/ai-dial-ci/actions/prepare_java@feat/test-ci
       - name: Build
         run: |
+          git pull # TODO: figure out why checkout lfs files are not pulled (it works a few lines above)
           ls -alh gradle/wrapper
           jar -tvf gradle/wrapper/gradle-wrapper.jar
           ./gradlew build -x test
