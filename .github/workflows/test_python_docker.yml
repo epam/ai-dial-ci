@@ -28,6 +28,7 @@ jobs:
           python_version: ${{ inputs.python_version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
+        shell: bash
         run: |
           make lint
 
@@ -37,12 +38,16 @@ jobs:
       - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
+        shell: bash
         run: |
           make test
 
   docker_build:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+        with:
+          lfs: true
       - uses: epam/ai-dial-ci/actions/build_docker@feat/test-ci
         with:
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
@@ -53,4 +58,9 @@ jobs:
   ort_scan:
     runs-on: ubuntu-latest
     steps:
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+      - name: Install dependencies
+        shell: bash
+        run: |
+          pip install -r requirements-dev.txt
       - uses: epam/ai-dial-ci/actions/ort@feat/test-ci
