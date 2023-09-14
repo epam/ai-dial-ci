@@ -1,5 +1,6 @@
 name: NodeJS Yarn test build
 
+#TODO: cache node_modules (setup-node with cache: yarn fails due to yarn.lock not found)
 on:
   workflow_call:
     inputs:
