@@ -27,7 +27,7 @@ jobs:
         uses: thehanimo/pr-title-checker@0cf5902181e78341bb97bb06646396e5bd354b3f #v1.4.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - uses: epam/ai-dial-ci/actions/gradle_checkstyle@feat/test-ci
+      - uses: epam/ai-dial-ci/actions/gradle_checkstyle@feat/test-ci
 
   code_checks:
     runs-on: ubuntu-latest

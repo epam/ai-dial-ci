@@ -20,10 +20,10 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-#  style_checks:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: epam/ai-dial-ci/actions/gradle_checkstyle@feat/test-ci
+  style_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/gradle_checkstyle@feat/test-ci
 
   code_checks:
     runs-on: ubuntu-latest
