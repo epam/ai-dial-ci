@@ -46,11 +46,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          python-version: [3.11, 3.10, 3.9, 3.8]
+          python-version: ["3.11", "3.10", "3.9", "3.8"]
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
         with:
-          python_version: ${{ matrix.python-version }}
+          python_version: ""${{ matrix.python-version }}"
       - name: Lint
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
