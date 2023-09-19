@@ -1,7 +1,5 @@
 name: Python test build
 
-#TODO: python versions matrix
-
 on:
   workflow_call:
     inputs:
