@@ -16,13 +16,16 @@ on:
       scan_trivy:
         description: 'Scan the image with Trivy'
         required: false
+        type: boolean
         default: true
       scan_severity:
         description: 'Severity of vulnerabilities to fail the build'
         required: false
+        type: string
         default: 'CRITICAL,HIGH'
       scan_vuln_type:
         description: 'Type of vulnerabilities to scan'
+        type: string
         required: false
         default: 'os,library'
 
