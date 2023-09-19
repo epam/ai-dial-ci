@@ -35,4 +35,4 @@ runs:
       with:
         allow-dynamic-versions: ${{ inputs.allow_dynamic_versions }}
         fail-on: ${{ inputs.fail_on }}
-        ort-cli-analyze-args: ${{ inputs.analyze_args }}
+        #ort-cli-analyze-args: ${{ inputs.analyze_args }}
