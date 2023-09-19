@@ -30,7 +30,6 @@ jobs:
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
-          cp .env.example .env
           make lint
 
   code_checks:
@@ -41,7 +40,6 @@ jobs:
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
-          cp .env.example .env
           make test
 
   docker_build:
