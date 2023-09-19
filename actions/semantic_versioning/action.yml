@@ -21,6 +21,7 @@ runs:
       id: semantic
       shell: bash
       run: |
+        set -x
         function bump_version {
           # Split the version string into Major, Minor and Patch numbers
           local VERSION
