@@ -75,6 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       non_semver_next_version: ${{ steps.semantic_versioning.outputs.non_semver_next_version }}
+      current_version: ${{ steps.semantic_versioning.outputs.current_version }}
     permissions:
       contents: write
       packages: write
@@ -141,18 +142,18 @@ jobs:
           name: "package"
           path: dist/*
 
-      - name: Changelog
-        uses: ardalanamini/auto-changelog@v4
-        with:
-          semver: false
-          release-name: ${{ needs.calculate_version.outputs.non_semver_next_version }}
-        id: changelog
+#      - name: Changelog
+#        uses: ardalanamini/auto-changelog@v4
+#        with:
+#          semver: false
+#          release-name: ${{ needs.calculate_version.outputs.non_semver_next_version }}
+#        id: changelog
 
       - uses: ncipollo/release-action@v1
         if: github.ref != 'refs/heads/development'
         with:
           artifacts: "dist/*"
-          body: ${{ steps.changelog.outputs.changelog }}
+          bodyFile: /tmp/my_changelog
           allowUpdates: true
           updateOnlyUnreleased: true
           makeLatest: true
