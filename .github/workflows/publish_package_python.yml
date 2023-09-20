@@ -88,8 +88,8 @@ jobs:
 #      - ort_scan
 #      - code_checks
     runs-on: ubuntu-latest
-    environment:
-      name: release
+#    environment:
+#      name: release
     permissions:
       contents: write
       packages: write
@@ -118,19 +118,23 @@ jobs:
           git config --global user.email "SpecialEPM-DIALDevTeam@epam.com"
           git add pyproject.toml
           git commit -m '[skip ci] Update version' || true # upstream branch may not have changes
-          if [[ "$BRANCH_NAME" =~ "release-" ]]; then
+          
+          CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
+          CURRENT_BRANCH=${CURRENT_BRANCH##refs/heads/}
+          CURRENT_BRANCH=${CURRENT_BRANCH:-HEAD}
+          if [[ "$CURRENT_BRANCH" =~ "release-" ]]; then
             git tag -a "${{ needs.calculate_version.outputs.non_semver_next_version }}" -m "$(cat /tmp/my_changelog)"
           fi
           
           git push
           git push --tags
           
-          pip install auto-changelog
-          auto-changelog --github --stdout --debug
-          
-          auto-changelog --github --stdout >> .release.md
-          echo "" >> .release.md
-          cat README.md >> .release.md
+#          pip install auto-changelog
+#          auto-changelog --github --stdout --debug
+#
+#          auto-changelog --github --stdout >> .release.md
+#          echo "" >> .release.md
+#          cat README.md >> .release.md
 
       - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 #v3.1.3
         with:
