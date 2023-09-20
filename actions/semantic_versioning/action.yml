@@ -53,7 +53,7 @@ runs:
         CURRENT_BRANCH=${CURRENT_BRANCH:-HEAD}
         git fetch --tags
 
-        TAGS=$(git tag)
+        TAGS=$(git tag | grep -v "rc")
 
         if [[ -z "${TAGS// }" ]]; then
           # No tags found

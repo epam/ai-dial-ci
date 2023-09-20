@@ -114,7 +114,9 @@ jobs:
           git config --global user.email "SpecialEPM-DIALDevTeam@epam.com"
           git add pyproject.toml
           git commit -m '[skip ci] Update version' || true # upstream branch may not have changes
-          git tag -a "${{ needs.calculate_version.outputs.non_semver_next_version }}" -m "$(cat /tmp/my_changelog)"
+          if [[ "$BRANCH_NAME" == release-* ]]; then
+            git tag -a "${{ needs.calculate_version.outputs.non_semver_next_version }}" -m "$(cat /tmp/my_changelog)"
+          fi
           git push --follow-tags
           
           echo "# v${{ needs.calculate_version.outputs.non_semver_next_version }}" > .release.md
@@ -128,6 +130,7 @@ jobs:
           path: dist/*
 
       - uses: ncipollo/release-action@v1
+        if: github.ref != 'refs/heads/develop'
         with:
           artifacts: "dist/*"
           bodyFile: ".release.md"
