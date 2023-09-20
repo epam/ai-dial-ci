@@ -16,14 +16,14 @@ runs:
       run: |
         set -x
         pip install auto-changelog
-        auto-changelog --github --stdout -u > /tmp/my-changelog
+        auto-changelog --github --stdout -u > /tmp/my_changelog
         
         echo "debug-------"
-        cat /tmp/my-changelog
+        cat /tmp/my_changelog
         echo "debug-------"
         
         {
           echo "CHANGELOG<<EOF"
-          cat /tmp/my-changelog
+          cat /tmp/my_changelog
           echo "EOF"
         } >> "$GITHUB_ENV"

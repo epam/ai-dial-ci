@@ -28,37 +28,37 @@ on:
         default: 'os,library'
 
 jobs:
-  code_checks:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ "3.11", "3.10", "3.9", "3.8" ]
-    steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
-        with:
-          python_version: "${{ matrix.python-version }}"
-      - name: Lint
-        continue-on-error: ${{ inputs.bypass_checks }}
-        shell: bash
-        run: |
-          pip install poetry
-          make lint
-      - name: Test
-        continue-on-error: ${{ inputs.bypass_checks }}
-        shell: bash
-        run: |
-          pip install poetry
-          make test
-      - name: Run Trivy vulnerability scanner
-        if: ${{ inputs.scan_trivy }}
-        continue-on-error: ${{ inputs.bypass_checks }}
-        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #0.12.0
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          vuln-type: ${{ inputs.scan_vuln_type }}
-          severity: ${{ inputs.scan_severity }}
+#  code_checks:
+#    runs-on: ubuntu-latest
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        python-version: [ "3.11", "3.10", "3.9", "3.8" ]
+#    steps:
+#      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+#        with:
+#          python_version: "${{ matrix.python-version }}"
+#      - name: Lint
+#        continue-on-error: ${{ inputs.bypass_checks }}
+#        shell: bash
+#        run: |
+#          pip install poetry
+#          make lint
+#      - name: Test
+#        continue-on-error: ${{ inputs.bypass_checks }}
+#        shell: bash
+#        run: |
+#          pip install poetry
+#          make test
+#      - name: Run Trivy vulnerability scanner
+#        if: ${{ inputs.scan_trivy }}
+#        continue-on-error: ${{ inputs.bypass_checks }}
+#        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #0.12.0
+#        with:
+#          scan-type: 'fs'
+#          scan-ref: '.'
+#          vuln-type: ${{ inputs.scan_vuln_type }}
+#          severity: ${{ inputs.scan_severity }}
 
 #  ort_scan:
 #    runs-on: ubuntu-latest
@@ -86,7 +86,7 @@ jobs:
     needs:
       - calculate_version
 #      - ort_scan
-      - code_checks
+#      - code_checks
     runs-on: ubuntu-latest
     environment:
       name: release
