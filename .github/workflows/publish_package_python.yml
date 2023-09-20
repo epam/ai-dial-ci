@@ -123,8 +123,6 @@ jobs:
           fi
           git push --follow-tags
           
-          echo "# v${{ needs.calculate_version.outputs.non_semver_next_version }}" > .release.md
-          echo "## Changelog" >> .release.md
           cat /tmp/my_changelog >> .release.md
           echo "" >> .release.md
           cat README.md >> .release.md

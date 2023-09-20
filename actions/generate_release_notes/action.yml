@@ -16,7 +16,7 @@ runs:
       run: |
         set -x
         pip install auto-changelog
-        auto-changelog --github --stdout -u > /tmp/my_changelog
+        auto-changelog --github --stdout -u --debug > /tmp/my_changelog
         
         echo "debug-------"
         cat /tmp/my_changelog
