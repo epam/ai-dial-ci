@@ -113,6 +113,7 @@ jobs:
       - name: Commit and push changes
         shell: bash
         run: |
+          set -x
           git config --global user.name "GitHub Actions"
           git config --global user.email "SpecialEPM-DIALDevTeam@epam.com"
           git add pyproject.toml
