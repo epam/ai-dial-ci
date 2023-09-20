@@ -60,6 +60,8 @@ runs:
           if [[ "$CURRENT_BRANCH" == "development" ]]; then
             # For development branch with no tags, set the next version to 0.1.0-rc
             NEXT_VERSION="0.1.0-rc"
+          elif [[ "$CURRENT_BRANCH" =~ "release-" ]]; then
+            NEXT_VERSION="${CURRENT_BRANCH#'release-'}.0"
           fi
         else
           # Tags found
