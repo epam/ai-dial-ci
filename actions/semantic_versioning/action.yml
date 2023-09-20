@@ -72,7 +72,7 @@ runs:
             echo "DEBUG --> on release"
             # For release branch with tags, bump patch version, e.g. v2.3.4 -> v2.3.5
             CURRENT_VERSION=$(git tag | { grep "^${CURRENT_BRANCH##release-}." || echo '' ;} | sort -V | tail -1)
-            if [[ -z "${CURRENT_VERSION// }" ]]; then
+            if [[ ! -z "${CURRENT_VERSION// }" ]]; then
               echo "DEBUG bumping"
               NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" "${CURRENT_BRANCH}")
             else
