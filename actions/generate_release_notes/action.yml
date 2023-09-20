@@ -13,7 +13,10 @@ runs:
       id: generate_changelog
       shell: bash
       run: |
-        set -x
+        #set -x
+        # ~12 hours spent on various attempts to re-use any of existing tools.
+        # most of them are sufficient for github flow (e.g. comparing changes against HEAD of default branch)
+        
         LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null|| echo NO ) 
 
         if [[ "${LAST_TAG}" == "NO" ]]; then
@@ -23,9 +26,6 @@ runs:
         fi
         
         cat /tmp/my_commits_log_all | sort > /tmp/my_commits_log
-        echo "================================================================================"
-        cat /tmp/my_commits_log
-        echo "================================================================================"
 
         echo -n '' > /tmp/my_changelog_features
         echo -n '' > /tmp/my_changelog_fixes
@@ -53,21 +53,18 @@ runs:
         done
 
         if [[ "$(wc -l < /tmp/my_changelog_features)" -gt 0 ]] ; then
-            echo "DEBUG -- features!"
             echo "### Features:" >> /tmp/my_changelog
             cat /tmp/my_changelog_features >> /tmp/my_changelog
             echo "" >> /tmp/my_changelog
         fi
 
         if [[ "$(wc -l < /tmp/my_changelog_fixes)" -gt 0 ]] ; then
-            echo "DEBUG --- fixes!"
             echo "### Fixes:" >> /tmp/my_changelog
             cat /tmp/my_changelog_fixes >> /tmp/my_changelog
             echo "" >> /tmp/my_changelog
         fi
 
         if [[ "$(wc -l  < /tmp/my_changelog_other)" -gt 0 ]] ; then
-            echo "DEBUG --- other!"
             echo "### Other:" >> /tmp/my_changelog
             cat /tmp/my_changelog_other >> /tmp/my_changelog
             echo "" >> /tmp/my_changelog
