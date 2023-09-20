@@ -60,7 +60,8 @@ jobs:
         shell: bash
         run: |
           pip install poetry
-          make test
+          set -x
+          make test PYTHON=${{ matrix.python-version }}
       - name: Build
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash

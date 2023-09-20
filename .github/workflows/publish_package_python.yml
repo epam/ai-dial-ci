@@ -136,7 +136,7 @@ jobs:
           name: "package"
           path: dist/*
 
-      - uses: ncipollo/release-action@v1
+      - uses: ncipollo/release-action@6c75be85e571768fa31b40abf38de58ba0397db5 #v1.13.0
         if: github.ref != 'refs/heads/development'
         with:
           artifacts: "dist/*"
