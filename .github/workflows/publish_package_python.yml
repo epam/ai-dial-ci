@@ -122,7 +122,8 @@ jobs:
             git tag -a "${{ needs.calculate_version.outputs.non_semver_next_version }}" -m "$(cat /tmp/my_changelog)"
           fi
           
-          git push --follow-tags
+          git push
+          git push --tags
           
           pip install auto-changelog
           auto-changelog --github --stdout --debug
