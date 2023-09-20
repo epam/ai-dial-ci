@@ -8,6 +8,9 @@ outputs:
   next_version:
     description: 'Next version'
     value: ${{ steps.semantic.outputs.next_version }}
+  non_semver_next_version:
+    description: 'Next version without semantic versioning'
+    value: ${{ steps.semantic.outputs.non_semver_next_version }}
 
 runs:
   using: "composite"
@@ -25,7 +28,7 @@ runs:
         function bump_version {
           # Split the version string into Major, Minor and Patch numbers
           local VERSION
-          IFS='.' read -r -a VERSION <<< $(echo ${1//"v"})
+          IFS='.' read -r -a VERSION <<< $(echo ${1})
           local BRANCH_NAME="$2"
           local MAJOR=${VERSION[0]}
           local MINOR=${VERSION[1]}
@@ -42,7 +45,7 @@ runs:
           fi
 
           # Build the new version string
-          echo "v${MAJOR}.${MINOR}.${PATCH}${rc}"
+          echo "${MAJOR}.${MINOR}.${PATCH}${rc}"
         }
 
         CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
@@ -56,7 +59,7 @@ runs:
           # No tags found
           if [[ "$CURRENT_BRANCH" == "development" ]]; then
             # For development branch with no tags, set the next version to 0.1.0-rc
-            NEXT_VERSION="v0.1.0-rc"
+            NEXT_VERSION="0.1.0-rc"
           fi
         else
           # Tags found
@@ -70,12 +73,16 @@ runs:
               NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" "${CURRENT_BRANCH}")
             else
               # If no tags match the release branch, set the next version to release number with 0 patch version, e.g. v-0.1.0
-              NEXT_VERSION="v${CURRENT_BRANCH#'release-'}.0"
+              NEXT_VERSION="${CURRENT_BRANCH#'release-'}.0"
             fi
           else
             exit 2
           fi
         fi
+        
+        # python packages do not support semantic versioning
+        NON_SEMVER_NEXT_VERSION="$(echo "${NEXT_VERSION}" | sed 's/-//')"
 
         echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
         echo "next_version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
+        echo "non_semver_next_version=${NON_SEMVER_NEXT_VERSION}" >> $GITHUB_OUTPUT

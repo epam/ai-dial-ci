@@ -61,6 +61,12 @@ jobs:
         run: |
           pip install poetry
           make test
+      - name: Build
+        continue-on-error: ${{ inputs.bypass_checks }}
+        shell: bash
+        run: |
+          pip install poetry
+          make build
       - name: Run Trivy vulnerability scanner
         if: ${{ inputs.scan_trivy }}
         continue-on-error: ${{ inputs.bypass_checks }}
@@ -79,5 +85,5 @@ jobs:
         shell: bash
         run: |
           pip install poetry
-          poetry install
+          make build
       - uses: epam/ai-dial-ci/actions/ort@feat/test-ci

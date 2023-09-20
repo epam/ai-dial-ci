@@ -74,7 +74,7 @@ jobs:
   calculate_version:
     runs-on: ubuntu-latest
     outputs:
-      next_version: ${{ steps.semantic_versioning.outputs.next_version }}
+      non_semver_next_version: ${{ steps.semantic_versioning.outputs.non_semver_next_version }}
     permissions:
       contents: write
       packages: write
@@ -103,10 +103,9 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          echo ${{ needs.calculate_version.outputs.next_version }}
+          echo ${{ needs.calculate_version.outputs.non_semver_next_version }}
           pip install poetry
-          #sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next_version }}\"/g" pyproject.toml
-          sed -i "s/^version = .*/version = \"0.1.0dev"/g" pyproject.toml
+          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.non_semver_next_version }}\"/g" pyproject.toml
           make build
       - name: Commit and push changes
         shell: bash
@@ -115,10 +114,11 @@ jobs:
           git config --global user.email "SpecialEPM-DIALDevTeam@epam.com"
           git add pyproject.toml
           git commit -m '[skip ci] Update version' || true # upstream branch may not have changes
-          git tag -a "0.1.0dev" -m "$(cat /tmp/my_changelog)"
+          git tag -a "${{ needs.calculate_version.outputs.non_semver_next_version }}" -m "$(cat /tmp/my_changelog)"
           git push --follow-tags
           
-          echo "# Changelog" > .release.md
+          echo "# v${{ needs.calculate_version.outputs.non_semver_next_version }}" > .release.md
+          echo "## Changelog" >> .release.md
           cat /tmp/my_changelog >> .release.md
           echo "" >> .release.md
           cat README.md >> .release.md
@@ -135,7 +135,7 @@ jobs:
           updateOnlyUnreleased: true
           makeLatest: ${{ github.ref == 'refs/heads/develop' }}
           prerelease: ${{ github.ref != 'refs/heads/develop' }}
-          tag: "0.1.0dev" #TODO: mb no tag on develop?
+          tag: "${{ needs.calculate_version.outputs.non_semver_next_version }}" #TODO: mb no tag on develop?
 
 #      - name: Release
 #        uses: softprops/action-gh-release@v1
