@@ -28,7 +28,19 @@ on:
         default: 'os,library'
 
 jobs:
-  code_checks:
+  style_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+        with:
+          python_version: "${{ inputs.python_version }}"
+          install_poetry: true
+      - name: Lint
+        shell: bash
+        run: |
+          make lint
+
+  unit_tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -38,28 +50,12 @@ jobs:
       - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
         with:
           python_version: "${{ matrix.python-version }}"
-      - name: Lint
-        continue-on-error: ${{ inputs.bypass_checks }}
-        shell: bash
-        run: |
-          pip install poetry
-          make lint
+          install_poetry: true
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
-          pip install poetry
-          set -x
           make test PYTHON=${{ matrix.python-version }}
-      - name: Run Trivy vulnerability scanner
-        if: ${{ inputs.scan_trivy }}
-        continue-on-error: ${{ inputs.bypass_checks }}
-        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #0.12.0
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          vuln-type: ${{ inputs.scan_vuln_type }}
-          severity: ${{ inputs.scan_severity }}
 
   ort_scan:
     runs-on: ubuntu-latest
@@ -88,7 +84,8 @@ jobs:
     needs:
       - calculate_version
       - ort_scan
-      - code_checks
+      - style_checks
+      - unit_tests
     runs-on: ubuntu-latest
 #    environment:
 #      name: release
@@ -102,16 +99,30 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.DEPLOY_USER_PAT }}
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+        with:
+          python_version: "${{ inputs.python_version }}"
+          install_poetry: true
       - name: Build
+        shell: bash
+        run: |
+          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.non_semver_next_version }}\"/g" pyproject.toml
+          make build
+      - name: Run Trivy vulnerability scanner
+        if: ${{ inputs.scan_trivy }}
+        continue-on-error: ${{ inputs.bypass_checks }}
+        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #0.12.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          vuln-type: ${{ inputs.scan_vuln_type }}
+          severity: ${{ inputs.scan_severity }}
+      - name: Publish to pypi
         shell: bash
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          echo ${{ needs.calculate_version.outputs.non_semver_next_version }}
-          pip install poetry
-          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.non_semver_next_version }}\"/g" pyproject.toml
-          make build
-          #make publish
+        run:
+          echo make publish #TODO: get rid of this echo, run make publish
       - name: Commit and push changes
         shell: bash
         run: |
@@ -130,7 +141,6 @@ jobs:
           
           git push
           git push --tags
-          
 
       - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 #v3.1.3
         with:

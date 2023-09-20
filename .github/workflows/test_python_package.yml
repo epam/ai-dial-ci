@@ -38,8 +38,16 @@ jobs:
         uses: thehanimo/pr-title-checker@0cf5902181e78341bb97bb06646396e5bd354b3f #v1.4.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+        with:
+          python_version: "${{ inputs.python_version }}"
+          install_poetry: true
+      - name: Lint
+        shell: bash
+        run: |
+          make lint
 
-  code_checks:
+  unit_tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -49,24 +57,25 @@ jobs:
       - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
         with:
           python_version: "${{ matrix.python-version }}"
-      - name: Lint
-        continue-on-error: ${{ inputs.bypass_checks }}
-        shell: bash
-        run: |
-          pip install poetry
-          make lint
+          install_poetry: true
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
-          pip install poetry
-          set -x
           make test PYTHON=${{ matrix.python-version }}
+
+  code_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+        with:
+          python_version: "${{ inputs.python_version }}"
+          install_poetry: true
       - name: Build
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
-          pip install poetry twine
+          pip install twine
           make build
           twine check dist/*
       - name: Run Trivy vulnerability scanner

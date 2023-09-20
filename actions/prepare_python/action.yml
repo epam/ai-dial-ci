@@ -5,6 +5,10 @@ inputs:
     description: 'Python version to use'
     required: false
     default: '3.11'
+  install_poetry:
+    description: 'Install poetry'
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -17,3 +21,8 @@ runs:
       with:
         python-version: ${{ inputs.python_version }}
         #cache: 'pip'
+    - name: Install poetry
+      if: ${{ inputs.install_poetry == 'true' }}
+      shell: bash
+      run: |
+        pip install poetry
