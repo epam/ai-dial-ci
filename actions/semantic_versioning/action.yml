@@ -51,9 +51,8 @@ runs:
         git fetch --tags
 
         TAGS=$(git tag)
-        HAS_TAGS=$(echo "$TAGS" | wc -l | tr -d ' ')
 
-        if [[ "$HAS_TAGS" -eq 0 ]]; then
+        if [[ -z "${TAGS// }" ]]; then
           # No tags found
           if [[ "$CURRENT_BRANCH" == "development" ]]; then
             # For development branch with no tags, set the next version to 0.1.0-rc
