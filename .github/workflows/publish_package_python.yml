@@ -138,6 +138,8 @@ jobs:
 
       - name: Changelog
         uses: ardalanamini/auto-changelog@v4
+        with:
+          semver: false
         id: changelog
 
       - uses: ncipollo/release-action@v1
