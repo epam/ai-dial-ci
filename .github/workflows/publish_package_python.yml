@@ -125,7 +125,7 @@ jobs:
           git push --follow-tags
           
           pip install auto-changelog
-          auto-changelog --github --stdout
+          auto-changelog --github --stdout --debug
           
           auto-changelog --github --stdout >> .release.md
           echo "" >> .release.md
@@ -136,11 +136,15 @@ jobs:
           name: "package"
           path: dist/*
 
+      - name: Changelog
+        uses: ardalanamini/auto-changelog@v4
+        id: changelog
+
       - uses: ncipollo/release-action@v1
         if: github.ref != 'refs/heads/development'
         with:
           artifacts: "dist/*"
-          bodyFile: ".release.md"
+          body: ${{ steps.changelog.outputs.changelog }}
           allowUpdates: true
           updateOnlyUnreleased: true
           makeLatest: true
