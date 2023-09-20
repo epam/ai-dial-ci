@@ -67,6 +67,7 @@ jobs:
         run: |
           pip install poetry
           make build
+          twine check dist/*
       - name: Run Trivy vulnerability scanner
         if: ${{ inputs.scan_trivy }}
         continue-on-error: ${{ inputs.bypass_checks }}
