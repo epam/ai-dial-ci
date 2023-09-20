@@ -39,7 +39,7 @@ runs:
             MINOR=$((MINOR + 1))
             PATCH=0
             rc="-rc"
-          elif [[ "$BRANCH_NAME" == release-* ]]; then
+          elif [[ "$BRANCH_NAME" =~ "release-" ]]; then
             PATCH=$((PATCH + 1))
             rc=""
           fi
@@ -68,7 +68,7 @@ runs:
           if [[ "$CURRENT_BRANCH" == "development" ]]; then
             CURRENT_VERSION=$(git tag | sort -V | tail -1)
             NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" "${CURRENT_BRANCH}")
-          elif [[ "${CURRENT_BRANCH}" == release-* ]]; then
+          elif [[ "${CURRENT_BRANCH}" =~ "release-" ]]; then
             # For release branch with tags, bump patch version, e.g. v2.3.4 -> v2.3.5
             CURRENT_VERSION=$(git tag | { grep "^${CURRENT_BRANCH#'release-'}.*" || echo '' } | sort -V | tail -1)
             if [[ -z "${CURRENT_VERSION// }" ]]; then
