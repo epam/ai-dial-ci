@@ -49,7 +49,8 @@ jobs:
         shell: bash
         run: |
           pip install poetry
-          make test
+          set -x
+          make test PYTHON=${{ matrix.python-version }}
       - name: Run Trivy vulnerability scanner
         if: ${{ inputs.scan_trivy }}
         continue-on-error: ${{ inputs.bypass_checks }}
