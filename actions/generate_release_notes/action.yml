@@ -9,73 +9,15 @@ runs:
       with:
         fetch-depth: 0
         lfs: true
+    - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
     - name: Generate changelog
       id: generate_changelog
       shell: bash
       run: |
         set -x
-        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null|| echo NO ) 
-
-        if [[ "${LAST_TAG}" == "NO" ]]; then
-            git log  --pretty=format:"%s" > /tmp/my_commits_log_all
-        else
-            git log "${LAST_TAG}"..HEAD --pretty=format:"%s" > /tmp/my_commits_log_all
-        fi
-        
-        cat /tmp/my_commits_log_all | sort > /tmp/my_commits_log
-        echo "================================================================================"
-        cat /tmp/my_commits_log
-        echo "================================================================================"
-
-        echo -n '' > /tmp/my_changelog_features
-        echo -n '' > /tmp/my_changelog_fixes
-        echo -n '' > /tmp/my_changelog_other
-        echo -n '' > /tmp/my_changelog
-
-        FEATURES_REGEX="^feat:|^feature:"
-        FIXES_REGEX="^fix:|^hotfix:"
-
-        egrep "${FEATURES_REGEX}" /tmp/my_commits_log || true | while read l; do
-            DESCRIPTION=$(echo "${l}" | sed "s/^feat://;s/^feature://")
-            echo "* ${DESCRIPTION}" >> /tmp/my_changelog_features
-            export FEATURES_ENABLED=1
-        done
-
-        egrep "${FIXES_REGEX}" /tmp/my_commits_log || true | while read l; do
-            DESCRIPTION=$(echo "${l}" | sed "s/^fix://;s/^hotfix://")
-            echo "* ${DESCRIPTION}" >> /tmp/my_changelog_fixes
-            export FIXES_ENABLED=1
-        done
-
-        egrep -v "${FEATURES_REGEX}|${FIXES_REGEX}" /tmp/my_commits_log || true | while read l; do
-            echo "* ${l}" >> /tmp/my_changelog_other
-            export OTHER_ENABLED=1
-        done
-
-        if [[ "$(wc -l /tmp/my_changelog_features | awk '{print $1}')" -gt 0 ]] ; then
-            echo "### Features:" >> /tmp/my_changelog
-            cat /tmp/my_changelog_features >> /tmp/my_changelog
-            echo "" >> /tmp/my_changelog
-        fi
-
-        if [[ "$(wc -l /tmp/my_changelog_fixes | awk '{print $1}')" -gt 0 ]] ; then
-            echo "### Fixes:" >> /tmp/my_changelog
-            cat /tmp/my_changelog_fixes >> /tmp/my_changelog
-            echo "" >> /tmp/my_changelog
-        fi
-
-        if [[ "$(wc -l /tmp/my_changelog_other | awk '{print $1}')" -gt 0 ]] ; then
-            echo "### Other:" >> /tmp/my_changelog
-            cat /tmp/my_changelog_other >> /tmp/my_changelog
-            echo "" >> /tmp/my_changelog
-        fi
-
-        MY_CHANGELOG=$(cat /tmp/my_changelog)
-        MY_CHANGELOG="${MY_CHANGELOG//'%'/'%25'}"
-        MY_CHANGELOG="${MY_CHANGELOG//$'\n'/'%0A'}"
-        MY_CHANGELOG="${MY_CHANGELOG//$'\r'/'%0D'}"
+        pip install auto-changelog
         {
           echo "CHANGELOG<<EOF"
-          cat /tmp/my_changelog
+          auto-changelog --github --stdout -u
           echo "EOF"
         } >> "$GITHUB_ENV"
