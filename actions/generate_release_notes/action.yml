@@ -16,8 +16,9 @@ runs:
       run: |
         set -x
         pip install auto-changelog
+        auto-changelog --github --stdout -u > /tmp/my-changelog
         {
           echo "CHANGELOG<<EOF"
-          auto-changelog --github --stdout -u
+          cat /tmp/my-changelog
           echo "EOF"
         } >> "$GITHUB_ENV"
