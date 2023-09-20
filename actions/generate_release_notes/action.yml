@@ -8,6 +8,7 @@ runs:
       uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
       with:
         fetch-depth: 0
+        fetch-tags: true
         lfs: true
     - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
     - name: Generate changelog
@@ -16,6 +17,16 @@ runs:
       run: |
         set -x
         pip install auto-changelog
+        
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null|| echo NO )
+
+        if [[ "${LAST_TAG}" == "NO" ]]; then
+            git log  --pretty=format:"%s" 
+        
+        else
+            git log "${LAST_TAG}"..HEAD --pretty=format:"%s" > /tmp/my_commits_log_all
+        fi
+    
         auto-changelog --github --stdout -u --debug > /tmp/my_changelog
         
         echo "debug-------"
