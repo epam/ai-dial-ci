@@ -137,14 +137,14 @@ jobs:
           path: dist/*
 
       - uses: ncipollo/release-action@v1
-        if: github.ref != 'refs/heads/develop'
+        if: github.ref != 'refs/heads/development'
         with:
           artifacts: "dist/*"
           bodyFile: ".release.md"
           allowUpdates: true
           updateOnlyUnreleased: true
-          makeLatest: ${{ github.ref == 'refs/heads/develop' }}
-          prerelease: ${{ github.ref != 'refs/heads/develop' }}
+          makeLatest: true
+          prerelease: false
           tag: "${{ needs.calculate_version.outputs.non_semver_next_version }}" #TODO: mb no tag on develop?
 
 #      - name: Release
