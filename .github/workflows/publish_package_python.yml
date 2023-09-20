@@ -143,16 +143,16 @@ jobs:
           semver: false
         id: changelog
 
-      - uses: ncipollo/release-action@v1
-        if: github.ref != 'refs/heads/development'
-        with:
-          artifacts: "dist/*"
-          body: ${{ steps.changelog.outputs.changelog }}
-          allowUpdates: true
-          updateOnlyUnreleased: true
-          makeLatest: true
-          prerelease: false
-          tag: "${{ needs.calculate_version.outputs.non_semver_next_version }}" #TODO: mb no tag on develop?
+#      - uses: ncipollo/release-action@v1
+#        if: github.ref != 'refs/heads/development'
+#        with:
+#          artifacts: "dist/*"
+#          body: ${{ steps.changelog.outputs.changelog }}
+#          allowUpdates: true
+#          updateOnlyUnreleased: true
+#          makeLatest: true
+#          prerelease: false
+#          tag: "${{ needs.calculate_version.outputs.non_semver_next_version }}" #TODO: mb no tag on develop?
 
 #      - name: Release
 #        uses: softprops/action-gh-release@v1
