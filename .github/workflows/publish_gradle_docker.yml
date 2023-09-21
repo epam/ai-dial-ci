@@ -66,6 +66,10 @@ jobs:
     steps:
       - uses: epam/ai-dial-ci/actions/generate_release_notes@feat/test-ci
       - uses: epam/ai-dial-ci/actions/prepare_java@feat/test-ci
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+        with:
+           lfs: true
+           token: ${{ secrets.DEPLOY_USER_PAT }}
       - name: Build
         run: |
            sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle

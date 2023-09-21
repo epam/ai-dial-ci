@@ -53,8 +53,22 @@ jobs:
       - uses: epam/ai-dial-ci/actions/semantic_versioning@feat/test-ci
         id: semantic_versioning
 
+  ort:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+      - name: Install dependencies
+        shell: bash
+        run: |
+          npm i
+      - uses: epam/ai-dial-ci/actions/ort@feat/test-ci
+
   release:
-    needs: calculate_version
+    needs:
+      - calculate_version
+      - style_checks
+      - code_checks
+      - ort
     runs-on: ubuntu-latest
     environment:
       name: release
@@ -67,6 +81,18 @@ jobs:
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
         with:
           lfs: true
+      - uses: epam/ai-dial-ci/actions/prepare_node@feat/test-ci
+        with:
+          node_version: ${{ inputs.node_version }}
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+        with:
+          lfs: true
+          token: ${{ secrets.DEPLOY_USER_PAT }}
+      - name: Set version
+        continue-on-error: ${{ inputs.bypass_checks }}
+        shell: bash
+        run: |
+          npm version ${{ needs.calculate_version.outputs.next_version }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc #v2.2.0
         with:
@@ -78,13 +104,11 @@ jobs:
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: ${{ needs.calculate_version.outputs.next_version }}
           push: true
-          scan: false
-      - name: Release
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 #v1
+          scan: true
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@feat/test-ci
         with:
-          target_commitish: ${{ github.sha }}
-          tag_name: ${{ needs.calculate_version.outputs.next_version }}
-          body: |
-            # ${{ needs.calculate_version.outputs.next_version }}
-
-            ${{ env.CHANGELOG }}
+          tag_version: ${{ needs.calculate_version.outputs.next_version }}
+          changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
+          extra_commit_command: |
+            git add package.json package-lock.json
+            git commit -m '[skip ci] Update version' || true # upstream branch may already be updated

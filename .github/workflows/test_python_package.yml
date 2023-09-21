@@ -88,7 +88,7 @@ jobs:
           vuln-type: ${{ inputs.scan_vuln_type }}
           severity: ${{ inputs.scan_severity }}
 
-  ort_scan:
+  ort:
     runs-on: ubuntu-latest
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci

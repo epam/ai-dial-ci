@@ -60,7 +60,7 @@ jobs:
           push: false
           scan: true
 
-  ort_scan:
+  ort:
     runs-on: ubuntu-latest
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci

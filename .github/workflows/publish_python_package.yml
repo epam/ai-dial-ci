@@ -57,7 +57,7 @@ jobs:
         run: |
           make test PYTHON=${{ matrix.python-version }}
 
-  ort_scan:
+  ort:
     runs-on: ubuntu-latest
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
@@ -83,7 +83,7 @@ jobs:
   release:
     needs:
       - calculate_version
-      - ort_scan
+      - ort
       - style_checks
       - unit_tests
     runs-on: ubuntu-latest
