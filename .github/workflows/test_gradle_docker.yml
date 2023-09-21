@@ -1,0 +1,57 @@
+name: Java test build
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      java_version:
+        type: string
+        default: '17'
+        description: Java version to use
+      java_distribution:
+        type: string
+        default: 'temurin'
+        description: Java distribution to use
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  style_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR title check
+        uses: thehanimo/pr-title-checker@0cf5902181e78341bb97bb06646396e5bd354b3f #v1.4.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: epam/ai-dial-ci/actions/gradle_checkstyle@feat/test-ci
+
+  code_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_java@feat/test-ci
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks }}
+        run: |
+          ./gradlew check || ( echo "::error::Tests failed" && exit 1)
+
+  docker_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_java@feat/test-ci
+      - name: Build
+        run: ./gradlew build -x test
+      - uses: epam/ai-dial-ci/actions/build_docker@feat/test-ci
+        with:
+          image_name: ghcr.io/${{ env.IMAGE_NAME }}
+          image_tag: test
+          push: false
+          scan: true
+
+  ort:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/ort@feat/test-ci

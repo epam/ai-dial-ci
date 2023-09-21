@@ -1,0 +1,33 @@
+name: 'Prepare JDK'
+description: 'Checkout project, set up JDK, prepare gradle caches'
+inputs:
+  java_version:
+    description: 'Java version to use'
+    required: false
+    default: '17'
+  java_distribution:
+    description: 'Java distribution to use'
+    required: false
+    default: 'temurin'
+  cache_path:
+    description: 'Path to cache'
+    required: false
+    default: '~/.gradle/caches'
+  bypass_checks:
+    description: 'Do not fail pipeline if checks failed'
+    required: false
+    default: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: epam/ai-dial-ci/actions/prepare_java@feat/test-ci
+      with:
+        java_version: ${{ inputs.java_version }}
+        java_distribution: ${{ inputs.java_distribution }}
+        cache_path: ${{ inputs.cache_path }}
+    - name: Codestyle
+      continue-on-error: ${{ inputs.bypass_check }}
+      shell: bash
+      run: |
+        ./gradlew checkstyleMain
