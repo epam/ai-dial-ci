@@ -67,7 +67,9 @@ jobs:
       - uses: epam/ai-dial-ci/actions/generate_release_notes@feat/test-ci
       - uses: epam/ai-dial-ci/actions/prepare_java@feat/test-ci
       - name: Build
-        run: ./gradlew build -x test
+        run: |
+           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle
+           ./gradlew build -x test
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc #v2.2.0
         with:
@@ -84,3 +86,6 @@ jobs:
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
+          extra_commit_command: |
+            git add build.gradle
+            git commit -m '[skip ci] Update version' || true # upstream branch may already be updated
