@@ -51,9 +51,7 @@ jobs:
           push: false
           scan: true
 
-  ort_scan:
+  ort:
     runs-on: ubuntu-latest
     steps:
       - uses: epam/ai-dial-ci/actions/ort@feat/test-ci
-        with:
-          analyze_args: '-P ort.analyzer.enabledPackageManagers=Gradle'
