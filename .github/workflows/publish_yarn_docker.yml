@@ -92,7 +92,7 @@ jobs:
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
-          npm version ${{ needs.calculate_version.outputs.next_version }}
+          npm version ${{ needs.calculate_version.outputs.next_version }} --no-git-tag-version
       - name: Login to GitHub Container Registry
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc #v2.2.0
         with:
