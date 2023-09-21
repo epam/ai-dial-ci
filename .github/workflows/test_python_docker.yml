@@ -1,0 +1,66 @@
+name: Python test build
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      python_version:
+        type: string
+        default: '3.11'
+        description: Python version to use
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  style_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR title check
+        uses: thehanimo/pr-title-checker@0cf5902181e78341bb97bb06646396e5bd354b3f #v1.4.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+        with:
+          python_version: ${{ inputs.python_version }}
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks }}
+        shell: bash
+        run: |
+          make lint
+
+  code_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks }}
+        shell: bash
+        run: |
+          make test
+
+  docker_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/build_docker@feat/test-ci
+        with:
+          image_name: ghcr.io/${{ env.IMAGE_NAME }}
+          image_tag: test
+          push: false
+          scan: true
+
+  ort:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+      - name: Install dependencies
+        shell: bash
+        run: |
+          pip install -r requirements-dev.txt
+      - uses: epam/ai-dial-ci/actions/ort@feat/test-ci
