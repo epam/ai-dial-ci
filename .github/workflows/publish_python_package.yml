@@ -1,0 +1,133 @@
+name: Release version
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      python_version:
+        type: string
+        default: '3.11'
+        description: Python version to use
+      scan_trivy:
+        description: 'Scan the image with Trivy'
+        required: false
+        type: boolean
+        default: true
+      scan_severity:
+        description: 'Severity of vulnerabilities to fail the build'
+        required: false
+        type: string
+        default: 'CRITICAL,HIGH'
+      scan_vuln_type:
+        description: 'Type of vulnerabilities to scan'
+        type: string
+        required: false
+        default: 'os,library'
+
+jobs:
+  style_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+        with:
+          python_version: "${{ inputs.python_version }}"
+          install_poetry: true
+      - name: Lint
+        shell: bash
+        run: |
+          make lint
+
+  unit_tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.11", "3.10", "3.9", "3.8" ]
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+        with:
+          python_version: "${{ matrix.python-version }}"
+          install_poetry: true
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks }}
+        shell: bash
+        run: |
+          make test PYTHON=${{ matrix.python-version }}
+
+  ort:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+      - name: Install dependencies
+        shell: bash
+        run: |
+          pip install poetry
+          poetry install
+      - uses: epam/ai-dial-ci/actions/ort@feat/test-ci
+
+  calculate_version:
+    runs-on: ubuntu-latest
+    outputs:
+      non_semver_next_version: ${{ steps.semantic_versioning.outputs.non_semver_next_version }}
+      current_version: ${{ steps.semantic_versioning.outputs.current_version }}
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@feat/test-ci
+        id: semantic_versioning
+
+  release:
+    needs:
+      - calculate_version
+      - ort
+      - style_checks
+      - unit_tests
+    runs-on: ubuntu-latest
+#    environment:
+#      name: release
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@feat/test-ci
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+        with:
+          lfs: true
+          token: ${{ secrets.DEPLOY_USER_PAT }}
+      - uses: epam/ai-dial-ci/actions/prepare_python@feat/test-ci
+        with:
+          python_version: "${{ inputs.python_version }}"
+          install_poetry: true
+      - name: Build
+        shell: bash
+        run: |
+          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.non_semver_next_version }}\"/g" pyproject.toml
+          make build
+      - name: Run Trivy vulnerability scanner
+        if: ${{ inputs.scan_trivy }}
+        continue-on-error: ${{ inputs.bypass_checks }}
+        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #0.12.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          vuln-type: ${{ inputs.scan_vuln_type }}
+          severity: ${{ inputs.scan_severity }}
+      - name: Publish to pypi
+        shell: bash
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run:
+          echo make publish #TODO: get rid of this echo, run make publish
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@feat/test-ci
+        with:
+          tag_version: ${{ needs.calculate_version.outputs.non_semver_next_version }}
+          changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
+          artifacts: "dist/*"
+          extra_commit_command: |
+            git add pyproject.toml
+            git commit -m '[skip ci] Update version' || true # upstream branch may already be updated
