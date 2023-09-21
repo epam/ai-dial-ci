@@ -57,8 +57,8 @@ jobs:
       - code_checks
       - ort
     runs-on: ubuntu-latest
-    environment:
-      name: release
+#    environment:
+#      name: release
     permissions:
       contents: write
       packages: write
