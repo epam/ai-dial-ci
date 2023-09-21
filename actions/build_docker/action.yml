@@ -23,6 +23,10 @@ inputs:
   image_tag:
     description: 'Tag of the image to build'
     required: true
+  image_extra_aliases:
+    description: 'Extra aliases for the image, e.g. to publish to multiple registries'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -32,7 +36,9 @@ runs:
       with:
         context: .
         push: ${{ inputs.push }}
-        tags: ${{ inputs.image_name }}:${{ inputs.image_tag }}
+        tags: |
+          ${{ inputs.image_name }}:${{ inputs.image_tag }}
+          ${{ inputs.image_extra_aliases }}
         labels: |
           maintainer=AI DIAL
           org.opencontainers.image.title=${{ inputs.image_name }}
