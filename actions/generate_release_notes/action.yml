@@ -16,15 +16,15 @@ runs:
         #set -x
         # ~12 hours spent on various attempts to re-use any of existing tools.
         # most of them are sufficient for github flow (e.g. comparing changes against HEAD of default branch)
-        
-        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null|| echo NO ) 
+
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null|| echo NO )
 
         if [[ "${LAST_TAG}" == "NO" ]]; then
             git log  --pretty=format:"%s" > /tmp/my_commits_log_all
         else
             git log "${LAST_TAG}"..HEAD --pretty=format:"%s" > /tmp/my_commits_log_all
         fi
-        
+
         cat /tmp/my_commits_log_all | sort > /tmp/my_commits_log
 
         echo -n '' > /tmp/my_changelog_features

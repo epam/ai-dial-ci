@@ -25,16 +25,16 @@ runs:
         set -x
         git config --global user.name "GitHub Actions"
         git config --global user.email "SpecialEPM-DIALDevTeam@epam.com"
-        
+
         ${{ inputs.extra_commit_command }}
-        
+
         CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
         CURRENT_BRANCH=${CURRENT_BRANCH##refs/heads/}
         CURRENT_BRANCH=${CURRENT_BRANCH:-HEAD}
         if [[ "$CURRENT_BRANCH" =~ "release-" ]]; then
           git tag -a "${{ inputs.tag_version }}" -m "$(cat ${{ inputs.changelog_file }})"
         fi
-        
+
         git push
         git push --tags
 

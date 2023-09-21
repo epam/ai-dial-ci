@@ -25,4 +25,3 @@ jobs:
 #             -F "ref=main" \
 #             -F "variables[CORE_VERSION]=${PR_NUMBER}-${PR_REF_OWNER}/${PR_REF_BRANCH}" \
 #             "${PIPELINE_TRIGGER_URL}" ||
-

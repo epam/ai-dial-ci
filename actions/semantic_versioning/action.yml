@@ -81,7 +81,7 @@ runs:
             exit 2
           fi
         fi
-        
+
         # python packages do not support semantic versioning
         NON_SEMVER_NEXT_VERSION="$(echo "${NEXT_VERSION}" | sed 's/-//')"
 
