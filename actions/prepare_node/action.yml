@@ -1,0 +1,23 @@
+name: 'Prepare NodeJS'
+description: 'Checkout project, set up NodeJS'
+inputs:
+  node_version:
+    description: 'NodeJS version to use'
+    required: false
+    default: '19'
+  cache:
+    description: 'Cache type. Supported values: npm, yarn, pnpm'
+    required: false
+    default: 'yarn'
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      with:
+        lfs: true
+    - name: Set up NodeJS
+      uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d #v3.8.1
+      with:
+        node-version: ${{ inputs.node_version }}
+#        cache: ${{ inputs.cache }}
