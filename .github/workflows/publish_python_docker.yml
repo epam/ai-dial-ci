@@ -54,8 +54,8 @@ jobs:
   release:
     needs: calculate_version
     runs-on: ubuntu-latest
-    environment:
-      name: release
+#    environment:
+#      name: release
     permissions:
       contents: write
       packages: write
