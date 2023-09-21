@@ -1,0 +1,90 @@
+name: 'Calculate version'
+description: 'Calculate version based on semantic versioning @ conventional commits'
+
+outputs:
+  current_version:
+    description: 'Current version'
+    value: ${{ steps.semantic.outputs.current_version }}
+  next_version:
+    description: 'Next version'
+    value: ${{ steps.semantic.outputs.next_version }}
+  non_semver_next_version:
+    description: 'Next version without semantic versioning'
+    value: ${{ steps.semantic.outputs.non_semver_next_version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      with:
+        fetch-depth: 0
+
+    - name: Calculate version
+      id: semantic
+      shell: bash
+      run: |
+        #set -x
+        function bump_version {
+          # Split the version string into Major, Minor and Patch numbers
+          local VERSION
+          IFS='.' read -r -a VERSION <<< $(echo ${1})
+          local BRANCH_NAME="$2"
+          local MAJOR=${VERSION[0]}
+          local MINOR=${VERSION[1]}
+          local PATCH=${VERSION[2]}
+
+          # Increment the version number
+          if [[ "$BRANCH_NAME" == "development" ]]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            rc="-rc"
+          elif [[ "$BRANCH_NAME" =~ "release-" ]]; then
+            PATCH=$((PATCH + 1))
+            rc=""
+          fi
+
+          # Build the new version string
+          echo "${MAJOR}.${MINOR}.${PATCH}${rc}"
+        }
+
+        CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
+        CURRENT_BRANCH=${CURRENT_BRANCH##refs/heads/}
+        CURRENT_BRANCH=${CURRENT_BRANCH:-HEAD}
+        git fetch --tags
+
+        TAGS=$(git tag)
+
+        if [[ -z "${TAGS// }" ]]; then
+          # No tags found
+          if [[ "$CURRENT_BRANCH" == "development" ]]; then
+            # For development branch with no tags, set the next version to 0.1.0-rc
+            NEXT_VERSION="0.1.0-rc"
+          elif [[ "$CURRENT_BRANCH" =~ "release-" ]]; then
+            NEXT_VERSION="${CURRENT_BRANCH#'release-'}.0"
+          fi
+        else
+          # Tags found
+          if [[ "$CURRENT_BRANCH" == "development" ]]; then
+            CURRENT_VERSION=$(git tag | sort -V | tail -1)
+            NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" "${CURRENT_BRANCH}")
+          elif [[ "${CURRENT_BRANCH}" =~ "release-" ]]; then
+            # For release branch with tags, bump patch version, e.g. v2.3.4 -> v2.3.5
+            CURRENT_VERSION=$(git tag | { grep "^${CURRENT_BRANCH##release-}." || echo '' ;} | sort -V | tail -1)
+            if [[ ! -z "${CURRENT_VERSION// }" ]]; then
+              NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" "${CURRENT_BRANCH}")
+            else
+              # If no tags match the release branch, set the next version to release number with 0 patch version, e.g. v-0.1.0
+              NEXT_VERSION="${CURRENT_BRANCH##release-}.0"
+            fi
+          else
+            exit 2
+          fi
+        fi
+
+        # python packages do not support semantic versioning
+        NON_SEMVER_NEXT_VERSION="$(echo "${NEXT_VERSION}" | sed 's/-//')"
+
+        echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+        echo "next_version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
+        echo "non_semver_next_version=${NON_SEMVER_NEXT_VERSION}" >> $GITHUB_OUTPUT

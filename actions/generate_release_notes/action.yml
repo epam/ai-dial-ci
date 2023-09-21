@@ -1,0 +1,81 @@
+name: 'Generate release notes'
+description: 'Generate release notes based on conventional commits'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      with:
+        fetch-depth: 0
+        lfs: true
+    - name: Generate changelog
+      id: generate_changelog
+      shell: bash
+      run: |
+        #set -x
+        # ~12 hours spent on various attempts to re-use any of existing tools.
+        # most of them are sufficient for github flow (e.g. comparing changes against HEAD of default branch)
+
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null|| echo NO )
+
+        if [[ "${LAST_TAG}" == "NO" ]]; then
+            git log  --pretty=format:"%s" > /tmp/my_commits_log_all
+        else
+            git log "${LAST_TAG}"..HEAD --pretty=format:"%s" > /tmp/my_commits_log_all
+        fi
+
+        cat /tmp/my_commits_log_all | sort > /tmp/my_commits_log
+
+        echo -n '' > /tmp/my_changelog_features
+        echo -n '' > /tmp/my_changelog_fixes
+        echo -n '' > /tmp/my_changelog_other
+        echo -n '' > /tmp/my_changelog
+
+        FEATURES_REGEX="^feat:|^feature:"
+        FIXES_REGEX="^fix:|^hotfix:"
+
+        { egrep "${FEATURES_REGEX}" /tmp/my_commits_log || echo -n '' ; } | while read l; do
+            DESCRIPTION=$(echo "${l}" | sed "s/^feat://;s/^feature://")
+            echo "* ${DESCRIPTION}" >> /tmp/my_changelog_features
+            export FEATURES_ENABLED=1
+        done
+
+        { egrep "${FIXES_REGEX}" /tmp/my_commits_log || echo -n '' ; } | while read l; do
+            DESCRIPTION=$(echo "${l}" | sed "s/^fix://;s/^hotfix://")
+            echo "* ${DESCRIPTION}" >> /tmp/my_changelog_fixes
+            export FIXES_ENABLED=1
+        done
+
+        { egrep -v "${FEATURES_REGEX}|${FIXES_REGEX}" /tmp/my_commits_log || echo -n '' ; } | while read l; do
+            echo "* ${l}" >> /tmp/my_changelog_other
+            export OTHER_ENABLED=1
+        done
+
+        if [[ "$(wc -l < /tmp/my_changelog_features)" -gt 0 ]] ; then
+            echo "### Features:" >> /tmp/my_changelog
+            cat /tmp/my_changelog_features >> /tmp/my_changelog
+            echo "" >> /tmp/my_changelog
+        fi
+
+        if [[ "$(wc -l < /tmp/my_changelog_fixes)" -gt 0 ]] ; then
+            echo "### Fixes:" >> /tmp/my_changelog
+            cat /tmp/my_changelog_fixes >> /tmp/my_changelog
+            echo "" >> /tmp/my_changelog
+        fi
+
+        if [[ "$(wc -l  < /tmp/my_changelog_other)" -gt 0 ]] ; then
+            echo "### Other:" >> /tmp/my_changelog
+            grep -v "Merge branch " /tmp/my_changelog_other >> /tmp/my_changelog
+            echo "" >> /tmp/my_changelog
+        fi
+
+        MY_CHANGELOG=$(cat /tmp/my_changelog)
+        MY_CHANGELOG="${MY_CHANGELOG//'%'/'%25'}"
+        MY_CHANGELOG="${MY_CHANGELOG//$'\n'/'%0A'}"
+        MY_CHANGELOG="${MY_CHANGELOG//$'\r'/'%0D'}"
+        {
+          echo "CHANGELOG<<EOF"
+          cat /tmp/my_changelog
+          echo "EOF"
+        } >> "$GITHUB_ENV"
