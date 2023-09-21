@@ -66,22 +66,24 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.DEPLOY_USER_PAT }}
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc #v2.2.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Bump version
         shell: bash
         run: |
           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.non_semver_next_version }}\"/g" pyproject.toml
       - uses: epam/ai-dial-ci/actions/build_docker@feat/test-ci
         with:
+          ghcr_username: ${{ github.actor }}
+          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
+          dockerhub_username: ${{ secrets.DOCKERHUB_LOGIN }}
+          dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: ${{ needs.calculate_version.outputs.next_version }}
           push: true
-          scan: false
+          scan: true
+          image_extra_aliases: |
+            ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
+            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'latest') }}
+            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') }}
       - uses: epam/ai-dial-ci/actions/publish_tag_release@feat/test-ci
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}

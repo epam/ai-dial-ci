@@ -92,20 +92,13 @@ jobs:
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
-          npm version ${{ needs.calculate_version.outputs.next_version }} --no-git-tag-version
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc #v2.2.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Login to Docker Hub
-        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc #v2.2.0
-        with:
-          username: ${{ secrets.DOCKERHUB_LOGIN }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          npm version ${{ needs.calculate_version.outputs.next_version }} --no-git-tag-version || true # upstream branch may already be updated
       - uses: epam/ai-dial-ci/actions/build_docker@feat/test-ci
         with:
+          ghcr_username: ${{ github.actor }}
+          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
+          dockerhub_username: ${{ secrets.DOCKERHUB_LOGIN }}
+          dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: ${{ needs.calculate_version.outputs.next_version }}
           push: true
