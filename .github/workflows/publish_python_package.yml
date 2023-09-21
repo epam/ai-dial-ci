@@ -122,7 +122,7 @@ jobs:
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run:
-          echo make publish #TODO: get rid of this echo, run make publish
+          make publish
       - uses: epam/ai-dial-ci/actions/publish_tag_release@0.1.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.non_semver_next_version }}
