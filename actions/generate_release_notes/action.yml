@@ -66,7 +66,7 @@ runs:
 
         if [[ "$(wc -l  < /tmp/my_changelog_other)" -gt 0 ]] ; then
             echo "### Other:" >> /tmp/my_changelog
-            cat /tmp/my_changelog_other >> /tmp/my_changelog
+            grep -v "Merge branch " /tmp/my_changelog_other >> /tmp/my_changelog
             echo "" >> /tmp/my_changelog
         fi
 
