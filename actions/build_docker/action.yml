@@ -38,7 +38,7 @@ runs:
           org.opencontainers.image.title=${{ inputs.image_name }}
           org.opencontainers.image.version=${{ inputs.image_tag }}
           org.opencontainers.image.description=${{ inputs.image_name }}
-          org.opencontainers.image.created=${{ github.event.repository.updated_at }}
+          org.opencontainers.image.created=${{ github.event.repository.pushed_at }}
           org.opencontainers.image.licenses=Apache-2.0
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
