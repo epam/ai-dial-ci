@@ -105,8 +105,8 @@ jobs:
           scan: true
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'latest') }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') }}
+            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
+            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
       - uses: epam/ai-dial-ci/actions/publish_tag_release@0.1.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}

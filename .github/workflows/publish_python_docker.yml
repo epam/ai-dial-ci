@@ -71,6 +71,7 @@ jobs:
         run: |
           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.non_semver_next_version }}\"/g" pyproject.toml
       - uses: epam/ai-dial-ci/actions/build_docker@0.1.0
+        if: github.ref == 'refs/heads/development'
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.GITHUB_TOKEN }}
@@ -82,8 +83,8 @@ jobs:
           scan: true
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'latest') }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') }}
+            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || '' }}
+            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
       - uses: epam/ai-dial-ci/actions/publish_tag_release@0.1.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
