@@ -26,6 +26,7 @@ jobs:
       - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
         with:
           python_version: ${{ inputs.python_version }}
+          install_poetry: true
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
@@ -36,6 +37,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+        with:
+          python_version: ${{ inputs.python_version }}
+          install_poetry: true
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
@@ -59,8 +63,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+        with:
+          python_version: ${{ inputs.python_version }}
+          install_poetry: true
       - name: Install dependencies
         shell: bash
         run: |
-          pip install -r requirements-dev.txt
+          poetry install --all-extras
       - uses: epam/ai-dial-ci/actions/ort@0.1.0
