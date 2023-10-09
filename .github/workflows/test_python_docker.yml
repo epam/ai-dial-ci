@@ -7,6 +7,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if checks failed
+      bypass_ort:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ORT failed
       python_version:
         type: string
         default: '3.11'
@@ -71,3 +75,5 @@ jobs:
         run: |
           poetry install --all-extras
       - uses: epam/ai-dial-ci/actions/ort@0.1.0
+        with:
+          bypass_checks: ${{ inputs.bypass_ort }}
