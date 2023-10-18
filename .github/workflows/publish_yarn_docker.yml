@@ -46,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       next_version: ${{ steps.semantic_versioning.outputs.next_version }}
+      is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
     permissions:
       contents: write
       packages: write
@@ -105,6 +106,10 @@ jobs:
           scan: true
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
+            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}
+            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
+            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
+            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
       - uses: epam/ai-dial-ci/actions/publish_tag_release@0.3.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}

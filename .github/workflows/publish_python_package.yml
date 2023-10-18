@@ -72,7 +72,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       non_semver_next_version: ${{ steps.semantic_versioning.outputs.non_semver_next_version }}
-      current_version: ${{ steps.semantic_versioning.outputs.current_version }}
     permissions:
       contents: write
       packages: write
