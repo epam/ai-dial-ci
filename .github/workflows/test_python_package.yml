@@ -38,7 +38,7 @@ jobs:
         uses: thehanimo/pr-title-checker@0cf5902181e78341bb97bb06646396e5bd354b3f #v1.4.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
@@ -54,7 +54,7 @@ jobs:
       matrix:
           python-version: ["3.11", "3.10", "3.9", "3.8"]
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
         with:
           python_version: "${{ matrix.python-version }}"
           install_poetry: true
@@ -67,7 +67,7 @@ jobs:
   code_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
@@ -91,10 +91,10 @@ jobs:
   ort:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
       - name: Install dependencies
         shell: bash
         run: |
           pip install poetry
           make build
-      - uses: epam/ai-dial-ci/actions/ort@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/ort@0.1.0

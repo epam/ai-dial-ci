@@ -20,13 +20,13 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/semantic_versioning@0.1.0
         id: semantic_versioning
 
   ort:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/ort@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/ort@0.1.0
 
   release:
     needs:
@@ -40,11 +40,11 @@ jobs:
       packages: write
 
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/generate_release_notes@0.1.0
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/build_docker@0.1.0
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.GITHUB_TOKEN }}
@@ -58,7 +58,7 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
             ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/publish_tag_release@0.1.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
