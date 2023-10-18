@@ -19,7 +19,7 @@ on:
 
 jobs:
   release:
-    uses: nepalevov/ai-dial-ci/.github/workflows/publish_python_package.yml@0.1.0
+    uses: nepalevov/ai-dial-ci/.github/workflows/publish_python_package.yml@main
     secrets: inherit
     with:
       bypass_checks: false

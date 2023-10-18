@@ -21,7 +21,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: nepalevov/ai-dial-ci/actions/prepare_java@0.1.0
+    - uses: nepalevov/ai-dial-ci/actions/prepare_java@main
       with:
         java_version: ${{ inputs.java_version }}
         java_distribution: ${{ inputs.java_distribution }}

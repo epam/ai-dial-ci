@@ -31,7 +31,7 @@ jobs:
   style_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@main
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
@@ -47,7 +47,7 @@ jobs:
       matrix:
         python-version: [ "3.11", "3.10", "3.9", "3.8" ]
     steps:
-      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@main
         with:
           python_version: "${{ matrix.python-version }}"
           install_poetry: true
@@ -60,13 +60,13 @@ jobs:
   ort:
     runs-on: ubuntu-latest
     steps:
-      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@main
       - name: Install dependencies
         shell: bash
         run: |
           pip install poetry
           poetry install
-      - uses: nepalevov/ai-dial-ci/actions/ort@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/ort@main
 
   calculate_version:
     runs-on: ubuntu-latest
@@ -77,7 +77,7 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: nepalevov/ai-dial-ci/actions/semantic_versioning@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/semantic_versioning@main
         id: semantic_versioning
 
   release:
@@ -94,12 +94,12 @@ jobs:
       packages: write
 
     steps:
-      - uses: nepalevov/ai-dial-ci/actions/generate_release_notes@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/generate_release_notes@main
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
         with:
           lfs: true
           token: ${{ secrets.DEPLOY_USER_PAT }}
-      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@main
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
@@ -123,7 +123,7 @@ jobs:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run:
           make publish
-      - uses: nepalevov/ai-dial-ci/actions/publish_tag_release@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/publish_tag_release@main
         with:
           tag_version: ${{ needs.calculate_version.outputs.non_semver_next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify

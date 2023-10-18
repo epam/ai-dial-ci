@@ -27,7 +27,7 @@ jobs:
         uses: thehanimo/pr-title-checker@0cf5902181e78341bb97bb06646396e5bd354b3f #v1.4.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@main
         with:
           python_version: ${{ inputs.python_version }}
           install_poetry: true
@@ -40,7 +40,7 @@ jobs:
   code_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@main
         with:
           python_version: ${{ inputs.python_version }}
           install_poetry: true
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
         with:
           lfs: true
-      - uses: nepalevov/ai-dial-ci/actions/build_docker@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/build_docker@main
         with:
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: test
@@ -66,7 +66,7 @@ jobs:
   ort:
     runs-on: ubuntu-latest
     steps:
-      - uses: nepalevov/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/prepare_python@main
         with:
           python_version: ${{ inputs.python_version }}
           install_poetry: true
@@ -74,6 +74,6 @@ jobs:
         shell: bash
         run: |
           poetry install --all-extras
-      - uses: nepalevov/ai-dial-ci/actions/ort@0.1.0
+      - uses: nepalevov/ai-dial-ci/actions/ort@main
         with:
           bypass_checks: ${{ inputs.bypass_ort }}
