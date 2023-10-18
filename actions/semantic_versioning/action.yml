@@ -11,6 +11,9 @@ outputs:
   non_semver_next_version:
     description: 'Next version without semantic versioning'
     value: ${{ steps.semantic.outputs.non_semver_next_version }}
+  is_latest:
+    description: 'Is a version semantically latest compared to the latest git tag'
+    value: ${{ steps.semantic.outputs.is_latest }}
 
 runs:
   using: "composite"

@@ -53,6 +53,7 @@ jobs:
     outputs:
       next_version: ${{ steps.semantic_versioning.outputs.next_version }}
       non_semver_next_version: ${{ steps.semantic_versioning.outputs.non_semver_next_version }}
+      is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
     permissions:
       contents: write
       packages: write
@@ -95,7 +96,6 @@ jobs:
           scan: true
           image_extra_aliases: |
             ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
-
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
       - uses: nepalevov/ai-dial-ci/actions/publish_tag_release@main
         with:
