@@ -46,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       next_version: ${{ steps.semantic_versioning.outputs.next_version }}
+      is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
     permissions:
       contents: write
       packages: write
