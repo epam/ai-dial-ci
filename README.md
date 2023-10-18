@@ -26,7 +26,6 @@ jobs:
       python_version: 3.8
 ```
 
-
 ## Developer environment
 
 This project contains reusable workflows under [`.github/workflows`](.github/workflows) directory, and composite actions under [`actions`](actions) directory.
