@@ -23,7 +23,7 @@ jobs:
   style_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@0.3.0
         with:
           python_version: ${{ inputs.python_version }}
           install_poetry: true
@@ -36,7 +36,7 @@ jobs:
   code_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@0.3.0
         with:
           python_version: ${{ inputs.python_version }}
           install_poetry: true
@@ -55,7 +55,7 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@0.1.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@0.3.0
         id: semantic_versioning
 
   release:
@@ -72,7 +72,7 @@ jobs:
       packages: write
 
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@0.1.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@0.3.0
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
         with:
           lfs: true
@@ -81,8 +81,7 @@ jobs:
         shell: bash
         run: |
           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.non_semver_next_version }}\"/g" pyproject.toml
-      - uses: epam/ai-dial-ci/actions/build_docker@0.1.0
-        if: github.ref == 'refs/heads/development'
+      - uses: epam/ai-dial-ci/actions/build_docker@0.3.0
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.GITHUB_TOKEN }}
@@ -94,9 +93,7 @@ jobs:
           scan: true
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || '' }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@0.1.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@0.3.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
@@ -106,7 +103,7 @@ jobs:
   ort:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@0.3.0
         with:
           python_version: ${{ inputs.python_version }}
           install_poetry: true
@@ -114,6 +111,6 @@ jobs:
         shell: bash
         run: |
           poetry install --all-extras
-      - uses: epam/ai-dial-ci/actions/ort@0.1.0
+      - uses: epam/ai-dial-ci/actions/ort@0.3.0
         with:
           bypass_checks: ${{ inputs.bypass_ort }}
