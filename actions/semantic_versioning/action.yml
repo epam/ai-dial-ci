@@ -11,6 +11,9 @@ outputs:
   non_semver_next_version:
     description: 'Next version without semantic versioning'
     value: ${{ steps.semantic.outputs.non_semver_next_version }}
+  is_latest:
+    description: 'Is a version semantically latest compared to the latest git tag?'
+    value: ${{ steps.semantic.outputs.is_latest }}
 
 runs:
   using: "composite"
@@ -24,11 +27,15 @@ runs:
       id: semantic
       shell: bash
       run: |
+        #!/bin/bash
         #set -x
+
+        function version { echo "$@" | awk -F. '{ printf("%d%03d%03d\n", $1,$2,$3); }'; }
+
         function bump_version {
           # Split the version string into Major, Minor and Patch numbers
           local VERSION
-          IFS='.' read -r -a VERSION <<< $(echo ${1})
+          IFS='.' read -r -a VERSION <<<"${1}"
           local BRANCH_NAME="$2"
           local MAJOR=${VERSION[0]}
           local MINOR=${VERSION[1]}
@@ -55,7 +62,7 @@ runs:
 
         TAGS=$(git tag)
 
-        if [[ -z "${TAGS// }" ]]; then
+        if [[ -z "${TAGS// /}" ]]; then
           # No tags found
           if [[ "$CURRENT_BRANCH" == "development" ]]; then
             # For development branch with no tags, set the next version to 0.1.0-rc
@@ -70,8 +77,8 @@ runs:
             NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" "${CURRENT_BRANCH}")
           elif [[ "${CURRENT_BRANCH}" =~ "release-" ]]; then
             # For release branch with tags, bump patch version, e.g. v2.3.4 -> v2.3.5
-            CURRENT_VERSION=$(git tag | { grep "^${CURRENT_BRANCH##release-}." || echo '' ;} | sort -V | tail -1)
-            if [[ ! -z "${CURRENT_VERSION// }" ]]; then
+            CURRENT_VERSION=$(git tag | { grep "^${CURRENT_BRANCH##release-}." || echo ''; } | sort -V | tail -1)
+            if [[ -n "${CURRENT_VERSION// /}" ]]; then
               NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" "${CURRENT_BRANCH}")
             else
               # If no tags match the release branch, set the next version to release number with 0 patch version, e.g. v-0.1.0
@@ -82,9 +89,19 @@ runs:
           fi
         fi
 
-        # python packages do not support semantic versioning
-        NON_SEMVER_NEXT_VERSION="$(echo "${NEXT_VERSION}" | sed 's/-//')"
+        # Check if the next version is greater than the latest tag in the repo
+        # Always false if NEXT_VERSION contains '-rc'
+        LATEST_TAG=$(git tag | sort -V | tail -1)
+        if [ "$(version "${NEXT_VERSION//*-/-}")" -gt "$(version "$LATEST_TAG")" ]; then
+          IS_LATEST="true"
+        else
+          IS_LATEST="false"
+        fi
 
-        echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
-        echo "next_version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
-        echo "non_semver_next_version=${NON_SEMVER_NEXT_VERSION}" >> $GITHUB_OUTPUT
+        # python packages do not support semantic versioning
+        NON_SEMVER_NEXT_VERSION="${NEXT_VERSION//-/}"
+
+        echo "current_version=${CURRENT_VERSION}" >>$GITHUB_OUTPUT
+        echo "next_version=${NEXT_VERSION}" >>$GITHUB_OUTPUT
+        echo "non_semver_next_version=${NON_SEMVER_NEXT_VERSION}" >>$GITHUB_OUTPUT
+        echo "is_latest=${IS_LATEST}" >>$GITHUB_OUTPUT

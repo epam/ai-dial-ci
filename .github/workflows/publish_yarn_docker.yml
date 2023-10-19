@@ -19,7 +19,7 @@ jobs:
   style_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_node@0.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_node@0.3.0
         with:
           node_version: ${{ inputs.node_version }}
       - name: Test
@@ -32,7 +32,7 @@ jobs:
   code_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_node@0.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_node@0.3.0
         with:
           node_version: ${{ inputs.node_version }}
       - name: Test
@@ -46,22 +46,23 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       next_version: ${{ steps.semantic_versioning.outputs.next_version }}
+      is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
     permissions:
       contents: write
       packages: write
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@0.1.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@0.3.0
         id: semantic_versioning
 
   ort:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@0.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@0.3.0
       - name: Install dependencies
         shell: bash
         run: |
           npm i
-      - uses: epam/ai-dial-ci/actions/ort@0.1.0
+      - uses: epam/ai-dial-ci/actions/ort@0.3.0
 
   release:
     needs:
@@ -77,11 +78,11 @@ jobs:
       packages: write
 
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@0.1.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@0.3.0
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/prepare_node@0.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_node@0.3.0
         with:
           node_version: ${{ inputs.node_version }}
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
@@ -93,7 +94,7 @@ jobs:
         shell: bash
         run: |
           npm version ${{ needs.calculate_version.outputs.next_version }} --no-git-tag-version || true # upstream branch may already be updated
-      - uses: epam/ai-dial-ci/actions/build_docker@0.1.0
+      - uses: epam/ai-dial-ci/actions/build_docker@0.3.0
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.GITHUB_TOKEN }}
@@ -105,9 +106,11 @@ jobs:
           scan: true
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
-            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@0.1.0
+            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}
+            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
+            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
+            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@0.3.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify

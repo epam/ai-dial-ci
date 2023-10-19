@@ -19,13 +19,12 @@ on:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/publish_python_package.yml@0.1.0
+    uses: epam/ai-dial-ci/.github/workflows/publish_python_package.yml@0.3.0
     secrets: inherit
     with:
       bypass_checks: false
       python_version: 3.8
 ```
-
 
 ## Developer environment
 
