@@ -6,19 +6,13 @@ jobs:
   deploy-review:
     runs-on: ubuntu-latest
     steps:
-      - name: Dump the client payload context
-        env:
-          PAYLOAD_CONTEXT: ${{ toJson(github.event.client_payload) }}
-        run: echo "$PAYLOAD_CONTEXT"
       - name: Check repository owner
         id: owner
         run: |
-          DISPATCHED_REPO_FULLNAME=${{ github.event.client_payload.repository.full_name }}
-          DISPATCHED_REPO_OWNER=${DISPATCHED_REPO_FULLNAME%/*}
-          DISPATCHED_REPO_NAME=${DISPATCHED_REPO_FULLNAME#*/}
-          CURRENT_REPO_OWNER=${GITHUB_REPOSITORY%/*}
+          DISPATCHED_REPO_NAME=${{ github.event.client_payload.github.payload.repository.name }}
+          DISPATCHED_REPO_OWNER=${{ github.event.client_payload.github.payload.repository.owner }}
           ERROR_MESSAGE=""
-          if [[ "$DISPATCHED_REPO_OWNER" != "$CURRENT_REPO_OWNER" ]]; then
+          if [[ "$DISPATCHED_REPO_OWNER" != "$GITHUB_REPOSITORY_OWNER" ]]; then
           ERROR_MESSAGE="The event was not dispatched by a repository within the same owner."
           fi
           if [[ "$DISPATCHED_REPO_NAME" != ai-dial* ]]; then
