@@ -9,7 +9,7 @@ on:
         description: Do not fail pipeline if checks failed
       node_version:
         type: string
-        default: '19'
+        default: '20'
         description: NodeJS version to use
 
 env:
