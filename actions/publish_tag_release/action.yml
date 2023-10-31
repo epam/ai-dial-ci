@@ -23,8 +23,8 @@ runs:
       shell: bash
       run: |
         set -x
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "SpecialEPM-DIALDevTeam@epam.com"
+        git config --global user.name "ai-dial-actions"
+        git config --global user.email "149404362+ai-dial-actions@users.noreply.github.com"
 
         ${{ inputs.extra_commit_command }}
 

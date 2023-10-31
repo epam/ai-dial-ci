@@ -70,7 +70,7 @@ jobs:
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
         with:
            lfs: true
-           token: ${{ secrets.DEPLOY_USER_PAT }}
+           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
       - name: Build
         run: |
            sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle
