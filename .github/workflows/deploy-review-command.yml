@@ -22,19 +22,25 @@ jobs:
             echo "status=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
             exit 1
           fi
+          echo "All checks passed."
       - name: Checks and transformations
         id: vars
         run: |
+          ERROR_MESSAGE=""
           if [[ -z "${{ github.event.client_payload.slash_command.args.named.application }}" ]]; then
-            echo "'application' argument is missing"
-            exit 1
+            ERROR_MESSAGE="The 'application' argument is missing."
           fi
           if [[ -z "${{ github.event.client_payload.pull_request.number }}" ]]; then
-            echo "Pull request number is missing"
-            exit 1
+            ERROR_MESSAGE+=" Pull request number is missing."
+          fi
+          if [[ -z "${{ github.event.client_payload.pull_request.head.repo.full_name }}" ]]; then
+            ERROR_MESSAGE+=" Pull request head repo full name is missing."
           fi
           if [[ -z "${{ github.event.client_payload.pull_request.head.ref }}" ]]; then
-            echo "Pull request head ref is missing"
+            ERROR_MESSAGE+=" Pull request head ref is missing."
+          fi
+          if [[ -n "$ERROR_MESSAGE" ]]; then
+            echo "status=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
             exit 1
           fi
           echo "All required values are present."
@@ -52,7 +58,7 @@ jobs:
             {
               "GITHUB_APP":"${{ github.event.client_payload.slash_command.args.named.application }}",
               "GITHUB_PR":"pr-${{ github.event.client_payload.pull_request.number }}",
-              "GITHUB_OWNER":"${{ github.event.client_payload.pull_request.head.repo.owner.login }}",
+              "GITHUB_REPO":"${{ github.event.client_payload.pull_request.head.repo.full_name }}",
               "GITHUB_REF":"${{ github.event.client_payload.pull_request.head.ref }}",
               "GITHUB_TRIGGER": "${{ github.event.client_payload.github.payload.comment.html_url }}"
             }
@@ -65,4 +71,4 @@ jobs:
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           body: |
-            >Deployment status: ${{ steps.deploy.outputs.status || steps.owner.outputs.status || 'something went wrong' }}
+            >Deployment status: ${{ steps.owner.outputs.status || steps.vars.outputs.status || steps.deploy.outputs.status || 'something went wrong' }}
