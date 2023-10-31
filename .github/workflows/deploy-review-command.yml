@@ -10,7 +10,7 @@ jobs:
         id: owner
         run: |
           DISPATCHED_REPO_NAME=${{ github.event.client_payload.github.payload.repository.name }}
-          DISPATCHED_REPO_OWNER=${{ github.event.client_payload.github.payload.repository.owner }}
+          DISPATCHED_REPO_OWNER=${{ github.event.client_payload.github.payload.repository.owner.login }}
           ERROR_MESSAGE=""
           if [[ "$DISPATCHED_REPO_OWNER" != "$GITHUB_REPOSITORY_OWNER" ]]; then
           ERROR_MESSAGE="The event was not dispatched by a repository within the same owner."
