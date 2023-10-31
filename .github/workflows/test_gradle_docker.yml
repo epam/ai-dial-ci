@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: PR title check
-        uses: thehanimo/pr-title-checker@0cf5902181e78341bb97bb06646396e5bd354b3f #v1.4.0
+        uses: thehanimo/pr-title-checker@5652588c80c479af803eabfbdb5a3895a77c1388 #v1.4.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: epam/ai-dial-ci/actions/gradle_checkstyle@0.5.0

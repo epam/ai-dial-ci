@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: PR title check
-        uses: thehanimo/pr-title-checker@0cf5902181e78341bb97bb06646396e5bd354b3f #v1.4.0
+        uses: thehanimo/pr-title-checker@5652588c80c479af803eabfbdb5a3895a77c1388 #v1.4.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: epam/ai-dial-ci/actions/prepare_python@0.5.0
@@ -81,7 +81,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         if: ${{ inputs.scan_trivy }}
         continue-on-error: ${{ inputs.bypass_checks }}
-        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #0.12.0
+        uses: aquasecurity/trivy-action@f78e9ecf42a1271402d4f484518b9313235990e1 #0.13.1
         with:
           scan-type: 'fs'
           scan-ref: '.'
