@@ -21,7 +21,10 @@ on:
 
 jobs:
   trigger-pipeline:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+    concurrency: development
+    environment:
+      name: development
     steps:
       - name: Deploy environment
         id: deploy
