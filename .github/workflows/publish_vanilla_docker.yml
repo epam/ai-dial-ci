@@ -48,7 +48,7 @@ jobs:
       - uses: epam/ai-dial-ci/actions/build_docker@1.0.1
         with:
           ghcr_username: ${{ github.actor }}
-          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
+          ghcr_password: ${{ secrets.ACTIONS_BOT_TOKEN }}
           dockerhub_username: ${{ secrets.DOCKERHUB_LOGIN }}
           dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
