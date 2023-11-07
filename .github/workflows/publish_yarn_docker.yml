@@ -47,6 +47,7 @@ jobs:
     outputs:
       next_version: ${{ steps.semantic_versioning.outputs.next_version }}
       is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
+      latest_tag: ${{ steps.semantic_versioning.outputs.latest_tag }}
     permissions:
       contents: write
       packages: write
@@ -79,6 +80,8 @@ jobs:
 
     steps:
       - uses: epam/ai-dial-ci/actions/generate_release_notes@1.0.1
+        with:
+          latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
       - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
         with:
           lfs: true

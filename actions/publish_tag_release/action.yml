@@ -1,20 +1,20 @@
-name: 'Publish git tag and release'
-description: 'Commit changes back to git, apply tag and create release'
+name: "Publish git tag and release"
+description: "Commit changes back to git, apply tag and create release"
 inputs:
   extra_commit_command:
     description: 'Extra command to commit changes, e.g. `git add version.txt ; git commit -m "[skip ci] Update version" || true`'
     required: false
-    default: ''
+    default: ""
   tag_version:
-    description: 'Tag version'
+    description: "Tag version"
     required: true
   changelog_file:
-    description: 'Changelog file'
+    description: "Changelog file"
     required: true
   artifacts:
-    description: 'Artifacts to upload'
+    description: "Artifacts to upload"
     required: false
-    default: ''
+    default: ""
 
 runs:
   using: "composite"
