@@ -46,5 +46,5 @@ runs:
         allowUpdates: true
         updateOnlyUnreleased: true
         makeLatest: true
-        prerelease: false
+        draft: true
         tag: ${{ inputs.tag_version }}
