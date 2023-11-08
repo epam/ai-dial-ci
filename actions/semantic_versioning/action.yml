@@ -1,19 +1,22 @@
-name: 'Calculate version'
-description: 'Calculate version based on semantic versioning @ conventional commits'
+name: "Calculate version"
+description: "Calculate version based on semantic versioning @ conventional commits"
 
 outputs:
   current_version:
-    description: 'Current version'
+    description: "Current version"
     value: ${{ steps.semantic.outputs.current_version }}
   next_version:
-    description: 'Next version'
+    description: "Next version"
     value: ${{ steps.semantic.outputs.next_version }}
   non_semver_next_version:
-    description: 'Next version without semantic versioning'
+    description: "Next version without semantic versioning"
     value: ${{ steps.semantic.outputs.non_semver_next_version }}
   is_latest:
-    description: 'Is a version semantically latest compared to the latest git tag?'
+    description: "Is a version semantically latest compared to the latest git tag?"
     value: ${{ steps.semantic.outputs.is_latest }}
+  latest_tag:
+    description: "Semantically latest git tag in the repository"
+    value: ${{ steps.semantic.outputs.latest_tag }}
 
 runs:
   using: "composite"
@@ -28,7 +31,7 @@ runs:
       shell: bash
       run: |
         #!/bin/bash
-        #set -x
+        # set -x
 
         function version { echo "$@" | awk -F. '{ printf("%d%03d%03d\n", $1,$2,$3); }'; }
 
@@ -105,3 +108,4 @@ runs:
         echo "next_version=${NEXT_VERSION}" >>$GITHUB_OUTPUT
         echo "non_semver_next_version=${NON_SEMVER_NEXT_VERSION}" >>$GITHUB_OUTPUT
         echo "is_latest=${IS_LATEST}" >>$GITHUB_OUTPUT
+        echo "latest_tag=${LATEST_TAG}" >>$GITHUB_OUTPUT
