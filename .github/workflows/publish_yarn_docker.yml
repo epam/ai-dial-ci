@@ -26,7 +26,7 @@ jobs:
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
-          npm i
+          npm ci
           yarn lint
 
   code_checks:
@@ -39,7 +39,7 @@ jobs:
         continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
-          npm i
+          npm ci
           yarn test --passWithNoTests
 
   calculate_version:
@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: |
-          npm i
+          npm ci
       - uses: epam/ai-dial-ci/actions/ort@1.0.2
 
   release:
