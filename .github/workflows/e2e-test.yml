@@ -26,7 +26,8 @@ jobs:
     environment:
       name: e2e-test
     steps:
-      - id: identify
+      - name: Set short sha
+        id: identify
         run: |
           # use bash variable expression to get the substring
           echo "TRIGGER_GITHUB_SHA=${GITHUB_SHA:0:7}" >>$GITHUB_ENV
