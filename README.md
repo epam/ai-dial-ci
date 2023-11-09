@@ -19,7 +19,7 @@ on:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/publish_python_package.yml@1.0.2
+    uses: epam/ai-dial-ci/.github/workflows/publish_python_package.yml@1.1.0
     secrets: inherit
     with:
       bypass_checks: false
