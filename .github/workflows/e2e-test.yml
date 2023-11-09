@@ -1,10 +1,10 @@
-name: Run e2e-test
+name: Run e2e-tests
 
 on:
   workflow_call:
     inputs:
       gitlab-project-id:
-        default: "1843"
+        required: true
         description: "The ID or path of the project owned by the authenticated user."
         type: string
       gitlab-project-ref:
@@ -26,12 +26,12 @@ jobs:
     environment:
       name: e2e-test
     steps:
-      - name: Set short sha
-        id: identify
+      - name: Obtain short sha
+        id: sha
+        shell: bash
         run: |
-          # use bash variable expression to get the substring
-          echo "TRIGGER_GITHUB_SHA=${GITHUB_SHA:0:7}" >>$GITHUB_ENV
-
+          # shorten the commit SHA to the first 7 characters
+          echo "SHA=${GITHUB_SHA:0:7}" >>$GITHUB_OUTPUT
       - name: Deploy environment
         id: deploy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@990eaca56dc9b9439da90dd81ab9311adce0dcce # v1.0.5
@@ -44,5 +44,5 @@ jobs:
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ github.event.repository.name }}",
-              "TRIGGER_GITHUB_SHA": "${{ env.TRIGGER_GITHUB_SHA }}"
+              "TRIGGER_GITHUB_SHA": "${{ steps.sha.outputs.SHA }}"
             }
