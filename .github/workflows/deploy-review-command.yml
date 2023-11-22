@@ -47,7 +47,7 @@ jobs:
 
       - name: Deploy environment
         id: deploy
-        uses: digital-blueprint/gitlab-pipeline-trigger-action@990eaca56dc9b9439da90dd81ab9311adce0dcce # v1.0.5
+        uses: digital-blueprint/gitlab-pipeline-trigger-action@388706535758e3417c5aca927a0958ee67c9f257 # v1.0.6
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
