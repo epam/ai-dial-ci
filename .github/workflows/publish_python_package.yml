@@ -101,7 +101,7 @@ jobs:
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.0.0
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
