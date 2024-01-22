@@ -13,7 +13,7 @@ on:
         description: Do not fail pipeline if ORT failed
       python_version:
         type: string
-        default: '3.11'
+        default: "3.11"
         description: Python version to use
 
 env:
@@ -67,8 +67,8 @@ jobs:
       - style_checks
       - code_checks
     runs-on: ubuntu-latest
-#    environment:
-#      name: release
+    # environment:
+    #   name: release
     permissions:
       contents: write
       packages: write
@@ -77,7 +77,7 @@ jobs:
       - uses: epam/ai-dial-ci/actions/generate_release_notes@1.1.0
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}

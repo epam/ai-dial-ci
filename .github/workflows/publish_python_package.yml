@@ -9,23 +9,23 @@ on:
         description: Do not fail pipeline if checks failed
       python_version:
         type: string
-        default: '3.11'
+        default: "3.11"
         description: Python version to use
       scan_trivy:
-        description: 'Scan the image with Trivy'
+        description: "Scan the image with Trivy"
         required: false
         type: boolean
         default: true
       scan_severity:
-        description: 'Severity of vulnerabilities to fail the build'
+        description: "Severity of vulnerabilities to fail the build"
         required: false
         type: string
-        default: 'CRITICAL,HIGH'
+        default: "CRITICAL,HIGH"
       scan_vuln_type:
-        description: 'Type of vulnerabilities to scan'
+        description: "Type of vulnerabilities to scan"
         type: string
         required: false
-        default: 'os,library'
+        default: "os,library"
 
 jobs:
   style_checks:
@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.11", "3.10", "3.9", "3.8" ]
+        python-version: ["3.11", "3.10", "3.9", "3.8"]
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_python@1.1.0
         with:
@@ -87,8 +87,8 @@ jobs:
       - style_checks
       - unit_tests
     runs-on: ubuntu-latest
-#    environment:
-#      name: release
+    # environment:
+    #   name: release
     permissions:
       contents: write
       packages: write
@@ -101,7 +101,7 @@ jobs:
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -113,18 +113,17 @@ jobs:
       - name: Run Trivy vulnerability scanner
         if: ${{ inputs.scan_trivy }}
         continue-on-error: ${{ inputs.bypass_checks }}
-        uses: aquasecurity/trivy-action@2b6a709cf9c4025c5438138008beaddbb02086f0 #0.14.0
+        uses: aquasecurity/trivy-action@2b6a709cf9c4025c5438138008beaddbb02086f0 # 0.14.0
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
+          scan-type: "fs"
+          scan-ref: "."
           vuln-type: ${{ inputs.scan_vuln_type }}
           severity: ${{ inputs.scan_severity }}
       - name: Publish to pypi
         shell: bash
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-        run:
-          make publish
+        run: make publish
       - uses: epam/ai-dial-ci/actions/publish_tag_release@1.1.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.non_semver_next_version }}

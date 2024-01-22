@@ -1,23 +1,23 @@
-name: 'Prepare python'
-description: 'Checkout project, set up python'
+name: "Prepare python"
+description: "Checkout project, set up python"
 inputs:
   python_version:
-    description: 'Python version to use'
+    description: "Python version to use"
     required: false
-    default: '3.11'
+    default: "3.11"
   install_poetry:
-    description: 'Install poetry'
+    description: "Install poetry"
     required: false
-    default: 'false'
+    default: "false"
 
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
       with:
         lfs: true
     - name: Set up Python
-      uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 #v4.7.0
+      uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ inputs.python_version }}
         #cache: 'pip'
