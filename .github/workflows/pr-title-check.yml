@@ -2,7 +2,9 @@ name: "Validate PR title"
 
 on:
   workflow_call:
-
+    secrets:
+      ACTIONS_BOT_TOKEN:
+        required: true
 jobs:
   main:
     name: Validate PR title
