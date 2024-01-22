@@ -40,7 +40,7 @@ git checkout -b your-new-branch
 
 ### 3. Creating a Pull Request (PR)
 
-Once ready, you can create a PR. Make sure to prefix the title with one of the following: "fix: ", "feat: ", "feature: ", "chore: ", "hotfix: "
+Once ready, you can create a PR. We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/). Make sure to prefix the title with one of the following: `fix:`, `feat:`, `feature:`, `chore:`, `hotfix:`. Breaking change pull requests may include `!` after the type/scope, e.g. `<type>!: <description>`.
 
 This helps maintainers to categorize the PR and understand its purpose easier.
 

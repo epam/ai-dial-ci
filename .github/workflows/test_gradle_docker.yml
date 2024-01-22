@@ -9,11 +9,11 @@ on:
         description: Do not fail pipeline if checks failed
       java_version:
         type: string
-        default: '17'
+        default: "17"
         description: Java version to use
       java_distribution:
         type: string
-        default: 'temurin'
+        default: "temurin"
         description: Java distribution to use
 
 env:
@@ -23,10 +23,6 @@ jobs:
   style_checks:
     runs-on: ubuntu-latest
     steps:
-      - name: PR title check
-        uses: thehanimo/pr-title-checker@5652588c80c479af803eabfbdb5a3895a77c1388 #v1.4.1
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: epam/ai-dial-ci/actions/gradle_checkstyle@1.1.0
 
   code_checks:

@@ -13,7 +13,7 @@ on:
         description: Do not fail pipeline if ORT failed
       python_version:
         type: string
-        default: '3.11'
+        default: "3.11"
         description: Python version to use
 
 env:
@@ -23,10 +23,6 @@ jobs:
   style_checks:
     runs-on: ubuntu-latest
     steps:
-      - name: PR title check
-        uses: thehanimo/pr-title-checker@5652588c80c479af803eabfbdb5a3895a77c1388 #v1.4.1
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: epam/ai-dial-ci/actions/prepare_python@1.1.0
         with:
           python_version: ${{ inputs.python_version }}
