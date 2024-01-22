@@ -8,7 +8,9 @@ Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub 
 
 ## Usage
 
-These workflows could be imported to any repository under EPAM GitHub organization as standard `.github/workflows` files.
+These workflows could be imported to any repository under EPAM GitHub organization as standard `.github/workflows` files. See examples below (replace `@main` with specific version tag).
+
+### Release (Python package)
 
 ```yml
 name: Release version
@@ -19,11 +21,48 @@ on:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/publish_python_package.yml@1.1.0
+    uses: epam/ai-dial-ci/.github/workflows/publish_python_package.yml@main
     secrets: inherit
     with:
       bypass_checks: false
       python_version: 3.8
+```
+
+### Release (Python docker)
+
+```yml
+name: Release version
+
+on:
+  push:
+    branches: [ development, release-* ]
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/publish_python_docker.yml@main
+    secrets: inherit
+```
+
+### Validate PR title
+
+```yml
+name: "Validate PR title"
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  pr-title-check:
+    uses: epam/ai-dial-ci/.github/workflows/pr-title-check.yml@main
+    secrets:
+      ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
 ## Developer environment
