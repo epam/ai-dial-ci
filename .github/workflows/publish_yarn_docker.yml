@@ -9,7 +9,7 @@ on:
         description: Do not fail pipeline if checks failed
       node_version:
         type: string
-        default: '20'
+        default: "20"
         description: NodeJS version to use
 
 env:
@@ -72,8 +72,8 @@ jobs:
       - code_checks
       - ort
     runs-on: ubuntu-latest
-#    environment:
-#      name: release
+    # environment:
+    #   name: release
     permissions:
       contents: write
       packages: write
@@ -82,13 +82,13 @@ jobs:
       - uses: epam/ai-dial-ci/actions/generate_release_notes@1.1.0
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/prepare_node@1.1.0
         with:
           node_version: ${{ inputs.node_version }}
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}

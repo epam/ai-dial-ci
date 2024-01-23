@@ -13,7 +13,7 @@ on:
         description: Do not fail pipeline if ORT failed
       python_version:
         type: string
-        default: '3.11'
+        default: "3.11"
         description: Python version to use
 
 env:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: PR title check
-        uses: thehanimo/pr-title-checker@5652588c80c479af803eabfbdb5a3895a77c1388 #v1.4.1
+        uses: thehanimo/pr-title-checker@5652588c80c479af803eabfbdb5a3895a77c1388 # v1.4.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: epam/ai-dial-ci/actions/prepare_python@1.1.0
@@ -53,7 +53,7 @@ jobs:
   docker_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/build_docker@1.1.0

@@ -9,23 +9,23 @@ on:
         description: Do not fail pipeline if checks failed
       python_version:
         type: string
-        default: '3.11'
+        default: "3.11"
         description: Python version to use
       scan_trivy:
-        description: 'Scan the image with Trivy'
+        description: "Scan the image with Trivy"
         required: false
         type: boolean
         default: true
       scan_severity:
-        description: 'Severity of vulnerabilities to fail the build'
+        description: "Severity of vulnerabilities to fail the build"
         required: false
         type: string
-        default: 'CRITICAL,HIGH'
+        default: "CRITICAL,HIGH"
       scan_vuln_type:
-        description: 'Type of vulnerabilities to scan'
+        description: "Type of vulnerabilities to scan"
         type: string
         required: false
-        default: 'os,library'
+        default: "os,library"
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: PR title check
-        uses: thehanimo/pr-title-checker@5652588c80c479af803eabfbdb5a3895a77c1388 #v1.4.1
+        uses: thehanimo/pr-title-checker@5652588c80c479af803eabfbdb5a3895a77c1388 # v1.4.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: epam/ai-dial-ci/actions/prepare_python@1.1.0
@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          python-version: ["3.11", "3.10", "3.9", "3.8"]
+        python-version: ["3.11", "3.10", "3.9", "3.8"]
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_python@1.1.0
         with:
@@ -81,10 +81,10 @@ jobs:
       - name: Run Trivy vulnerability scanner
         if: ${{ inputs.scan_trivy }}
         continue-on-error: ${{ inputs.bypass_checks }}
-        uses: aquasecurity/trivy-action@2b6a709cf9c4025c5438138008beaddbb02086f0 #0.14.0
+        uses: aquasecurity/trivy-action@2b6a709cf9c4025c5438138008beaddbb02086f0 # v0.14.0
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
+          scan-type: "fs"
+          scan-ref: "."
           vuln-type: ${{ inputs.scan_vuln_type }}
           severity: ${{ inputs.scan_severity }}
 

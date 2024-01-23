@@ -1,20 +1,20 @@
-name: 'ORT scan'
-description: 'Run Opensource Review Toolkit scan'
+name: "ORT scan"
+description: "Run Opensource Review Toolkit scan"
 inputs:
   allow_dynamic_versions:
-    description: 'Allow dynamic versions'
+    description: "Allow dynamic versions"
     required: false
-    default: 'true'
+    default: "true"
   fail_on:
-    description: 'Fail on violations'
+    description: "Fail on violations"
     required: false
-    default: 'violations'
+    default: "violations"
   analyze_args:
-    description: 'Arguments to pass to analyze command'
+    description: "Arguments to pass to analyze command"
     required: false
-    default: '-P ort.analyzer.enabledPackageManagers=NPM,Yarn,Yarn2'
+    default: "-P ort.analyzer.enabledPackageManagers=NPM,Yarn,Yarn2"
   bypass_checks:
-    description: 'Do not fail pipeline if checks failed'
+    description: "Do not fail pipeline if checks failed"
     required: false
     default: false
 
@@ -25,12 +25,12 @@ runs:
       shell: bash
       run: git config --global url.https://github.com/.insteadOf ssh://git@github.com/
     - name: Checkout project
-      uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
       with:
         lfs: true
     - name: Run GitHub Action for ORT
       id: ort_scan
-      uses: oss-review-toolkit/ort-ci-github-action@b6d71a83acba8619f16b30c008f212a7a572f8e8 #v1
+      uses: oss-review-toolkit/ort-ci-github-action@b6d71a83acba8619f16b30c008f212a7a572f8e8 # v1
       continue-on-error: ${{ inputs.bypass_checks }}
       with:
         allow-dynamic-versions: ${{ inputs.allow_dynamic_versions }}
