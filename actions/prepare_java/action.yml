@@ -1,32 +1,32 @@
-name: 'Prepare JDK'
-description: 'Checkout project, set up JDK, prepare gradle caches'
+name: "Prepare JDK"
+description: "Checkout project, set up JDK, prepare gradle caches"
 inputs:
   java_version:
-    description: 'Java version to use'
+    description: "Java version to use"
     required: false
-    default: '17'
+    default: "17"
   java_distribution:
-    description: 'Java distribution to use'
+    description: "Java distribution to use"
     required: false
-    default: 'temurin'
+    default: "temurin"
   cache_path:
-    description: 'Path to cache'
+    description: "Path to cache"
     required: false
-    default: '~/.gradle/caches'
+    default: "~/.gradle/caches"
 
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+    - uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
       with:
         lfs: true
     - name: Set up JDK
-      uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 #v3.12.0
+      uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
       with:
         java-version: ${{ inputs.java_version }}
         distribution: ${{ inputs.java_distribution }}
     - name: Cache gradle dependencies
-      uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+      uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
       with:
         path: ${{ inputs.cache_path }}
         key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle') }}

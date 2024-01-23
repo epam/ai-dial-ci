@@ -9,11 +9,11 @@ on:
         description: Do not fail pipeline if checks failed
       java_version:
         type: string
-        default: '17'
+        default: "17"
         description: Java version to use
       java_distribution:
         type: string
-        default: 'temurin'
+        default: "temurin"
         description: Java distribution to use
 
 env:
@@ -59,8 +59,8 @@ jobs:
       - code_checks
       - ort
     runs-on: ubuntu-latest
-#    environment:
-#      name: release
+    # environment:
+    #   name: release
     permissions:
       contents: write
       packages: write
@@ -70,14 +70,14 @@ jobs:
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
       - uses: epam/ai-dial-ci/actions/prepare_java@1.1.0
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
         with:
-           lfs: true
-           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          lfs: true
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
       - name: Build
         run: |
-           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle
-           ./gradlew build -x test
+          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle
+          ./gradlew build -x test
       - uses: epam/ai-dial-ci/actions/build_docker@1.1.0
         with:
           ghcr_username: ${{ github.actor }}

@@ -1,20 +1,20 @@
-name: 'Prepare JDK'
-description: 'Checkout project, set up JDK, prepare gradle caches'
+name: "Prepare JDK"
+description: "Checkout project, set up JDK, prepare gradle caches"
 inputs:
   java_version:
-    description: 'Java version to use'
+    description: "Java version to use"
     required: false
-    default: '17'
+    default: "17"
   java_distribution:
-    description: 'Java distribution to use'
+    description: "Java distribution to use"
     required: false
-    default: 'temurin'
+    default: "temurin"
   cache_path:
-    description: 'Path to cache'
+    description: "Path to cache"
     required: false
-    default: '~/.gradle/caches'
+    default: "~/.gradle/caches"
   bypass_checks:
-    description: 'Do not fail pipeline if checks failed'
+    description: "Do not fail pipeline if checks failed"
     required: false
     default: false
 
