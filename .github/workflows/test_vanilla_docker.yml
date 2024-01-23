@@ -12,14 +12,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  style_checks:
-    runs-on: ubuntu-latest
-    steps:
-      - name: PR title check
-        uses: thehanimo/pr-title-checker@5652588c80c479af803eabfbdb5a3895a77c1388 # v1.4.1
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   docker_build:
     runs-on: ubuntu-latest
     steps:
