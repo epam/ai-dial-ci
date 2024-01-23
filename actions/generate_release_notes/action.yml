@@ -47,6 +47,7 @@ runs:
         sed -i '/\[skip ci\] Update version/d' /tmp/my_commits_log # Removing '[skip ci] Update version' commits
 
         # Creating empty files for each category.
+        echo -n '' >/tmp/my_changelog_breaking_changes
         echo -n '' >/tmp/my_changelog_features
         echo -n '' >/tmp/my_changelog_fixes
         echo -n '' >/tmp/my_changelog_other
@@ -55,29 +56,46 @@ runs:
         # Regular expression patterns for categorizing commits
         FEATURES_REGEX="^feat:|^feature:"
         FIXES_REGEX="^fix:|^hotfix:"
+        BREAKING_CHANGES_REGEX="^.*!:"
+
+        # Separating breaking change commits
+        { grep -E "${BREAKING_CHANGES_REGEX}" /tmp/my_commits_log || echo -n ''; } | while read -r l; do
+            DESCRIPTION=$(echo "${l}" | sed "s/${BREAKING_CHANGES_REGEX} *//") # Removing leading keywords for neat display
+            echo "* ${DESCRIPTION}" >>/tmp/my_changelog_breaking_changes
+        done
 
         # Separating feature commits
         { grep -E "${FEATURES_REGEX}" /tmp/my_commits_log || echo -n ''; } | while read -r l; do
-            DESCRIPTION=$(echo "${l}" | sed "s/^feat://;s/^feature://") # Removing leading keywords for neat display
+            DESCRIPTION=$(echo "${l}" | sed "s/^feat: *//;s/^feature: *//") # Removing leading keywords for neat display
             echo "* ${DESCRIPTION}" >>/tmp/my_changelog_features
         done
 
         # Separating fix commits
         { grep -E "${FIXES_REGEX}" /tmp/my_commits_log || echo -n ''; } | while read -r l; do
-            DESCRIPTION=$(echo "${l}" | sed "s/^fix://;s/^hotfix://")
+            DESCRIPTION=$(echo "${l}" | sed "s/^fix: *//;s/^hotfix: *//")
             echo "* ${DESCRIPTION}" >>/tmp/my_changelog_fixes
         done
 
         # Separating other commits
-        { grep -Ev "${FEATURES_REGEX}|${FIXES_REGEX}" /tmp/my_commits_log || echo -n ''; } | while read -r l; do
-            echo "* ${l}" >>/tmp/my_changelog_other
+        { grep -Ev "${BREAKING_CHANGES_REGEX}|${FEATURES_REGEX}|${FIXES_REGEX}" /tmp/my_commits_log || echo -n ''; } | while read -r l; do
+            DESCRIPTION=$(echo "${l}" | sed "s/^chore: *//")
+            echo "* ${DESCRIPTION}" >>/tmp/my_changelog_other
         done
 
         # Creating the final changelog file with markdown syntax
+        # breaking changes
+        if [[ "$(wc -l </tmp/my_changelog_breaking_changes)" -gt 0 ]]; then
+            {
+                echo -e "## BREAKING CHANGES\n"
+                cat /tmp/my_changelog_breaking_changes
+                echo ""
+            } >>/tmp/my_changelog
+        fi
+
         # features
         if [[ "$(wc -l </tmp/my_changelog_features)" -gt 0 ]]; then
             {
-                echo "### Features:"
+                echo -e "## Features\n"
                 cat /tmp/my_changelog_features
                 echo ""
             } >>/tmp/my_changelog
@@ -86,7 +104,7 @@ runs:
         # fixes
         if [[ "$(wc -l </tmp/my_changelog_fixes)" -gt 0 ]]; then
             {
-                echo "### Fixes:"
+                echo -e "## Fixes\n"
                 cat /tmp/my_changelog_fixes
                 echo ""
             } >>/tmp/my_changelog
@@ -95,8 +113,7 @@ runs:
         # other
         if [[ "$(wc -l </tmp/my_changelog_other)" -gt 0 ]]; then
             {
-                echo "### Other:"
-                grep -v "Merge branch " /tmp/my_changelog_other
-                echo ""
+                echo -e "## Other\n"
+                grep -v "Merge branch " /tmp/my_changelog_other # Removing merge commits
             } >>/tmp/my_changelog
         fi
