@@ -65,6 +65,37 @@ jobs:
       ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
+## Deploy review environment
+
+```yml
+name: Slash Command Dispatch
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  slashCommandDispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slash Command Dispatch
+        id: scd
+        uses: peter-evans/slash-command-dispatch@a28ee6cd74d5200f99e247ebc7b365c03ae0ef3c # v3.0.1
+        with:
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          reaction-token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          config: >
+            [
+              {
+                "command": "deploy-review",
+                "permission": "write",
+                "issue_type": "pull-request",
+                "repository": "epam/ai-dial-ci",
+                "static_args": [
+                  "application=${{ github.event.repository.name }}"
+                ]
+              }
+            ]
+```
+
 ## Developer environment
 
 This project contains reusable workflows under [`.github/workflows`](.github/workflows) directory, and composite actions under [`actions`](actions) directory.
