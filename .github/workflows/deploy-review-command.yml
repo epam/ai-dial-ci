@@ -63,6 +63,29 @@ jobs:
               "GITHUB_TRIGGER": "${{ github.event.client_payload.github.payload.comment.html_url }}"
             }
 
+      - name: Check status
+        id: status
+        if: success() || failure()
+        run: |
+          GITHUB_WORKFLOW_URL=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          # Get latest pipeline URL. TODO: use action output or GitLab environment API, as `latest` is not always the correct one
+          GITLAB_PIPELINE_URL=$(curl --silent --header "PRIVATE-TOKEN: ${{ secrets.DEPLOY_ACCESS_TOKEN }}" "https://${{ secrets.DEPLOY_HOST }}/api/v4/projects/${{ secrets.DEPLOY_PROJECT_ID }}/pipelines/latest" | jq -r '.web_url')
+
+          MESSAGE=""
+          if [[ -n "${{ steps.owner.outputs.status }}" ]]; then
+            MESSAGE+=">- **Owner check failed**: ${{ steps.owner.outputs.status }}\n"
+          fi
+          if [[ -n "${{ steps.vars.outputs.status }}" ]]; then
+            MESSAGE+=">- **Vars check failed**: ${{ steps.vars.outputs.status }}\n"
+          fi
+          if [[ -n "${{ steps.deploy.outputs.status }}" && "${{ steps.deploy.outputs.status }}" != "success" ]]; then
+            MESSAGE+=">- **Deployment failed**: [${{ steps.deploy.outputs.status }}](${GITLAB_PIPELINE_URL})\n"
+          fi
+          if [[ -z "${{ steps.owner.outputs.status }}" && -z "${{ steps.vars.outputs.status }}" && -z "${{ steps.deploy.outputs.status }}" ]]; then
+            MESSAGE+=">Something went wrong, check [GitHub Workflow run output](${GITHUB_WORKFLOW_URL})\n"
+          fi
+          echo -e "message=$MESSAGE" >> $GITHUB_OUTPUT
+
       - name: Return status
         if: success() || failure()
         uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3.1.0
@@ -71,4 +94,4 @@ jobs:
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           body: |
-            >Deployment status: ${{ steps.owner.outputs.status || steps.vars.outputs.status || steps.deploy.outputs.status || 'something went wrong' }}
+            ${{ steps.status.outputs.message }}
