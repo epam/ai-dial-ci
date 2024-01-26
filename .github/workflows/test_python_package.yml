@@ -34,7 +34,7 @@ jobs:
   style_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.2.0
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
@@ -50,7 +50,7 @@ jobs:
       matrix:
         python-version: ["3.11", "3.10", "3.9", "3.8"]
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.2.0
         with:
           python_version: "${{ matrix.python-version }}"
           install_poetry: true
@@ -63,7 +63,7 @@ jobs:
   code_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.2.0
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
@@ -87,10 +87,10 @@ jobs:
   ort:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.1.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.2.0
       - name: Install dependencies
         shell: bash
         run: |
           pip install poetry
           make build
-      - uses: epam/ai-dial-ci/actions/ort@1.1.0
+      - uses: epam/ai-dial-ci/actions/ort@1.2.0
