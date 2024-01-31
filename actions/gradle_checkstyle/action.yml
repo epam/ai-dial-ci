@@ -16,7 +16,7 @@ inputs:
   bypass_checks:
     description: "Do not fail pipeline if checks failed"
     required: false
-    default: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -27,7 +27,7 @@ runs:
         java_distribution: ${{ inputs.java_distribution }}
         cache_path: ${{ inputs.cache_path }}
     - name: Codestyle
-      continue-on-error: ${{ inputs.bypass_check }}
+      continue-on-error: ${{ fromJSON(inputs.bypass_checks) }}
       shell: bash
       run: |
         ./gradlew checkstyleMain
