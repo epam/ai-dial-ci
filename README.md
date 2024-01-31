@@ -10,6 +10,23 @@ Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub 
 
 These workflows could be imported to any repository under EPAM GitHub organization as standard `.github/workflows` files. See examples below (replace `@main` with specific version tag).
 
+### PR tests (NodeJS docker)
+
+```yml
+name: Code checks - tests
+
+on:
+  pull_request:
+    branches: [ development, release-* ]
+
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/test_yarn_docker.yml@main
+    secrets: inherit
+    with:
+      bypass_ort: false
+```
+
 ### Release (Python package)
 
 ```yml
