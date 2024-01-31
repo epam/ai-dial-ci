@@ -7,6 +7,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if checks failed
+      bypass_ort:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ORT failed
       node_version:
         type: string
         default: "20"
@@ -64,6 +68,8 @@ jobs:
         run: |
           npm ci
       - uses: epam/ai-dial-ci/actions/ort@1.2.0
+        with:
+          bypass_checks: ${{ inputs.bypass_ort }}
 
   release:
     needs:
