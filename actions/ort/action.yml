@@ -16,7 +16,7 @@ inputs:
   bypass_checks:
     description: "Do not fail pipeline if checks failed"
     required: false
-    default: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -31,7 +31,7 @@ runs:
     - name: Run GitHub Action for ORT
       id: ort_scan
       uses: oss-review-toolkit/ort-ci-github-action@b6d71a83acba8619f16b30c008f212a7a572f8e8 # v1
-      continue-on-error: ${{ inputs.bypass_checks }}
+      continue-on-error: ${{ fromJSON(inputs.bypass_checks) }}
       with:
         allow-dynamic-versions: ${{ inputs.allow_dynamic_versions }}
         fail-on: ${{ inputs.fail_on }}
