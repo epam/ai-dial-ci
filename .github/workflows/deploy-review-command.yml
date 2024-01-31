@@ -68,8 +68,7 @@ jobs:
         if: success() || failure()
         run: |
           GITHUB_WORKFLOW_URL=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
-          # Get latest pipeline URL. TODO: use action output or GitLab environment API, as `latest` is not always the correct one
-          GITLAB_PIPELINE_URL=$(curl --silent --header "PRIVATE-TOKEN: ${{ secrets.DEPLOY_ACCESS_TOKEN }}" "https://${{ secrets.DEPLOY_HOST }}/api/v4/projects/${{ secrets.DEPLOY_PROJECT_ID }}/pipelines/latest" | jq -r '.web_url')
+          GITLAB_PIPELINE_URL=${{ steps.deploy.outputs.web_url }}
 
           MESSAGE=""
           if [[ -n "${{ steps.owner.outputs.status }}" ]]; then
