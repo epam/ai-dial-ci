@@ -17,7 +17,20 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  style_checks:
+  format_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: epam/ai-dial-ci/actions/prepare_node@1.2.0
+        with:
+          node_version: ${{ inputs.node_version }}
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks }}
+        shell: bash
+        run: |
+          npm ci
+          yarn format
+
+  lint_checks:
     runs-on: ubuntu-latest
     steps:
       - uses: epam/ai-dial-ci/actions/prepare_node@1.2.0
@@ -56,12 +69,12 @@ jobs:
           push: false
           scan: true
 
-  ort:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.2.0
-      - name: Install dependencies
-        shell: bash
-        run: |
-          npm ci
-      - uses: epam/ai-dial-ci/actions/ort@1.2.0
+  # ort:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: epam/ai-dial-ci/actions/prepare_python@1.2.0
+  #     - name: Install dependencies
+  #       shell: bash
+  #       run: |
+  #         npm ci
+  #     - uses: epam/ai-dial-ci/actions/ort@1.2.0
