@@ -23,7 +23,7 @@ jobs:
   style_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.3.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.3.1
         with:
           python_version: ${{ inputs.python_version }}
           install_poetry: true
@@ -36,7 +36,7 @@ jobs:
   code_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.3.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.3.1
         with:
           python_version: ${{ inputs.python_version }}
           install_poetry: true
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@1.3.0
+      - uses: epam/ai-dial-ci/actions/build_docker@1.3.1
         with:
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: test
@@ -62,7 +62,7 @@ jobs:
   ort:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.3.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.3.1
         with:
           python_version: ${{ inputs.python_version }}
           install_poetry: true
@@ -70,6 +70,6 @@ jobs:
         shell: bash
         run: |
           poetry install --all-extras
-      - uses: epam/ai-dial-ci/actions/ort@1.3.0
+      - uses: epam/ai-dial-ci/actions/ort@1.3.1
         with:
           bypass_checks: ${{ inputs.bypass_ort }}
