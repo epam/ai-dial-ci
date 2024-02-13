@@ -1,38 +1,32 @@
 name: "ORT scan"
 description: "Run Opensource Review Toolkit scan"
 inputs:
+  bypass_checks:
+    description: "Do not fail pipeline if checks failed"
+    default: "false"
   allow_dynamic_versions:
     description: "Allow dynamic versions"
-    required: false
     default: "true"
   fail_on:
-    description: "Fail on violations"
-    required: false
+    description: "Comma-separated list of ORT results that if exceeding their severity threshold will fail the action. Accepted values are '', 'issues', 'violations' or 'issues,violations'."
     default: "violations"
   analyze_args:
     description: "Arguments to pass to analyze command"
-    required: false
-    default: "-P ort.analyzer.enabledPackageManagers=NPM,Yarn,Yarn2"
-  bypass_checks:
-    description: "Do not fail pipeline if checks failed"
-    required: false
-    default: "false"
+    default: ""
+  cli_args:
+    description: "List of arguments to pass to ORT CLI, applies to all commands."
+    default: "-P ort.forceOverwrite=true --stacktrace"
 
 runs:
   using: "composite"
   steps:
-    - name: Use HTTPS instead of SSH for Git cloning
-      shell: bash
-      run: git config --global url.https://github.com/.insteadOf ssh://git@github.com/
-    - name: Checkout project
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      with:
-        lfs: true
     - name: Run GitHub Action for ORT
-      id: ort_scan
       uses: oss-review-toolkit/ort-ci-github-action@b6d71a83acba8619f16b30c008f212a7a572f8e8 # v1
-      continue-on-error: ${{ fromJSON(inputs.bypass_checks) }}
       with:
         allow-dynamic-versions: ${{ inputs.allow_dynamic_versions }}
         fail-on: ${{ inputs.fail_on }}
-        #ort-cli-analyze-args: ${{ inputs.analyze_args }}
+        ort-cli-analyze-args: ${{ inputs.analyze_args || '' }}
+        ort-cli-args: ${{ inputs.cli_args || '' }}
+      env:
+        CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
+      continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
