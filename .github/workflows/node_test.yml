@@ -1,0 +1,113 @@
+name: NodeJS tests
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      enable_format_checks:
+        type: boolean
+        default: true
+        description: Enable format_checks
+      bypass_format_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if format_checks failed
+      enable_style_checks:
+        type: boolean
+        default: true
+        description: Enable style_checks
+      bypass_style_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if style_checks failed
+      enable_code_checks:
+        type: boolean
+        default: true
+        description: Enable code_checks
+      bypass_code_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if code_checks failed
+      enable_ort:
+        type: boolean
+        default: true
+        description: Enable ort
+      bypass_ort:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ort failed
+      node_version:
+        type: string
+        default: "20"
+        description: NodeJS version to use
+
+jobs:
+  format_checks:
+    if: ${{ inputs.enable_format_checks }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.3.1
+        with:
+          node_version: ${{ inputs.node_version }}
+          clean_install: "true"
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_format_checks }}
+        shell: bash
+        run: |
+          npm run format
+
+  style_checks:
+    if: ${{ inputs.enable_style_checks }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.3.1
+        with:
+          node_version: ${{ inputs.node_version }}
+          clean_install: "true"
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_style_checks }}
+        shell: bash
+        run: |
+          npm run lint
+
+  code_checks:
+    if: ${{ inputs.enable_code_checks }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.3.1
+        with:
+          node_version: ${{ inputs.node_version }}
+          clean_install: "true"
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_code_checks }}
+        shell: bash
+        run: |
+          npm run test
+
+  ort:
+    if: ${{ inputs.enable_ort }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.3.1
+        with:
+          node_version: ${{ inputs.node_version }}
+          clean_install: "true"
+      - uses: epam/ai-dial-ci/actions/ort@1.3.1
+        with:
+          bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
+          cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=NPM"
