@@ -26,7 +26,7 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.3.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.4.0
         id: semantic_versioning
 
   ort:
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.3.1
+      - uses: epam/ai-dial-ci/actions/ort@1.4.0
         with:
           bypass_checks: ${{ inputs.bypass_ort }}
 
@@ -51,13 +51,13 @@ jobs:
       packages: write
 
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.3.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.4.0
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@1.3.1
+      - uses: epam/ai-dial-ci/actions/build_docker@1.4.0
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -73,7 +73,7 @@ jobs:
             ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.3.1
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.4.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
