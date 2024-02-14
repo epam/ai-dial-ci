@@ -1,0 +1,84 @@
+name: NodeJS PR workflow
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      enable_format_checks:
+        type: boolean
+        default: true
+        description: Enable format_checks
+      bypass_format_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if format_checks failed
+      enable_style_checks:
+        type: boolean
+        default: true
+        description: Enable style_checks
+      bypass_style_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if style_checks failed
+      enable_code_checks:
+        type: boolean
+        default: true
+        description: Enable code_checks
+      bypass_code_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if code_checks failed
+      enable_ort:
+        type: boolean
+        default: true
+        description: Enable ort
+      bypass_ort:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ort failed
+      enable_trivy:
+        type: boolean
+        default: true
+        description: Enable trivy
+      bypass_trivy:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if trivy failed
+      node_version:
+        type: string
+        default: "20"
+        description: NodeJS version to use
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    uses: ./.github/workflows/node_test.yml
+    with:
+      bypass_checks: ${{ inputs.bypass_checks }}
+      enable_format_checks: ${{ inputs.enable_format_checks }}
+      bypass_format_checks: ${{ inputs.bypass_format_checks }}
+      enable_style_checks: ${{ inputs.enable_style_checks }}
+      bypass_style_checks: ${{ inputs.bypass_style_checks }}
+      enable_code_checks: ${{ inputs.enable_code_checks }}
+      bypass_code_checks: ${{ inputs.bypass_code_checks }}
+      enable_ort: ${{ inputs.enable_ort }}
+      bypass_ort: ${{ inputs.bypass_ort }}
+      node_version: ${{ inputs.node_version }}
+
+  docker_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/build_docker@1.4.0
+        with:
+          image_name: ghcr.io/${{ env.IMAGE_NAME }}
+          image_tag: test
+          scan: ${{ inputs.enable_trivy }}
+          bypass_checks: ${{ inputs.bypass_trivy }}
