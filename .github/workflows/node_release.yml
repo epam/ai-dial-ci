@@ -127,7 +127,7 @@ jobs:
       - name: Publish packages to npmjs
         run: |
           npm run build
-          npm run publish
+          npm run publish ${{ needs.calculate_version.outputs.is_latest == true && '--tag latest' || '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - uses: epam/ai-dial-ci/actions/publish_tag_release@1.4.0
