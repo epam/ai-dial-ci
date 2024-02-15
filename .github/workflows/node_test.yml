@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.4.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.4.2
         with:
           node_version: ${{ inputs.node_version }}
           clean_install: "true"
@@ -69,7 +69,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.4.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.4.2
         with:
           node_version: ${{ inputs.node_version }}
           clean_install: "true"
@@ -86,7 +86,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.4.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.4.2
         with:
           node_version: ${{ inputs.node_version }}
           clean_install: "true"
@@ -103,7 +103,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.4.1
+      - uses: epam/ai-dial-ci/actions/ort@1.4.2
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
           cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=NPM"

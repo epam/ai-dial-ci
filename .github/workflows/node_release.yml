@@ -47,6 +47,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if trivy failed
+      enable_publish:
+        type: boolean
+        default: true
+        description: Enable publish to npmjs
       node_version:
         type: string
         default: "20"
@@ -77,7 +81,7 @@ jobs:
       is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
       latest_tag: ${{ steps.semantic_versioning.outputs.latest_tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.4.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.4.2
         id: semantic_versioning
 
   release:
@@ -90,14 +94,14 @@ jobs:
       - calculate_version
       - test
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.4.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.4.2
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.4.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.4.2
         with:
           node_version: ${{ inputs.node_version }}
           clean_install: true
@@ -107,7 +111,7 @@ jobs:
         shell: bash
         run: |
           npm version ${{ needs.calculate_version.outputs.next_version }} --no-git-tag-version || true # upstream branch may already be updated
-      - uses: epam/ai-dial-ci/actions/build_docker@1.4.1
+      - uses: epam/ai-dial-ci/actions/build_docker@1.4.2
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -125,12 +129,14 @@ jobs:
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
       - name: Publish packages to npmjs
+        if: ${{ inputs.enable_publish && startsWith(github.ref, 'refs/heads/release-') }}
+        shell: bash
         run: |
           npm run build
           npm run publish ${{ needs.calculate_version.outputs.is_latest == 'true' && '-- --tag latest' || '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.4.1
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.4.2
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
