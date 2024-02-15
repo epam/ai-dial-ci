@@ -47,6 +47,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if trivy failed
+      enable_publish:
+        type: boolean
+        default: true
+        description: Enable publish to npmjs
       node_version:
         type: string
         default: "20"
@@ -125,6 +129,8 @@ jobs:
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
       - name: Publish packages to npmjs
+        if: ${{ inputs.enable_publish && startsWith(github.ref, 'refs/heads/release-') }}
+        shell: bash
         run: |
           npm run build
           npm run publish ${{ needs.calculate_version.outputs.is_latest == 'true' && '-- --tag latest' || '' }}
