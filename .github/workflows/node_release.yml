@@ -129,13 +129,28 @@ jobs:
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
       - name: Publish packages to npmjs
-        if: ${{ inputs.enable_publish && startsWith(github.ref, 'refs/heads/release-') }}
+        if: ${{ inputs.enable_publish }}
         shell: bash
         run: |
+          #!/bin/bash
           npm run build
-          npm run publish ${{ needs.calculate_version.outputs.is_latest == 'true' && '-- --tag latest' || '' }}
+          PUBLISH_COMMAND="npm run publish"
+          ARGS=""
+          if [ "$IS_DEVELOPMENT_BRANCH" == "true" ]; then
+            ARGS+=" --development"
+          fi
+          if [ "$IS_RELEASE_BRANCH" == "true" ] && [ "$IS_LATEST" == "true" ]; then
+            ARGS+=" --tag latest"
+          fi
+          if [ -n "$ARGS" ]; then
+            PUBLISH_COMMAND+=" --"$ARGS
+          fi
+          $PUBLISH_COMMAND
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          IS_LATEST: ${{ needs.calculate_version.outputs.is_latest == 'true' }}
+          IS_DEVELOPMENT_BRANCH: ${{ github.ref == 'refs/heads/development' }}
+          IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release-') }}
       - uses: epam/ai-dial-ci/actions/publish_tag_release@1.4.2
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
