@@ -27,12 +27,12 @@ jobs:
   style_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/gradle_checkstyle@1.4.2
+      - uses: epam/ai-dial-ci/actions/gradle_checkstyle@1.5.0
 
   code_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_java@1.4.2
+      - uses: epam/ai-dial-ci/actions/prepare_java@1.5.0
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks }}
         run: |
@@ -41,10 +41,10 @@ jobs:
   docker_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_java@1.4.2
+      - uses: epam/ai-dial-ci/actions/prepare_java@1.5.0
       - name: Build
         run: ./gradlew build -x test
-      - uses: epam/ai-dial-ci/actions/build_docker@1.4.2
+      - uses: epam/ai-dial-ci/actions/build_docker@1.5.0
         with:
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: test
@@ -57,6 +57,6 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.4.2
+      - uses: epam/ai-dial-ci/actions/ort@1.5.0
         with:
           bypass_checks: ${{ inputs.bypass_ort }}

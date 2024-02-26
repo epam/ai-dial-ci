@@ -21,7 +21,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: epam/ai-dial-ci/actions/prepare_java@1.4.2
+    - uses: epam/ai-dial-ci/actions/prepare_java@1.5.0
       with:
         java_version: ${{ inputs.java_version }}
         java_distribution: ${{ inputs.java_distribution }}
