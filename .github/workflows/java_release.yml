@@ -1,4 +1,4 @@
-name: Release version
+name: Java Release workflow
 
 on:
   workflow_call:
@@ -7,10 +7,38 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if checks failed
+      enable_style_checks:
+        type: boolean
+        default: true
+        description: Enable style_checks
+      bypass_style_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if style_checks failed
+      enable_code_checks:
+        type: boolean
+        default: true
+        description: Enable code_checks
+      bypass_code_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if code_checks failed
+      enable_ort:
+        type: boolean
+        default: true
+        description: Enable ort
       bypass_ort:
         type: boolean
         default: false
-        description: Do not fail pipeline if ORT failed
+        description: Do not fail pipeline if ort failed
+      enable_trivy:
+        type: boolean
+        default: true
+        description: Enable trivy
+      bypass_trivy:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if trivy failed
       java_version:
         type: string
         default: "17"
@@ -24,19 +52,18 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  style_checks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: epam/ai-dial-ci/actions/gradle_checkstyle@1.5.0
-
-  code_checks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: epam/ai-dial-ci/actions/prepare_java@1.5.0
-      - name: Test
-        continue-on-error: ${{ inputs.bypass_checks }}
-        run: |
-          ./gradlew check
+  test:
+    uses: ./.github/workflows/java_test.yml
+    with:
+      bypass_checks: ${{ inputs.bypass_checks }}
+      enable_style_checks: ${{ inputs.enable_style_checks }}
+      bypass_style_checks: ${{ inputs.bypass_style_checks }}
+      enable_code_checks: ${{ inputs.enable_code_checks }}
+      bypass_code_checks: ${{ inputs.bypass_code_checks }}
+      enable_ort: ${{ inputs.enable_ort }}
+      bypass_ort: ${{ inputs.bypass_ort }}
+      java_version: ${{ inputs.java_version }}
+      java_distribution: ${{ inputs.java_distribution }}
 
   calculate_version:
     runs-on: ubuntu-latest
@@ -44,49 +71,35 @@ jobs:
       next_version: ${{ steps.semantic_versioning.outputs.next_version }}
       is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
       latest_tag: ${{ steps.semantic_versioning.outputs.latest_tag }}
-    permissions:
-      contents: write
-      packages: write
     steps:
       - uses: epam/ai-dial-ci/actions/semantic_versioning@1.5.0
         id: semantic_versioning
 
-  ort:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.5.0
-        with:
-          bypass_checks: ${{ inputs.bypass_ort }}
-
   release:
-    needs:
-      - calculate_version
-      - style_checks
-      - code_checks
-      - ort
     runs-on: ubuntu-latest
-    # environment:
-    #   name: release
     permissions:
       contents: write
       packages: write
-
+      security-events: write
+    needs:
+      - calculate_version
+      - test
     steps:
       - uses: epam/ai-dial-ci/actions/generate_release_notes@1.5.0
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
-      - uses: epam/ai-dial-ci/actions/prepare_java@1.5.0
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - name: Build
+      - uses: epam/ai-dial-ci/actions/java_prepare@1.5.0
+        with:
+          java_version: ${{ inputs.java_version }}
+          java_distribution: ${{ inputs.java_distribution }}
+      - name: Set version
+        shell: bash
         run: |
           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle
-          ./gradlew build -x test
       - uses: epam/ai-dial-ci/actions/build_docker@1.5.0
         with:
           ghcr_username: ${{ github.actor }}
@@ -96,7 +109,8 @@ jobs:
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: ${{ needs.calculate_version.outputs.next_version }}
           push: true
-          scan: true
+          scan: ${{ inputs.enable_trivy }}
+          bypass_checks: ${{ inputs.bypass_trivy }}
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
             ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}

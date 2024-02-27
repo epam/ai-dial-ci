@@ -1,0 +1,23 @@
+name: "Prepare Java"
+description: "Set up Java with Gradle cache"
+
+inputs:
+  java_version:
+    description: "Java version to use"
+    default: "17"
+  java_distribution:
+    description: "Java distribution to use"
+    default: "temurin"
+  cache:
+    description: "Cache type. Supported values: maven, gradle, sbt"
+    default: "gradle"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up JDK
+      uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
+      with:
+        java-version: ${{ inputs.java_version }}
+        distribution: ${{ inputs.java_distribution }}
+        cache: ${{ inputs.cache }}
