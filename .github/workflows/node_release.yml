@@ -107,7 +107,6 @@ jobs:
           clean_install: true
           registry_url: "https://registry.npmjs.org"
       - name: Set version
-        continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
           npm version ${{ needs.calculate_version.outputs.next_version }} --no-git-tag-version || true # upstream branch may already be updated

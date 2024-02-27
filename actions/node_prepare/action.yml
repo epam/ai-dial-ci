@@ -1,5 +1,5 @@
 name: "Prepare NodeJS"
-description: "Checkout project, set up NodeJS, (optionally) perform clean install of NPM dependencies"
+description: "Set up NodeJS, (optionally) perform clean install of NPM dependencies"
 
 inputs:
   node_version:
