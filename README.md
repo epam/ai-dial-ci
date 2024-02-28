@@ -10,7 +10,7 @@ Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub 
 
 These workflows could be imported to any repository under EPAM GitHub organization as standard `.github/workflows` files. See examples below (replace `@main` with specific version tag).
 
-### PR Workflow (NodeJS, Docker)
+### PR Workflow (NodeJS (npm), Docker)
 
 ```yml
 name: PR Workflow
@@ -25,7 +25,7 @@ jobs:
     secrets: inherit
 ```
 
-### Release Workflow (NodeJS, Docker)
+### Release Workflow (NodeJS (npm), Docker)
 
 ```yml
 name: Release Workflow
@@ -37,6 +37,36 @@ on:
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/node_release.yml@main
+    secrets: inherit
+```
+
+### PR Workflow (Java (gradle), Docker)
+
+```yml
+name: PR Workflow
+
+on:
+  pull_request:
+    branches: [development, release-*]
+
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/java_pr.yml@main
+    secrets: inherit
+```
+
+### Release Workflow (Java (gradle), Docker)
+
+```yml
+name: Release Workflow
+
+on:
+  push:
+    branches: [development, release-*]
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/java_release.yml@main
     secrets: inherit
 ```
 

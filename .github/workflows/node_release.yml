@@ -81,7 +81,7 @@ jobs:
       is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
       latest_tag: ${{ steps.semantic_versioning.outputs.latest_tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.5.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.6.0
         id: semantic_versioning
 
   release:
@@ -94,24 +94,23 @@ jobs:
       - calculate_version
       - test
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.5.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.6.0
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.5.0
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.6.0
         with:
           node_version: ${{ inputs.node_version }}
           clean_install: true
           registry_url: "https://registry.npmjs.org"
       - name: Set version
-        continue-on-error: ${{ inputs.bypass_checks }}
         shell: bash
         run: |
           npm version ${{ needs.calculate_version.outputs.next_version }} --no-git-tag-version || true # upstream branch may already be updated
-      - uses: epam/ai-dial-ci/actions/build_docker@1.5.0
+      - uses: epam/ai-dial-ci/actions/build_docker@1.6.0
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -151,7 +150,7 @@ jobs:
           IS_LATEST: ${{ needs.calculate_version.outputs.is_latest == 'true' }}
           IS_DEVELOPMENT_BRANCH: ${{ github.ref == 'refs/heads/development' }}
           IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release-') }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.5.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.6.0
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify

@@ -1,4 +1,4 @@
-name: NodeJS tests
+name: Java tests
 
 on:
   workflow_call:
@@ -7,14 +7,6 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if checks failed
-      enable_format_checks:
-        type: boolean
-        default: true
-        description: Enable format_checks
-      bypass_format_checks:
-        type: boolean
-        default: false
-        description: Do not fail pipeline if format_checks failed
       enable_style_checks:
         type: boolean
         default: true
@@ -39,29 +31,16 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if ort failed
-      node_version:
+      java_version:
         type: string
-        default: "20"
-        description: NodeJS version to use
+        default: "17"
+        description: Java version to use
+      java_distribution:
+        type: string
+        default: "temurin"
+        description: Java distribution to use
 
 jobs:
-  format_checks:
-    if: ${{ inputs.enable_format_checks }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.6.0
-        with:
-          node_version: ${{ inputs.node_version }}
-          clean_install: "true"
-      - name: Test
-        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_format_checks }}
-        shell: bash
-        run: |
-          npm run format
-
   style_checks:
     if: ${{ inputs.enable_style_checks }}
     runs-on: ubuntu-latest
@@ -69,15 +48,15 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.6.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@1.6.0
         with:
-          node_version: ${{ inputs.node_version }}
-          clean_install: "true"
+          java_version: ${{ inputs.java_version }}
+          java_distribution: ${{ inputs.java_distribution }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_style_checks }}
         shell: bash
         run: |
-          npm run lint
+          ./gradlew checkstyleMain
 
   code_checks:
     if: ${{ inputs.enable_code_checks }}
@@ -86,15 +65,15 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.6.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@1.6.0
         with:
-          node_version: ${{ inputs.node_version }}
-          clean_install: "true"
+          java_version: ${{ inputs.java_version }}
+          java_distribution: ${{ inputs.java_distribution }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_code_checks }}
         shell: bash
         run: |
-          npm run test
+          ./gradlew check || { echo "::error::Tests failed" && exit 1; } # TODO: figure out why we need to capture exit code
 
   ort:
     if: ${{ inputs.enable_ort }}
@@ -106,4 +85,4 @@ jobs:
       - uses: epam/ai-dial-ci/actions/ort@1.6.0
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
-          cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=NPM"
+          cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Gradle"
