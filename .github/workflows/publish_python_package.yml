@@ -35,7 +35,7 @@ jobs:
   style_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.6.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.6.1
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
@@ -51,7 +51,7 @@ jobs:
       matrix:
         python-version: ["3.11", "3.10", "3.9", "3.8"]
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.6.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.6.1
         with:
           python_version: "${{ matrix.python-version }}"
           install_poetry: true
@@ -64,13 +64,13 @@ jobs:
   ort:
     runs-on: ubuntu-latest
     steps:
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.6.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.6.1
       - name: Install dependencies
         shell: bash
         run: |
           pip install poetry
           poetry install
-      - uses: epam/ai-dial-ci/actions/ort@1.6.0
+      - uses: epam/ai-dial-ci/actions/ort@1.6.1
         with:
           bypass_checks: ${{ inputs.bypass_ort }}
 
@@ -83,7 +83,7 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.6.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.6.1
         id: semantic_versioning
 
   release:
@@ -100,10 +100,10 @@ jobs:
       packages: write
 
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.6.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.6.1
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
-      - uses: epam/ai-dial-ci/actions/prepare_python@1.6.0
+      - uses: epam/ai-dial-ci/actions/prepare_python@1.6.1
         with:
           python_version: "${{ inputs.python_version }}"
           install_poetry: true
@@ -130,7 +130,7 @@ jobs:
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: make publish
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.6.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.6.1
         with:
           tag_version: ${{ needs.calculate_version.outputs.non_semver_next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
