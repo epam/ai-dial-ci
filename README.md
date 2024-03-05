@@ -103,14 +103,14 @@ jobs:
 ### PR Workflow (Python (poetry), package)
 
 ```yml
-name: Release version
+name: PR Workflow
 
 on:
   push:
     branches: [development, release-*]
 
 jobs:
-  release:
+  run_tests:
     uses: epam/ai-dial-ci/.github/workflows/python_package_pr.yml@main
     secrets: inherit
 ```
@@ -118,7 +118,7 @@ jobs:
 ### Release Workflow (Python (poetry), package)
 
 ```yml
-name: Release version
+name: Release Workflow
 
 on:
   push:
