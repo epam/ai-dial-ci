@@ -106,7 +106,7 @@ jobs:
 name: PR Workflow
 
 on:
-  push:
+  pull_request:
     branches: [development, release-*]
 
 jobs:
