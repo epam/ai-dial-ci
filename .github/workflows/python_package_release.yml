@@ -1,0 +1,107 @@
+name: Python Package Release workflow
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      enable_style_checks:
+        type: boolean
+        default: true
+        description: Enable style_checks
+      bypass_style_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if style_checks failed
+      enable_code_checks:
+        type: boolean
+        default: true
+        description: Enable code_checks
+      bypass_code_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if code_checks failed
+      enable_ort:
+        type: boolean
+        default: true
+        description: Enable ORT scanning
+      bypass_ort:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ORT scan failed
+      enable_trivy:
+        type: boolean
+        default: true
+        description: Enable Trivy scanning
+      bypass_trivy:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if Trivy failed
+      python_version:
+        type: string
+        default: "3.11"
+        description: Python version to use
+
+jobs:
+  test:
+    uses: ./.github/workflows/python_package_test.yml
+    with:
+      bypass_checks: ${{ inputs.bypass_checks }}
+      enable_style_checks: ${{ inputs.enable_style_checks }}
+      bypass_style_checks: ${{ inputs.bypass_style_checks }}
+      enable_code_checks: ${{ inputs.enable_code_checks }}
+      bypass_code_checks: ${{ inputs.bypass_code_checks }}
+      enable_ort: ${{ inputs.enable_ort }}
+      bypass_ort: ${{ inputs.bypass_ort }}
+      python_version: ${{ inputs.python_version }}
+
+  calculate_version:
+    runs-on: ubuntu-latest
+    outputs:
+      non_semver_next_version: ${{ steps.semantic_versioning.outputs.non_semver_next_version }}
+      latest_tag: ${{ steps.semantic_versioning.outputs.latest_tag }}
+    steps:
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.6.1
+        id: semantic_versioning
+
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
+    needs:
+      - calculate_version
+      - test
+    steps:
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.6.1
+        with:
+          latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.6.1
+        with:
+          python_version: ${{ inputs.python_version }}
+      - name: Set version
+        shell: bash
+        run: |
+          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.non_semver_next_version }}\"/g" pyproject.toml
+      - name: Publish to pypi
+        shell: bash
+        run: |
+          make build
+          make publish
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.6.1
+        with:
+          tag_version: ${{ needs.calculate_version.outputs.non_semver_next_version }}
+          changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
+          artifacts: "dist/*"
+          extra_commit_command: |
+            git add pyproject.toml
+            git commit -m '[skip ci] Update version' || true # upstream branch may already be updated

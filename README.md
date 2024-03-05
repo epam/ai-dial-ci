@@ -70,39 +70,63 @@ jobs:
     secrets: inherit
 ```
 
-### Release (Python package)
+### PR Workflow (Python (poetry), Docker)
 
 ```yml
-name: Release version
+name: PR Workflow
 
 on:
-  push:
-    branches: [ development, release-* ]
+  pull_request:
+    branches: [development, release-*]
 
 jobs:
-  release:
-    uses: epam/ai-dial-ci/.github/workflows/publish_python_package.yml@main
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
     secrets: inherit
-    with:
-      bypass_checks: false
-      python_version: 3.8
 ```
 
-### Release (Python docker)
+### Release Workflow (Python (poetry), Docker)
+
+```yml
+name: Release Workflow
+
+on:
+  push:
+    branches: [development, release-*]
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/python_docker_release.yml@main
+    secrets: inherit
+```
+
+### PR Workflow (Python (poetry), package)
 
 ```yml
 name: Release version
 
 on:
   push:
-    branches: [ development, release-* ]
-
-env:
-  IMAGE_NAME: ${{ github.repository }}
+    branches: [development, release-*]
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/publish_python_docker.yml@main
+    uses: epam/ai-dial-ci/.github/workflows/python_package_pr.yml@main
+    secrets: inherit
+```
+
+### Release Workflow (Python (poetry), package)
+
+```yml
+name: Release version
+
+on:
+  push:
+    branches: [development, release-*]
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@main
     secrets: inherit
 ```
 
@@ -160,7 +184,7 @@ jobs:
 
 This project contains reusable workflows under [`.github/workflows`](.github/workflows) directory, and composite actions under [`actions`](actions) directory.
 
-pre-commit hook configured by [`.pre-commit-config.yaml`](.pre-commit-config.yaml) file forces yaml "code style".
+The `pre-commit` hook configured by [`.pre-commit-config.yaml`](.pre-commit-config.yaml) file forces yaml "code style".
 
 To install and configure pre-commit hook run:
 
@@ -170,3 +194,5 @@ pre-commit install
 ```
 
 This will install and configure git pre-commit hook initiated automatically on `git commit` command and auto-fixing code style.
+
+Check [contribution guidelines](CONTRIBUTING.md) for details.
