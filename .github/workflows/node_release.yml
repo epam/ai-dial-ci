@@ -34,19 +34,19 @@ on:
       enable_ort:
         type: boolean
         default: true
-        description: Enable ort
+        description: Enable ORT scanning
       bypass_ort:
         type: boolean
         default: false
-        description: Do not fail pipeline if ort failed
+        description: Do not fail pipeline if ORT scan failed
       enable_trivy:
         type: boolean
         default: true
-        description: Enable trivy
+        description: Enable Trivy scanning
       bypass_trivy:
         type: boolean
         default: false
-        description: Do not fail pipeline if trivy failed
+        description: Do not fail pipeline if Trivy failed
       enable_publish:
         type: boolean
         default: true

@@ -26,11 +26,11 @@ on:
       enable_ort:
         type: boolean
         default: true
-        description: Enable ort
+        description: Enable ORT scanning
       bypass_ort:
         type: boolean
         default: false
-        description: Do not fail pipeline if ort failed
+        description: Do not fail pipeline if ORT scan failed
       java_version:
         type: string
         default: "17"
