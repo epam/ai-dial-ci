@@ -26,19 +26,19 @@ on:
       enable_ort:
         type: boolean
         default: true
-        description: Enable ort
+        description: Enable ORT scanning
       bypass_ort:
         type: boolean
         default: false
-        description: Do not fail pipeline if ort failed
+        description: Do not fail pipeline if ORT scan failed
       enable_trivy:
         type: boolean
         default: true
-        description: Enable trivy
+        description: Enable Trivy scanning
       bypass_trivy:
         type: boolean
         default: false
-        description: Do not fail pipeline if trivy failed
+        description: Do not fail pipeline if Trivy failed
       java_version:
         type: string
         default: "17"
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@1.6.1
+      - uses: epam/ai-dial-ci/actions/java_prepare@1.7.0
         with:
           java_version: ${{ inputs.java_version }}
           java_distribution: ${{ inputs.java_distribution }}
@@ -83,7 +83,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@1.6.1
+      - uses: epam/ai-dial-ci/actions/build_docker@1.7.0
         with:
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: test

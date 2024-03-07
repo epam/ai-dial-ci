@@ -9,7 +9,7 @@ inputs:
     required: false
     default: "false"
   scan:
-    description: "Scan the image with Trivy"
+    description: "Scan with Trivy"
     required: false
     default: "true"
   scan_severity:
@@ -114,11 +114,14 @@ runs:
         CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@e8893c57a1f3a2b659b6b55564fdfdbbd2982911 #v3.24.0
       if: ${{ !cancelled() && fromJSON(inputs.scan) }} # workaround for composite jobs not being able to pass boolean inputs
+      uses: github/codeql-action/upload-sarif@e8893c57a1f3a2b659b6b55564fdfdbbd2982911 #v3.24.0
       with:
         sarif_file: "trivy-results.sarif"
         category: trivy
+      env:
+        CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
+      continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Build and push
       if: ${{ fromJSON(inputs.push) }} # workaround for composite jobs not being able to pass boolean inputs
       uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0

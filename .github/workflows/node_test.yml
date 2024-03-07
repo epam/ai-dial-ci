@@ -34,11 +34,11 @@ on:
       enable_ort:
         type: boolean
         default: true
-        description: Enable ort
+        description: Enable ORT scanning
       bypass_ort:
         type: boolean
         default: false
-        description: Do not fail pipeline if ort failed
+        description: Do not fail pipeline if ORT scan failed
       node_version:
         type: string
         default: "20"
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.6.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.7.0
         with:
           node_version: ${{ inputs.node_version }}
           clean_install: "true"
@@ -69,7 +69,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.6.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.7.0
         with:
           node_version: ${{ inputs.node_version }}
           clean_install: "true"
@@ -86,7 +86,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.6.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.7.0
         with:
           node_version: ${{ inputs.node_version }}
           clean_install: "true"
@@ -103,7 +103,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.6.1
+      - uses: epam/ai-dial-ci/actions/ort@1.7.0
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
           cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=NPM"

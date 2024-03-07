@@ -1,0 +1,144 @@
+name: Python Package tests
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      enable_style_checks:
+        type: boolean
+        default: true
+        description: Enable style_checks
+      bypass_style_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if style_checks failed
+      enable_code_checks:
+        type: boolean
+        default: true
+        description: Enable code_checks
+      bypass_code_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if code_checks failed
+      enable_trivy:
+        type: boolean
+        default: true
+        description: Enable Trivy scanning
+      bypass_trivy:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if Trivy failed
+      scan_severity:
+        description: "Severity of vulnerabilities to fail the build"
+        type: string
+        default: "CRITICAL,HIGH"
+      scan_vuln_type:
+        description: "Type of vulnerabilities to scan"
+        type: string
+        default: "os,library"
+      scan_ignore_unfixed:
+        type: boolean
+        description: "Ignore unpatched/unfixed vulnerabilities"
+        default: true
+      enable_ort:
+        type: boolean
+        default: true
+        description: Enable ORT scanning
+      bypass_ort:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ORT scan failed
+      python_version:
+        type: string
+        default: "3.11"
+        description: Python version to use
+
+jobs:
+  style_checks:
+    if: ${{ inputs.enable_style_checks }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.7.0
+        with:
+          python_version: ${{ inputs.python_version }}
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_style_checks }}
+        shell: bash
+        run: |
+          make lint
+
+  code_checks:
+    if: ${{ inputs.enable_code_checks }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.10", "3.9", "3.8"] # TODO: Use input to specify versions(?)
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.7.0
+        with:
+          python_version: ${{ matrix.python-version }}
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_code_checks }}
+        shell: bash
+        run: |
+          pip install twine
+          make build
+          twine check dist/*
+          make test PYTHON=${{ matrix.python-version }}
+
+  ort:
+    if: ${{ inputs.enable_ort }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/ort@1.7.0
+        with:
+          bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
+          cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
+
+  trivy:
+    if: ${{ inputs.enable_trivy }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Trivy vulnerability scanner (stdout, table view, no fail)
+        uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # v0.17.0
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
+          vuln-type: ${{ inputs.scan_vuln_type }}
+          severity: ${{ inputs.scan_severity }}
+        continue-on-error: ${{ inputs.bypass_trivy }}
+      - name: Run Trivy vulnerability scanner (SARIF, may fail)
+        uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # v0.17.0
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+          exit-code: "1"
+          ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
+          vuln-type: ${{ inputs.scan_vuln_type }}
+          severity: ${{ inputs.scan_severity }}
+          limit-severities-for-sarif: true
+        continue-on-error: ${{ inputs.bypass_trivy }}
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: ${{ !cancelled() && inputs.enable_trivy }}
+        uses: github/codeql-action/upload-sarif@e8893c57a1f3a2b659b6b55564fdfdbbd2982911 #v3.24.0
+        with:
+          sarif_file: "trivy-results.sarif"
+          category: trivy
+        continue-on-error: ${{ inputs.bypass_trivy }}

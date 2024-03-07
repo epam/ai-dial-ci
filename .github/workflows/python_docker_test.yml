@@ -1,4 +1,4 @@
-name: Java tests
+name: Python Docker tests
 
 on:
   workflow_call:
@@ -31,14 +31,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if ORT scan failed
-      java_version:
+      python_version:
         type: string
-        default: "17"
-        description: Java version to use
-      java_distribution:
-        type: string
-        default: "temurin"
-        description: Java distribution to use
+        default: "3.11"
+        description: Python version to use
 
 jobs:
   style_checks:
@@ -48,15 +44,14 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@1.7.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.7.0
         with:
-          java_version: ${{ inputs.java_version }}
-          java_distribution: ${{ inputs.java_distribution }}
+          python_version: ${{ inputs.python_version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_style_checks }}
         shell: bash
         run: |
-          ./gradlew checkstyleMain
+          make lint
 
   code_checks:
     if: ${{ inputs.enable_code_checks }}
@@ -65,15 +60,14 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@1.7.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.7.0
         with:
-          java_version: ${{ inputs.java_version }}
-          java_distribution: ${{ inputs.java_distribution }}
+          python_version: ${{ inputs.python_version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_code_checks }}
         shell: bash
         run: |
-          ./gradlew check || { echo "::error::Tests failed" && exit 1; } # TODO: figure out why we need to capture exit code
+          make test
 
   ort:
     if: ${{ inputs.enable_ort }}
@@ -85,4 +79,4 @@ jobs:
       - uses: epam/ai-dial-ci/actions/ort@1.7.0
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
-          cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Gradle"
+          cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
