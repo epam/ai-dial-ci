@@ -1,4 +1,4 @@
-name: NodeJS PR workflow
+name: Generic Docker PR workflow
 
 on:
   workflow_call:
@@ -7,14 +7,6 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if checks failed
-      enable_format_checks:
-        type: boolean
-        default: true
-        description: Enable format_checks
-      bypass_format_checks:
-        type: boolean
-        default: false
-        description: Do not fail pipeline if format_checks failed
       enable_style_checks:
         type: boolean
         default: true
@@ -23,14 +15,6 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if style_checks failed
-      enable_code_checks:
-        type: boolean
-        default: true
-        description: Enable code_checks
-      bypass_code_checks:
-        type: boolean
-        default: false
-        description: Do not fail pipeline if code_checks failed
       enable_ort:
         type: boolean
         default: true
@@ -47,28 +31,19 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if Trivy failed
-      node_version:
-        type: string
-        default: "20"
-        description: NodeJS version to use
 
 env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   test:
-    uses: ./.github/workflows/node_test.yml
+    uses: ./.github/workflows/generic_docker_test.yml
     with:
       bypass_checks: ${{ inputs.bypass_checks }}
-      enable_format_checks: ${{ inputs.enable_format_checks }}
-      bypass_format_checks: ${{ inputs.bypass_format_checks }}
       enable_style_checks: ${{ inputs.enable_style_checks }}
       bypass_style_checks: ${{ inputs.bypass_style_checks }}
-      enable_code_checks: ${{ inputs.enable_code_checks }}
-      bypass_code_checks: ${{ inputs.bypass_code_checks }}
       enable_ort: ${{ inputs.enable_ort }}
       bypass_ort: ${{ inputs.bypass_ort }}
-      node_version: ${{ inputs.node_version }}
 
   docker_build:
     runs-on: ubuntu-latest
