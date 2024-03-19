@@ -1,0 +1,50 @@
+name: Generic Docker tests
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      enable_style_checks:
+        type: boolean
+        default: true
+        description: Enable style_checks
+      bypass_style_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if style_checks failed
+      enable_ort:
+        type: boolean
+        default: true
+        description: Enable ORT scanning
+      bypass_ort:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ORT scan failed
+
+jobs:
+  style_checks:
+    if: ${{ inputs.enable_style_checks }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - name: Test
+        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_style_checks }}
+        shell: bash
+        run: |
+          make lint
+
+  ort:
+    if: ${{ inputs.enable_ort }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/ort@1.7.0
+        with:
+          bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}

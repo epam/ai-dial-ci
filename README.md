@@ -130,6 +130,36 @@ jobs:
     secrets: inherit
 ```
 
+### PR Workflow (Generic, Docker)
+
+```yml
+name: PR Workflow
+
+on:
+  pull_request:
+    branches: [development, release-*]
+
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/generic_docker_pr.yml@main
+    secrets: inherit
+```
+
+### Release Workflow (Generic, Docker)
+
+```yml
+name: Release Workflow
+
+on:
+  push:
+    branches: [development, release-*]
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/generic_docker_release.yml@main
+    secrets: inherit
+```
+
 ### Validate PR title
 
 ```yml

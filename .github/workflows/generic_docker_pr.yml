@@ -1,0 +1,59 @@
+name: Generic Docker PR workflow
+
+on:
+  workflow_call:
+    inputs:
+      bypass_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      enable_style_checks:
+        type: boolean
+        default: true
+        description: Enable style_checks
+      bypass_style_checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if style_checks failed
+      enable_ort:
+        type: boolean
+        default: true
+        description: Enable ORT scanning
+      bypass_ort:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ORT scan failed
+      enable_trivy:
+        type: boolean
+        default: true
+        description: Enable Trivy scanning
+      bypass_trivy:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if Trivy failed
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    uses: ./.github/workflows/generic_docker_test.yml
+    with:
+      bypass_checks: ${{ inputs.bypass_checks }}
+      enable_style_checks: ${{ inputs.enable_style_checks }}
+      bypass_style_checks: ${{ inputs.bypass_style_checks }}
+      enable_ort: ${{ inputs.enable_ort }}
+      bypass_ort: ${{ inputs.bypass_ort }}
+
+  docker_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/build_docker@1.7.0
+        with:
+          image_name: ghcr.io/${{ env.IMAGE_NAME }}
+          image_tag: test
+          scan: ${{ inputs.enable_trivy }}
+          bypass_checks: ${{ inputs.bypass_trivy }}
