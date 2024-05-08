@@ -61,7 +61,7 @@ jobs:
     if: ${{ inputs.enable_style_checks }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/python_prepare@1.8.0
@@ -81,7 +81,7 @@ jobs:
       matrix:
         python-version: ["3.11", "3.10", "3.9", "3.8"] # TODO: Use input to specify versions(?)
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/python_prepare@1.8.0
@@ -100,7 +100,7 @@ jobs:
     if: ${{ inputs.enable_ort }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/ort@1.8.0
