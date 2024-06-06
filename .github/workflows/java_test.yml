@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@1.8.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@1.8.1
         with:
           java_version: ${{ inputs.java_version }}
           java_distribution: ${{ inputs.java_distribution }}
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@1.8.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@1.8.1
         with:
           java_version: ${{ inputs.java_version }}
           java_distribution: ${{ inputs.java_distribution }}
@@ -82,7 +82,7 @@ jobs:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.8.0
+      - uses: epam/ai-dial-ci/actions/ort@1.8.1
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
           cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Gradle"

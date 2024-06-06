@@ -21,7 +21,7 @@ runs:
   using: "composite"
   steps:
     - name: Run GitHub Action for ORT
-      uses: oss-review-toolkit/ort-ci-github-action@7f23c1f8d169dad430e41df223d3b8409c7a156e # v1
+      uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
       with:
         allow-dynamic-versions: ${{ inputs.allow_dynamic_versions }}
         fail-on: ${{ inputs.fail_on }}
