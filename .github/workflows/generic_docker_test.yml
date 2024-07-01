@@ -45,6 +45,6 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.8.2
+      - uses: epam/ai-dial-ci/actions/ort@1.8.3
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
