@@ -49,7 +49,7 @@ jobs:
     if: ${{ inputs.enable_format_checks }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/node_prepare@1.8.1
@@ -66,7 +66,7 @@ jobs:
     if: ${{ inputs.enable_style_checks }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/node_prepare@1.8.1
@@ -83,7 +83,7 @@ jobs:
     if: ${{ inputs.enable_code_checks }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/node_prepare@1.8.1
@@ -100,7 +100,7 @@ jobs:
     if: ${{ inputs.enable_ort }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/ort@1.8.1
