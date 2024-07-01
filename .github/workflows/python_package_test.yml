@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.8.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.8.3
         with:
           python_version: ${{ inputs.python_version }}
       - name: Test
@@ -84,14 +84,14 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.8.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.8.3
         with:
           python_version: ${{ matrix.python-version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_code_checks }}
         shell: bash
         run: |
-          pip install twine==5.1.0
+          pip install twine==5.0.0
           make build
           twine check dist/*
           make test PYTHON=${{ matrix.python-version }}
@@ -103,7 +103,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.8.2
+      - uses: epam/ai-dial-ci/actions/ort@1.8.3
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
           cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
