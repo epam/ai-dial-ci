@@ -43,6 +43,10 @@ on:
         type: string
         default: "3.11"
         description: Python version to use
+      test_python_versions:
+        type: string
+        description: Python versions to run tests against as a list
+        default: '["3.9", "3.10", "3.11", "3.12"]'
 
 jobs:
   test:
@@ -56,6 +60,7 @@ jobs:
       enable_ort: ${{ inputs.enable_ort }}
       bypass_ort: ${{ inputs.bypass_ort }}
       python_version: ${{ inputs.python_version }}
+      test_python_versions: ${{ inputs.test_python_versions }}
 
   calculate_version:
     runs-on: ubuntu-latest
