@@ -45,7 +45,7 @@ on:
         description: Python version to use
       test_python_versions:
         type: string
-        description: Python versions to run tests against as a list
+        description: Python versions to run tests against
         default: '["3.9", "3.10", "3.11", "3.12"]'
 
 jobs:
