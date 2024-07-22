@@ -46,7 +46,7 @@ on:
       test_python_versions:
         type: string
         description: Python versions to run tests against
-        default: '["3.9", "3.10", "3.11", "3.12"]'
+        default: '["3.8", "3.9", "3.10", "3.11"]'
 
 env:
   IMAGE_NAME: ${{ github.repository }}
