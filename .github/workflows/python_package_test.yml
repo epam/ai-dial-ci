@@ -55,6 +55,10 @@ on:
         type: string
         default: "3.11"
         description: Python version to use
+      test_python_versions:
+        type: string
+        description: Python versions to run tests against
+        default: '["3.8", "3.9", "3.10", "3.11"]'
 
 jobs:
   style_checks:
@@ -64,7 +68,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.8.3
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.0
         with:
           python_version: ${{ inputs.python_version }}
       - name: Test
@@ -79,12 +83,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.10", "3.9", "3.8"] # TODO: Use input to specify versions(?)
+        python-version: ${{ fromJSON(inputs.test_python_versions) }}
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.8.3
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.0
         with:
           python_version: ${{ matrix.python-version }}
       - name: Test
@@ -103,7 +107,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.8.3
+      - uses: epam/ai-dial-ci/actions/ort@1.9.0
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
           cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
