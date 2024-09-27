@@ -1,0 +1,48 @@
+name: GKE deploy
+
+on:
+  workflow_call:
+    inputs:
+      test_value:
+        required: true
+        description: 'foo'
+        type: string
+    secrets:
+      TEST_VALUE:
+        required: true
+
+jobs:
+  deploy:
+    name: Setup, Build, and Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      NAMESPACE: component+pr-name
+      RELEASE: component+pr-name
+
+    steps:
+      - id: checkout
+        uses: 'actions/checkout@v4'
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          create_credentials_file: true
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - id: get-gke-credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: test
+          location: us-central1
+
+      - id: Deploy to GKE using Helm
+        run: |
+          helm repo add dial https://charts.epam-rail.com
+          helm upgrade --install $RELEASE dial/dial --namespace $NAMESPACE --create-namespace -f .github/workflows/gcp-values.yaml
+          

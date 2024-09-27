@@ -1,0 +1,31 @@
+name: publish to GCR pr image
+
+on:
+  workflow_call:
+
+jobs:
+  build-and-push-to-gcr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:      
+      - id: checkout
+        uses: 'actions/checkout@v4'
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          create_credentials_file: true
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+      
+      - uses: RafikFarhad/push-to-gcr-github-action@v5-rc1
+        with:
+          registry: ${{ secrets.GCP_REGISTRY }}
+          project_id: ${{ secrets.GCP_PROJECT }}
+          image_name: test
+          image_tag: test
+          dockerfile: ./Dockerfile
