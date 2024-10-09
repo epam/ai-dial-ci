@@ -94,3 +94,18 @@ jobs:
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           body: |
             ${{ steps.status.outputs.message }}
+
+      - name: Build and push image to GCR
+        uses: ./.github/actions/build-docker
+        with:
+          registry: ${{ secrets.GCP_REGISTRY }}
+
+
+      - name: Deploy environment to GKE
+        uses: ./.github/workflows/deploy-dial-gke
+        with:
+          NAMESPACE: "${{ github.event.repository.name }}-${{ github.event.pull_request.number }}" # should be taken from init trigger job
+          RELEASE: "${{ github.event.repository.name }}-${{ github.event.pull_request.number }}" # should be taken from init trigger job
+          
+
+
