@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.1
         with:
           python_version: ${{ inputs.python_version }}
       - run: make build
