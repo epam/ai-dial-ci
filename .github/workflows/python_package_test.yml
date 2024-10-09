@@ -63,12 +63,12 @@ on:
 jobs:
   style_checks:
     if: ${{ inputs.enable_style_checks }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.1
         with:
           python_version: ${{ inputs.python_version }}
       - name: Test
@@ -79,7 +79,7 @@ jobs:
 
   code_checks:
     if: ${{ inputs.enable_code_checks }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     strategy:
       fail-fast: false
       matrix:
@@ -88,7 +88,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.1
         with:
           python_version: ${{ matrix.python-version }}
       - name: Test
@@ -107,7 +107,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.9.0
+      - uses: epam/ai-dial-ci/actions/ort@1.9.1
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
           cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
