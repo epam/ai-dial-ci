@@ -39,7 +39,7 @@ on:
 jobs:
   style_checks:
     if: ${{ inputs.enable_style_checks }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
@@ -55,7 +55,7 @@ jobs:
 
   code_checks:
     if: ${{ inputs.enable_code_checks }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:

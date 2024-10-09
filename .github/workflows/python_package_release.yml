@@ -72,7 +72,7 @@ jobs:
         id: semantic_versioning
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     permissions:
       contents: write
       packages: write
