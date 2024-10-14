@@ -88,7 +88,7 @@ runs:
           org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
     - name: Run Trivy vulnerability scanner (stdout, table view, no fail)
       if: ${{ fromJSON(inputs.scan) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/trivy-action@fd25fed6972e341ff0007ddb61f77e88103953c2 # v0.21.0
+      uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # v0.24.0
       with:
         image-ref: "${{ inputs.image_name }}:${{ inputs.image_tag }}"
         format: "table"
@@ -99,8 +99,9 @@ runs:
         CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Run Trivy vulnerability scanner (SARIF, may fail)
-      if: ${{ fromJSON(inputs.scan) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/trivy-action@fd25fed6972e341ff0007ddb61f77e88103953c2 # v0.21.0
+      # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
+      if: ${{ fromJSON(inputs.scan) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
+      uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # v0.24.0
       with:
         image-ref: "${{ inputs.image_name }}:${{ inputs.image_tag }}"
         format: "sarif"
@@ -114,8 +115,9 @@ runs:
         CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Upload Trivy scan results to GitHub Security tab
-      if: ${{ !cancelled() && fromJSON(inputs.scan) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: github/codeql-action/upload-sarif@2e230e8fe0ad3a14a340ad0815ddb96d599d2aff #v3.25.8
+      # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
+      if: ${{ !cancelled() && fromJSON(inputs.scan) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
+      uses: github/codeql-action/upload-sarif@e2b3eafc8d227b0241d48be5f425d47c2d750a13 #v3.26.10
       with:
         sarif_file: "trivy-results.sarif"
         category: trivy
