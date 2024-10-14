@@ -72,7 +72,7 @@ jobs:
       is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
       latest_tag: ${{ steps.semantic_versioning.outputs.latest_tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.8.3
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.9.1
         id: semantic_versioning
 
   release:
@@ -85,14 +85,14 @@ jobs:
       - calculate_version
       - test
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.8.3
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.9.1
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/java_prepare@1.8.3
+      - uses: epam/ai-dial-ci/actions/java_prepare@1.9.1
         with:
           java_version: ${{ inputs.java_version }}
           java_distribution: ${{ inputs.java_distribution }}
@@ -100,7 +100,7 @@ jobs:
         shell: bash
         run: |
           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle
-      - uses: epam/ai-dial-ci/actions/build_docker@1.8.3
+      - uses: epam/ai-dial-ci/actions/build_docker@1.9.1
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -117,7 +117,7 @@ jobs:
             ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is_latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.8.3
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.9.1
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
