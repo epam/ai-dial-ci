@@ -63,12 +63,12 @@ on:
 jobs:
   style_checks:
     if: ${{ inputs.enable_style_checks }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.1
         with:
           python_version: ${{ inputs.python_version }}
       - name: Test
@@ -79,7 +79,7 @@ jobs:
 
   code_checks:
     if: ${{ inputs.enable_code_checks }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     strategy:
       fail-fast: false
       matrix:
@@ -88,7 +88,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.1
         with:
           python_version: ${{ matrix.python-version }}
       - name: Test
@@ -107,7 +107,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/ort@1.9.0
+      - uses: epam/ai-dial-ci/actions/ort@1.9.1
         with:
           bypass_checks: ${{ inputs.bypass_checks || inputs.bypass_ort }}
           cli_args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
@@ -127,6 +127,8 @@ jobs:
           severity: ${{ inputs.scan_severity }}
         continue-on-error: ${{ inputs.bypass_trivy }}
       - name: Run Trivy vulnerability scanner (SARIF, may fail)
+        # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
+        if: ${{ !github.event.repository.private }}
         uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # v0.23.0
         with:
           scan-type: "fs"
@@ -140,7 +142,8 @@ jobs:
           limit-severities-for-sarif: true
         continue-on-error: ${{ inputs.bypass_trivy }}
       - name: Upload Trivy scan results to GitHub Security tab
-        if: ${{ !cancelled() && inputs.enable_trivy }}
+        # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
+        if: ${{ !cancelled() && inputs.enable_trivy && !github.event.repository.private }}
         uses: github/codeql-action/upload-sarif@e2b3eafc8d227b0241d48be5f425d47c2d750a13 #v3.26.10
         with:
           sarif_file: "trivy-results.sarif"

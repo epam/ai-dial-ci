@@ -62,16 +62,18 @@ jobs:
       bypass_code_checks: ${{ inputs.bypass_code_checks }}
       enable_ort: ${{ inputs.enable_ort }}
       bypass_ort: ${{ inputs.bypass_ort }}
+      enable_trivy: ${{ inputs.enable_trivy }}
+      bypass_trivy: ${{ inputs.bypass_trivy }}
       python_version: ${{ inputs.python_version }}
       test_python_versions: ${{ inputs.test_python_versions }}
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.1
         with:
           python_version: ${{ inputs.python_version }}
       - run: make build
