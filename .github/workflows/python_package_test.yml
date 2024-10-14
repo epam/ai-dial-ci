@@ -127,6 +127,8 @@ jobs:
           severity: ${{ inputs.scan_severity }}
         continue-on-error: ${{ inputs.bypass_trivy }}
       - name: Run Trivy vulnerability scanner (SARIF, may fail)
+        # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
+        if: ${{ !github.event.repository.private }}
         uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # v0.23.0
         with:
           scan-type: "fs"
@@ -140,7 +142,8 @@ jobs:
           limit-severities-for-sarif: true
         continue-on-error: ${{ inputs.bypass_trivy }}
       - name: Upload Trivy scan results to GitHub Security tab
-        if: ${{ !cancelled() && inputs.enable_trivy }}
+        # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
+        if: ${{ !cancelled() && inputs.enable_trivy && !github.event.repository.private }}
         uses: github/codeql-action/upload-sarif@b611370bb5703a7efb587f9d136a52ea24c5c38c #v3.25.11
         with:
           sarif_file: "trivy-results.sarif"
