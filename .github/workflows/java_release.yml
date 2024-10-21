@@ -99,7 +99,7 @@ jobs:
       - name: Set version
         shell: bash
         run: |
-          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle
+          sed -i -E "s/^([ \t]*version[ \t]*=[ \t]*)[\"'].*[\"']/\1\"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle
       - uses: epam/ai-dial-ci/actions/build_docker@1.9.2
         with:
           ghcr_username: ${{ github.actor }}
