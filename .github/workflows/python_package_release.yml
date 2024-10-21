@@ -70,7 +70,7 @@ jobs:
       non_semver_next_version: ${{ steps.semantic_versioning.outputs.non_semver_next_version }}
       latest_tag: ${{ steps.semantic_versioning.outputs.latest_tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.9.2
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.9.3
         id: semantic_versioning
 
   release:
@@ -83,14 +83,14 @@ jobs:
       - calculate_version
       - test
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.9.2
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.9.3
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.9.3
         with:
           python_version: ${{ inputs.python_version }}
       - name: Set version
@@ -104,7 +104,7 @@ jobs:
           make publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.9.2
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.9.3
         with:
           tag_version: ${{ needs.calculate_version.outputs.non_semver_next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
