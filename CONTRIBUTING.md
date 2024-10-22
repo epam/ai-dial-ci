@@ -2,33 +2,33 @@
 
 Thank you for your interest in contributing to our project. The following is a set of guidelines for contributing to this project.
 
-## Workflow
+## Contributors Workflow
 
-### 1. Installing pre-commit
+### Configure pre-commit
 
-We use pre-commit to ensure code quality. Please install it following the steps below:
+We use pre-commit to ensure code quality. We kindly ask you to use it before creating a pull request.
 
-Install pre-commit package globally:
+1. Install pre-commit using pip (if you haven't already):
 
-```bash
-pip install pre-commit
-```
+    ```bash
+    pip install pre-commit
+    ```
 
-Then install the git hook scripts, run:
+1. Then install the git hook scripts:
 
-```bash
-pre-commit install
-```
+    ```bash
+    pre-commit install
+    ```
 
-Pre-commit will now run on every commit. If you want to run pre-commit manually, you can use:
+Pre-commit will now run on every commit. If you want to run pre-commit checks manually, you can use:
 
 ```bash
 pre-commit run
 ```
 
-### 2. Creating a Feature Branch
+### Creating a Feature Branch
 
-Before you start working, please create a new feature branch. This will ensure your ongoing work does not affect the main branch and makes it easier to merge your changes later.
+Before you start working, please create a new, "feature" branch from the repo's default one. This will ensure your ongoing work does not affect the main branch and makes it easier to merge your changes later.
 
 To create a new branch:
 
@@ -36,32 +36,40 @@ To create a new branch:
 git checkout -b your-new-branch
 ```
 
-**While doing changes, make sure to update self-dependencies in actions versions.**
+### Creating a Pull Request (PR)
 
-### 3. Creating a Pull Request (PR)
+Once ready, you can create a PR back from your feature branch to a repo's default branch.
 
-Once ready, you can create a PR. We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/). Make sure to prefix the title with one of the following: `fix:`, `feat:`, `feature:`, `chore:`, `hotfix:`. Breaking change pull requests may include `!` after the type/scope, e.g. `<type>!: <description>`.
+We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/). Make sure to prefix the title with one of the following: `fix:`, `feat:`, `feature:`, `chore:`, `hotfix:`. Breaking change pull requests may include `!` after the type/scope, e.g. `<type>!: <description>`.
 
-This helps maintainers to categorize the PR and understand its purpose easier.
+## Maintainers Workflow
 
-### For Maintainers
+### Checking a Pull Request (PR)
 
 After a PR is created, it needs to be checked and reviewed before merging.
 
-#### 1. Checking, Approving, and Merging with squash
+Review the changes in the PR and ensure they adhere to the code quality standards and are aligned with the project's objectives.
 
-Review the changes in the PR and ensure they adhere to the code quality standards and are aligned with the project's objectives. Once approved, merge the PR and squash the commits.
+### Updating Self-Dependencies
 
-#### 2. Creating a new release
+Once PR checked, ensure the self-dependencies (occurrences of `uses: epam/ai-dial-ci`) in it are updated. We don't update self-dependencies automatically, e.g. with Dependabot, so it must be done in the PR manually. You may use `update-self-dependencies.sh` script for your convenience.
+
+```console
+$ ./update-self-dependencies.sh
+Enter the next (predicted) version tag (e.g., 1.0.1): 1.9.3
+Updated all occurrences of 'epam/ai-dial-ci/' with version '1.9.3'.
+$
+```
+
+After updating self-dependencies, commit the changes and push them to the PR branch. Approve the PR and merge it.
+
+### Creating a new release
 
 Follow the steps below to create a new release on GitHub:
 
 1. Navigate to your repository homepage.
 1. Click on the "Releases" tab which is next to the "About" section on the right side of the page.
 1. Click on "Draft a new release" button which is toward the right side of the screen.
-1. Select the main branch as the target for the release.
-1. Enter a unique tag for the new version following your project's versioning system. This tag will be used to identify this specific release.
-1. Under "Release title", give a short, meaningful name for the release.
-1. Make sure "Generate Release Notes" option is selected.
-*GitHub will automatically include a changelog of all commit messages since your last release.*
+1. Hit "Choose a tag" and enter a unique tag for the new version following [semver](https://semver.org/) rules. This tag must match the tag used in [Updating Self-Dependencies](#updating-self-dependencies) step. Hit "Create new tag".
+1. Click "Generate Release Notes". GitHub will automatically include a changelog of all commit messages since last release.
 1. Once all the details are finalized, click on the "Publish release" button.
