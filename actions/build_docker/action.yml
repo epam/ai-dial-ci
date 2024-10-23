@@ -56,14 +56,14 @@ runs:
   steps:
     - name: Login to GitHub Container Registry
       if: ${{ fromJSON(inputs.push) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+      uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
       with:
         registry: ghcr.io
         username: ${{ inputs.ghcr_username }}
         password: ${{ inputs.ghcr_password }}
     - name: Login to Docker Hub
       if: ${{ fromJSON(inputs.push) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+      uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
       with:
         username: ${{ inputs.dockerhub_username }}
         password: ${{ inputs.dockerhub_password }}
