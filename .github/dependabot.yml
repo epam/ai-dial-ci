@@ -1,7 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - "/actions/**"
     schedule:
       interval: "weekly"
       day: "wednesday"
@@ -9,3 +11,6 @@ updates:
     commit-message:
       # Prefix all commit messages with "chore: "
       prefix: "chore"
+    ignore:
+      - dependency-name: "epam/ai-dial-ci"
+    open-pull-requests-limit: 100
