@@ -111,7 +111,10 @@ runs:
         vuln-type: ${{ inputs.scan_vuln_type }}
         severity: ${{ inputs.scan_severity }}
         limit-severities-for-sarif: true
+        skip-setup-trivy: true  # We already have trivy installed just above
       env:
+        TRIVY_SKIP_DB_UPDATE: true # We already have the DB updated just above
+        TRIVY_SKIP_JAVA_DB_UPDATE: true # We already have the Java DB updated just above
         CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Upload Trivy scan results to GitHub Security tab
