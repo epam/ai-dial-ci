@@ -221,7 +221,7 @@ on:
 
 jobs:
   dependency-submission:
-    uses: epam/ai-dial-ci/.github/workflows/generic_docker_release.yml@main
+    uses: epam/ai-dial-ci/.github/workflows/gradle-dependency-submission.yml@main
 ```
 
 ## Developer environment
