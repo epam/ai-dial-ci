@@ -210,6 +210,20 @@ jobs:
             ]
 ```
 
+## Submit dependencies to Dependabot
+
+```yml
+name: Dependency Submission
+
+on:
+  push:
+    branches: [ 'development' ]
+
+jobs:
+  dependency-submission:
+    uses: epam/ai-dial-ci/.github/workflows/generic_docker_release.yml@main
+```
+
 ## Developer environment
 
 This project contains reusable workflows under [`.github/workflows`](.github/workflows) directory, and composite actions under [`actions`](actions) directory.
