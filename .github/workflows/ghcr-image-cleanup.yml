@@ -1,0 +1,35 @@
+on:
+  workflow_call:
+    inputs:
+      account:
+        type: string
+        description: GitHub organization
+        default: epam
+      image-names:
+        type: string
+        description: Container image names
+      cut-off:
+        type: string
+        description: Specifies how old package versions need to be before being considered for deletion.
+        default: 1w
+      dry-run:
+        type: string
+        description: Run in dry-run mode
+        default: true
+    secrets:
+      GHCR_TOKEN:
+        required: true
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    name: Delete untagged images
+    steps:
+      - uses: snok/container-retention-policy@4f22ef80902ad409ed55a99dc5133cc1250a0d03 # v3.0.0
+        with:
+          account: ${{ inputs.account }}
+          token: ${{ secrets.GHCR_TOKEN }}
+          image-names: ${{ inputs.image-names }}
+          tag-selection: untagged
+          cut-off: ${{ inputs.cut-off }}
+          dry-run: ${{ inputs.dry-run }}

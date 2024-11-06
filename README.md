@@ -209,6 +209,21 @@ jobs:
               }
             ]
 ```
+## Cleanup untagged images in GHCR
+
+```yml
+name: Cleanup untagged images
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Everyday at midnight
+
+jobs:
+  cleanup-untagged-images:
+    uses: epam/ai-dial-ci/.github/workflows/ghcr-image-cleanup.yml@main
+    secrets:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+```
 
 ## Developer environment
 
