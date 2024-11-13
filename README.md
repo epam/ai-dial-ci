@@ -209,7 +209,7 @@ jobs:
               }
             ]
 ```
-## Cleanup untagged images in GHCR
+## Cleanup for untagged images in GHCR
 
 ```yml
 name: Cleanup untagged images
