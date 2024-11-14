@@ -84,6 +84,7 @@ jobs:
           lfs: true
       - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
         with:
+          image: "ghcr.io/oss-review-toolkit/ort:39.0.0"
           allow-dynamic-versions: "true"
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Gradle"
