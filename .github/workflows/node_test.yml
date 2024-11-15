@@ -109,6 +109,4 @@ jobs:
           allow-dynamic-versions: "true"
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=NPM"
-        env:
-          CONTINUE_ON_ERROR: ${{ inputs.bypass_checks || inputs.bypass_ort }} # Hack to use the input below as a boolean
-        continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
+        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_ort }}
