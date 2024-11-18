@@ -1,5 +1,24 @@
 # AI DIAL workflows
 
+- [AI DIAL workflows](#ai-dial-workflows)
+  - [Overview](#overview)
+  - [Usage](#usage)
+    - [PR Workflow (NodeJS (npm), Docker)](#pr-workflow-nodejs-npm-docker)
+    - [Release Workflow (NodeJS (npm), Docker)](#release-workflow-nodejs-npm-docker)
+    - [PR Workflow (Java (gradle), Docker)](#pr-workflow-java-gradle-docker)
+    - [Release Workflow (Java (gradle), Docker)](#release-workflow-java-gradle-docker)
+    - [PR Workflow (Python (poetry), Docker)](#pr-workflow-python-poetry-docker)
+    - [Release Workflow (Python (poetry), Docker)](#release-workflow-python-poetry-docker)
+    - [PR Workflow (Python (poetry), package)](#pr-workflow-python-poetry-package)
+    - [Release Workflow (Python (poetry), package)](#release-workflow-python-poetry-package)
+    - [PR Workflow (Generic, Docker)](#pr-workflow-generic-docker)
+    - [Release Workflow (Generic, Docker)](#release-workflow-generic-docker)
+    - [Validate PR title](#validate-pr-title)
+    - [Deploy review environment](#deploy-review-environment)
+    - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
+    - [Dependency Review (Java (gradle))](#dependency-review-java-gradle)
+  - [Contributing](#contributing)
+
 ## Overview
 
 Continuous Integration instrumentation for [AI DIAL](https://epam-rail.com) components.
@@ -34,6 +53,10 @@ on:
   push:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/node_release.yml@main
@@ -63,6 +86,10 @@ name: Release Workflow
 on:
   push:
     branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release:
@@ -94,6 +121,10 @@ on:
   push:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_release.yml@main
@@ -123,6 +154,10 @@ name: Release Workflow
 on:
   push:
     branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release:
@@ -154,6 +189,10 @@ on:
   push:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/generic_docker_release.yml@main
@@ -170,7 +209,11 @@ on:
     types:
       - opened
       - edited
-      - synchronize
+      - reopened
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   pr-title-check:
@@ -179,7 +222,7 @@ jobs:
       ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
-## Deploy review environment
+### Deploy review environment
 
 ```yml
 name: Slash Command Dispatch
@@ -209,7 +252,8 @@ jobs:
               }
             ]
 ```
-## Cleanup for untagged images in GHCR
+
+### Cleanup for untagged images in GHCR
 
 ```yml
 name: Cleanup untagged images
@@ -234,19 +278,30 @@ jobs:
           cut-off: "1d"
 ```
 
-## Developer environment
+### Dependency Review (Java (gradle))
 
-This project contains reusable workflows under [`.github/workflows`](.github/workflows) directory, and composite actions under [`actions`](actions) directory.
+```yml
+name: Dependency Review
 
-The `pre-commit` hook configured by [`.pre-commit-config.yaml`](.pre-commit-config.yaml) file forces yaml "code style".
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
 
-To install and configure pre-commit hook run:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
-```bash
-pip install pre-commit
-pre-commit install
+jobs:
+  dependency-review:
+    uses: epam/ai-dial-ci/.github/workflows/java_dependency_review.yml@main
+    secrets:
+      ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
-This will install and configure git pre-commit hook initiated automatically on `git commit` command and auto-fixing code style.
+## Contributing
+
+This project contains reusable workflows under [`.github/workflows`](.github/workflows) directory, and composite actions under [`actions`](actions) directory.
 
 Check [contribution guidelines](CONTRIBUTING.md) for details.

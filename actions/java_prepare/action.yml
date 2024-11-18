@@ -1,5 +1,5 @@
 name: "Prepare Java"
-description: "Set up Java with Gradle cache"
+description: "Set up Java with Gradle"
 
 inputs:
   java_version:
@@ -8,9 +8,6 @@ inputs:
   java_distribution:
     description: "Java distribution to use"
     default: "temurin"
-  cache:
-    description: "Cache type. Supported values: maven, gradle, sbt"
-    default: "gradle"
 
 runs:
   using: "composite"
@@ -20,4 +17,9 @@ runs:
       with:
         java-version: ${{ inputs.java_version }}
         distribution: ${{ inputs.java_distribution }}
-        cache: ${{ inputs.cache }}
+        # Not using `cache: gradle` because `setup-gradle` action takes care of it
+        # ref: https://github.com/gradle/actions/blob/main/docs/setup-gradle.md#incompatibility-with-other-caching-mechanisms
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@d156388eb19639ec20ade50009f3d199ce1e2808 # v4.1.0
+      with:
+        add-job-summary: "on-failure"
