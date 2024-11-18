@@ -23,6 +23,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if ORT scan failed
+      ort_version:
+        type: string
+        default: "latest"
+        description: ORT version to use
 
 jobs:
   style_checks:
@@ -47,7 +51,7 @@ jobs:
           lfs: true
       - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
         with:
-          image: "ghcr.io/oss-review-toolkit/ort:39.0.0"
+          image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort_version }}"
           allow-dynamic-versions: "true"
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace"

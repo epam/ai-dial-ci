@@ -31,6 +31,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if ORT scan failed
+      ort_version:
+        type: string
+        default: "latest"
+        description: ORT version to use
       enable_trivy:
         type: boolean
         default: true
@@ -62,6 +66,7 @@ jobs:
       bypass_code_checks: ${{ inputs.bypass_code_checks }}
       enable_ort: ${{ inputs.enable_ort }}
       bypass_ort: ${{ inputs.bypass_ort }}
+      ort_version: ${{ inputs.ort_version }}
       enable_trivy: ${{ inputs.enable_trivy }}
       bypass_trivy: ${{ inputs.bypass_trivy }}
       python_version: ${{ inputs.python_version }}
