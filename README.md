@@ -17,6 +17,7 @@
     - [Deploy review environment](#deploy-review-environment)
     - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
     - [Dependency Review (Java (gradle))](#dependency-review-java-gradle)
+    - [Trivy additional configuration](#trivy-additional-configuration)
   - [Contributing](#contributing)
 
 ## Overview
@@ -280,6 +281,8 @@ jobs:
 
 ### Dependency Review (Java (gradle))
 
+To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository.
+
 ```yml
 name: Dependency Review
 
@@ -298,6 +301,27 @@ jobs:
     uses: epam/ai-dial-ci/.github/workflows/java_dependency_review.yml@main
     secrets:
       ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
+```
+
+### Trivy additional configuration
+
+To change predefined Trivy parameters or set up additional configuration options, create `trivy.yaml` file in root of your repository. Use example below to add fallback repositories for vulnerabilities and checks DB and thus mitigate rate limit issues.
+
+```yaml
+# Trivy configuration file
+# https://aquasecurity.github.io/trivy/latest/docs/references/configuration/config-file/
+db:
+  no-progress: true
+  repository:
+    - mirror.gcr.io/aquasec/trivy-db:2
+    - public.ecr.aws/aquasecurity/trivy-db:2
+    - ghcr.io/aquasecurity/trivy-db:2
+  java-repository:
+    - mirror.gcr.io/aquasec/trivy-java-db:1
+    - public.ecr.aws/aquasecurity/trivy-java-db:1
+    - ghcr.io/aquasecurity/trivy-java-db:1
+misconfiguration:
+  checks-bundle-repository: mirror.gcr.io/aquasec/trivy-checks:1
 ```
 
 ## Contributing
