@@ -39,6 +39,10 @@ on:
   pull_request:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@main
@@ -72,6 +76,10 @@ name: PR Workflow
 on:
   pull_request:
     branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   run_tests:
@@ -107,6 +115,10 @@ on:
   pull_request:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
@@ -141,6 +153,10 @@ on:
   pull_request:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/python_package_pr.yml@main
@@ -174,6 +190,10 @@ name: PR Workflow
 on:
   pull_request:
     branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   run_tests:
