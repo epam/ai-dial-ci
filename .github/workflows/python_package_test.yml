@@ -133,6 +133,8 @@ jobs:
           vuln-type: ${{ inputs.scan_vuln_type }}
           severity: ${{ inputs.scan_severity }}
         continue-on-error: ${{ inputs.bypass_trivy }}
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
       - name: Run Trivy vulnerability scanner (SARIF, may fail)
         # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
         if: ${{ !github.event.repository.private }}
@@ -148,6 +150,8 @@ jobs:
           severity: ${{ inputs.scan_severity }}
           limit-severities-for-sarif: true
         continue-on-error: ${{ inputs.bypass_trivy }}
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
       - name: Upload Trivy scan results to GitHub Security tab
         # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
         if: ${{ !cancelled() && inputs.enable_trivy && !github.event.repository.private }}

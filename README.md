@@ -39,6 +39,10 @@ on:
   pull_request:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@main
@@ -72,6 +76,10 @@ name: PR Workflow
 on:
   pull_request:
     branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   run_tests:
@@ -107,6 +115,10 @@ on:
   pull_request:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
@@ -141,6 +153,10 @@ on:
   pull_request:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/python_package_pr.yml@main
@@ -174,6 +190,10 @@ name: PR Workflow
 on:
   pull_request:
     branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   run_tests:
@@ -233,10 +253,11 @@ on:
 jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request }}
     steps:
       - name: Slash Command Dispatch
         id: scd
-        uses: peter-evans/slash-command-dispatch@a28ee6cd74d5200f99e247ebc7b365c03ae0ef3c # v3.0.1
+        uses: peter-evans/slash-command-dispatch@13bc09769d122a64f75aa5037256f6f2d78be8c4 # v4.0.0
         with:
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
           reaction-token: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -244,7 +265,6 @@ jobs:
             [
               {
                 "command": "deploy-review",
-                "permission": "write",
                 "issue_type": "pull-request",
                 "repository": "epam/ai-dial-ci",
                 "static_args": [
@@ -281,7 +301,7 @@ jobs:
 
 ### Dependency Review (Java (gradle))
 
-To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository.
+To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository. You'll start getting review comments on PRs.
 
 ```yml
 name: Dependency Review
