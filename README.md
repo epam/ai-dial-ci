@@ -281,7 +281,7 @@ jobs:
 
 ### Dependency Review (Java (gradle))
 
-To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository.
+To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository. You'll start getting review comments on PRs.
 
 ```yml
 name: Dependency Review

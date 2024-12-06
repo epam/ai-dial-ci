@@ -1,5 +1,6 @@
 name: Dependency Review
 
+# Designed to be triggered by `pull_request_target` event
 on:
   workflow_call:
     inputs:
@@ -20,7 +21,9 @@ permissions:
   contents: read
 
 jobs:
-  dependency-submission:
+  dependency-review:
+    # Do not perform dependency review on private repos - GitHub Advanced Security is not enabled
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       contents: write # to submit dependency graph
