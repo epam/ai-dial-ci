@@ -105,8 +105,23 @@ runs:
         # python packages do not support semantic versioning
         NON_SEMVER_NEXT_VERSION="${NEXT_VERSION//-/}"
 
+        # Outputs to stdout and job summary
+        OUTPUTS_SUMMARY=$(cat << EOF
+        | Parameter               | Value                     |
+        |-------------------------|---------------------------|
+        | current_version         | $CURRENT_VERSION          |
+        | next_version            | $NEXT_VERSION             |
+        | non_semver_next_version | $NON_SEMVER_NEXT_VERSION  |
+        | latest_tag              | $LATEST_TAG               |
+        | is_latest               | $IS_LATEST                |
+        EOF
+        )
+        echo "$OUTPUTS_SUMMARY"
+        echo "$OUTPUTS_SUMMARY" >> "$GITHUB_STEP_SUMMARY"
+
+        # Outputs
         echo "current_version=${CURRENT_VERSION}" >>$GITHUB_OUTPUT
         echo "next_version=${NEXT_VERSION}" >>$GITHUB_OUTPUT
         echo "non_semver_next_version=${NON_SEMVER_NEXT_VERSION}" >>$GITHUB_OUTPUT
-        echo "is_latest=${IS_LATEST}" >>$GITHUB_OUTPUT
         echo "latest_tag=${LATEST_TAG}" >>$GITHUB_OUTPUT
+        echo "is_latest=${IS_LATEST}" >>$GITHUB_OUTPUT
