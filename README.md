@@ -253,10 +253,11 @@ on:
 jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request }}
     steps:
       - name: Slash Command Dispatch
         id: scd
-        uses: peter-evans/slash-command-dispatch@a28ee6cd74d5200f99e247ebc7b365c03ae0ef3c # v3.0.1
+        uses: peter-evans/slash-command-dispatch@13bc09769d122a64f75aa5037256f6f2d78be8c4 # v4.0.0
         with:
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
           reaction-token: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -264,7 +265,6 @@ jobs:
             [
               {
                 "command": "deploy-review",
-                "permission": "write",
                 "issue_type": "pull-request",
                 "repository": "epam/ai-dial-ci",
                 "static_args": [
