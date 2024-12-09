@@ -50,6 +50,10 @@ inputs:
     description: "Docker Hub password"
     required: false
     default: ""
+  build_context:
+    description: "Docker build context"
+    required: false
+    default: "."
 
 runs:
   using: "composite"
@@ -71,7 +75,7 @@ runs:
       if: ${{ fromJSON(inputs.scan) }} # workaround for composite jobs not being able to pass boolean inputs
       uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
       with:
-        context: .
+        context: ${{ inputs.build_context }}
         load: true
         tags: |
           ${{ inputs.image_name }}:${{ inputs.image_tag }}
@@ -131,7 +135,7 @@ runs:
       if: ${{ fromJSON(inputs.push) }} # workaround for composite jobs not being able to pass boolean inputs
       uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
       with:
-        context: .
+        context: ${{ inputs.build_context }}
         push: true
         tags: |
           ${{ inputs.image_name }}:${{ inputs.image_tag }}
