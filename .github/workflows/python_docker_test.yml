@@ -81,9 +81,11 @@ jobs:
         with:
           lfs: true
       - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
+        env:
+          CONTINUE_ON_ERROR: ${{ inputs.bypass_checks || inputs.bypass_ort }} # Hack to use the input below as a boolean
         with:
           image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort_version }}"
           allow-dynamic-versions: "true"
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
-        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_ort }}
+        continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
