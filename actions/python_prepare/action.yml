@@ -11,6 +11,9 @@ inputs:
   install_poetry:
     description: "Install poetry"
     default: "true"
+  poetry_version:
+    description: "Poetry version to use"
+    default: "1.8.5"
 
 runs:
   using: "composite"
@@ -19,7 +22,7 @@ runs:
       if: ${{ fromJSON(inputs.install_poetry) }} # workaround for composite jobs not being able to pass boolean inputs
       shell: bash
       run: |
-        pip install poetry
+        pip install poetry==${{ inputs.poetry_version }}
     - name: Set up Python
       uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:

@@ -43,7 +43,7 @@ jobs:
           lfs: true
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: epam/ai-dial-ci/actions/java_prepare@1.10.2
+      - uses: epam/ai-dial-ci/actions/java_prepare@1.11.0
         with:
           java_version: ${{ inputs.java_version }}
           java_distribution: ${{ inputs.java_distribution }}
