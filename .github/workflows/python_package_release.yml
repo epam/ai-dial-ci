@@ -47,6 +47,10 @@ on:
         type: string
         default: "3.11"
         description: Python version to use
+      poetry_version:
+        type: string
+        description: "Poetry version to use"
+        default: "1.8.5"
       test_python_versions:
         type: string
         description: Python versions to run tests against
@@ -75,7 +79,7 @@ jobs:
       non_semver_next_version: ${{ steps.semantic_versioning.outputs.non_semver_next_version }}
       latest_tag: ${{ steps.semantic_versioning.outputs.latest_tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.10.2
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.10.3
         id: semantic_versioning
 
   release:
@@ -88,16 +92,17 @@ jobs:
       - calculate_version
       - test
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.10.2
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.10.3
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.10.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.10.3
         with:
           python_version: ${{ inputs.python_version }}
+          poetry_version: ${{ inputs.poetry_version }}
       - name: Set version
         shell: bash
         run: |
@@ -109,7 +114,7 @@ jobs:
           make publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.10.2
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.10.3
         with:
           tag_version: ${{ needs.calculate_version.outputs.non_semver_next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify

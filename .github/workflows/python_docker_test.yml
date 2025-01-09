@@ -39,6 +39,10 @@ on:
         type: string
         default: "3.11"
         description: Python version to use
+      poetry_version:
+        type: string
+        description: "Poetry version to use"
+        default: "latest"
 
 jobs:
   style_checks:
@@ -48,9 +52,10 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.10.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.10.3
         with:
           python_version: ${{ inputs.python_version }}
+          poetry_version: ${{ inputs.poetry_version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_style_checks }}
         shell: bash
@@ -64,9 +69,10 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@1.10.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@1.10.3
         with:
           python_version: ${{ inputs.python_version }}
+          poetry_version: ${{ inputs.poetry_version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_code_checks }}
         shell: bash
