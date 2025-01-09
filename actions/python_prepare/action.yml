@@ -4,7 +4,7 @@ description: "Checkout project, set up python"
 inputs:
   python_version:
     description: "Python version to use"
-    default: "3.11"
+    default: "3.x"
   cache:
     description: "Cache type. Supported values: pip, pipenv, poetry"
     default: "poetry"
@@ -13,7 +13,7 @@ inputs:
     default: "true"
   poetry_version:
     description: "Poetry version to use"
-    default: "1.8.5"
+    default: "latest"
 
 runs:
   using: "composite"
