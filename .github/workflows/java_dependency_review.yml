@@ -1,5 +1,6 @@
 name: Dependency Review
 
+# Designed to be triggered by `pull_request_target` event
 on:
   workflow_call:
     inputs:
@@ -20,7 +21,9 @@ permissions:
   contents: read
 
 jobs:
-  dependency-submission:
+  dependency-review:
+    # Do not perform dependency review on private repos - GitHub Advanced Security is not enabled
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       contents: write # to submit dependency graph
@@ -43,7 +46,7 @@ jobs:
           lfs: true
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: epam/ai-dial-ci/actions/java_prepare@1.10.3
+      - uses: epam/ai-dial-ci/actions/java_prepare@1.10.4
         with:
           java_version: ${{ inputs.java_version }}
           java_distribution: ${{ inputs.java_distribution }}
