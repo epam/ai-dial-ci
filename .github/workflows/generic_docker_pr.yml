@@ -57,7 +57,7 @@ jobs:
         with:
           lfs: true
           persist-credentials: false
-      - uses: epam/ai-dial-ci/actions/build_docker@1.10.2
+      - uses: epam/ai-dial-ci/actions/build_docker@1.10.3
         with:
           image_name: ghcr.io/${{ env.IMAGE_NAME }}
           image_tag: test
