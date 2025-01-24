@@ -86,7 +86,7 @@ jobs:
       is_latest: ${{ steps.semantic_versioning.outputs.is_latest }}
       latest_tag: ${{ steps.semantic_versioning.outputs.latest_tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.11.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@1.11.1
         id: semantic_versioning
 
   release:
@@ -99,14 +99,14 @@ jobs:
       - calculate_version
       - test
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.11.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@1.11.1
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@1.11.0
+      - uses: epam/ai-dial-ci/actions/node_prepare@1.11.1
         with:
           node_version: ${{ inputs.node_version }}
           clean_install: true
@@ -115,7 +115,7 @@ jobs:
         shell: bash
         run: |
           npm version ${{ needs.calculate_version.outputs.next_version }} --no-git-tag-version || true # upstream branch may already be updated
-      - uses: epam/ai-dial-ci/actions/build_docker@1.11.0
+      - uses: epam/ai-dial-ci/actions/build_docker@1.11.1
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -155,7 +155,7 @@ jobs:
           IS_LATEST: ${{ needs.calculate_version.outputs.is_latest == 'true' }}
           IS_DEVELOPMENT_BRANCH: ${{ github.ref == 'refs/heads/development' }}
           IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release-') }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.11.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@1.11.1
         with:
           tag_version: ${{ needs.calculate_version.outputs.next_version }}
           changelog_file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
