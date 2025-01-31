@@ -1,0 +1,164 @@
+name: "End to end test"
+description: "Run DIAL end-to-end test"
+
+inputs:
+  addons-list-for-tests:
+    description: "Dial entities used for listing test"
+    type: string
+    default: '[{"entityId":"addon-wolfram"}, {"entityId":"addon-xweather"}]'
+  auth-provider:
+    description: "Name of authentication provider"
+    type: string
+    default: "auth0"
+  e2e-host:
+    required: true
+    description: "The host URL for end-to-end testing"
+    type: string
+  e2e-admin:
+    required: true
+    description: "Username for admin authentication"
+    type: string
+  e2e-username:
+    required: true
+    description: "Comma-separated list of usernames for e2e authentication. Provide enough usernames for all main users, additional users, and second additional users (number of workers * 3)."
+    type: string
+  e2e-overlay-username:
+    required: true
+    description: "Comma separated list of usernames for overlay sandbox authentification. The number of users should be equal to number of workers"
+    type: string
+  e2e-password:
+    required: true
+    description: "E2E tests password"
+    type: string
+  e2e-workers:
+    description: "Number of threads to run e2e tests"
+    type: number
+    default: 3
+  e2e-overlay-workers:
+    description: "Number of threads to run e2e overlay tests"
+    type: number
+    default: 1
+  entity-arithmetic-request-for-api-tests:
+    description: "Dial entities used for simple arithmetic API test"
+    type: string
+    default: '[{ "entityId": "gpt-35-turbo", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-16k", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-1106", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0613", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0125", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0301", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-1106-preview", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-0125-preview", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-turbo-2024-04-09", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-turbo", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-32k-0613", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4o-2024-05-13", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4o-2024-08-06", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4o-mini-2024-07-18", "isSysPromptAllowed": "true" },{ "entityId": "amazon.titan-tg1-large", "isSysPromptAllowed": "true" },{ "entityId": "ai21.j2-grande-instruct", "isSysPromptAllowed": "true" },{ "entityId": "ai21.j2-jumbo-instruct", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-instant-v1", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v2", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v2-1", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v3-haiku", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v3-sonnet", "isSysPromptAllowed": "true" },{ "entityId": "meta.llama3-8b-instruct-v1", "isSysPromptAllowed": "true" },{ "entityId": "meta.llama3-70b-instruct-v1", "isSysPromptAllowed": "true" },{ "entityId": "gemini-pro", "isSysPromptAllowed": "true" },{ "entityId": "gemini-1.5-pro-preview-0409", "isSysPromptAllowed": "true" },{ "entityId": "gemini-1.5-flash-001", "isSysPromptAllowed": "true" }]'
+  entity-plus-addons-for-api-tests:
+    description: "Dial entities used for entity+addons API test"
+    type: string
+    default: ''
+  entity-simple-request-for-api-tests:
+    description: "Dial entities used for text request API test, attachment can be expected as a response"
+    type: string
+    default: '[{ "entityId": "stability.stable-diffusion-xl", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}, { "entityId": "dall-e-3", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}, { "entityId": "imagegeneration@005", "request": "draw smiling emoticon", "isAttachmentResponse": "true"} ]'
+  entity-plus-attachment-for-api-tests:
+    description: "Dial entities used for attachment request API test"
+    type: string
+    default: '[{ "entityId": "gpt-4-vision-preview", "attachmentName": "sun.jpg", "response": "sun" },{ "entityId": "gemini-pro-vision", "attachmentName": "sun.jpg", "request": "what is on picture?", "response": "sun" }]'
+  assistant-plus-addons-for-api-tests:
+    description: "Dial entities used for assistant+addons API test"
+    type: string
+    default: ''
+  issue-url:
+    description: "Issue URL"
+    type: string
+    default: "https://github.com/epam/ai-dial-chat/issues"
+  models-list-for-tests:
+    description: "Dial entities used for listing test"
+    type: string
+    default: '[{"entityId":"gpt-35-turbo"}, {"entityId":"gpt-35-turbo-0301"}, {"entityId":"gpt-35-turbo-0613"}, {"entityId":"gpt-35-turbo-1106"}, {"entityId":"gpt-35-turbo-16k"}, {"entityId":"gpt-35-turbo-0125"}, {"entityId":"gpt-4"}, {"entityId":"gpt-4-0613"}, {"entityId":"gpt-4-1106-preview"}, {"entityId":"gpt-4-0125-preview"}, {"entityId":"gpt-4-turbo-2024-04-09"}, {"entityId":"gpt-4-turbo"}, {"entityId":"gpt-4-32k"}, {"entityId":"gpt-4-32k-0613"}, {"entityId":"gpt-4-vision-preview"}, {"entityId":"gpt-4o"}, {"entityId":"gpt-4o-2024-05-13"}, {"entityId": "gpt-4o-2024-08-06"}, {"entityId": "gpt-4o-mini-2024-07-18"}, {"entityId": "chat-bison"}, {"entityId": "codechat-bison"}, {"entityId": "dall-e-3"}, {"entityId": "amazon.titan-tg1-large"}, {"entityId": "ai21.j2-grande-instruct"}, {"entityId": "ai21.j2-jumbo-instruct"}, {"entityId": "anthropic.claude"}, {"entityId": "anthropic.claude-instant-v1"}, {"entityId": "anthropic.claude-v2"}, {"entityId": "anthropic.claude-v2-1"}, {"entityId": "anthropic.claude-v3-sonnet"}, {"entityId": "anthropic.claude-v3-5-sonnet"}, {"entityId": "anthropic.claude-v3-haiku"}, {"entityId": "anthropic.claude-v3-opus"}, {"entityId": "stability.stable-diffusion-xl"}, {"entityId": "imagegeneration@005"}, {"entityId": "gemini-1.5-pro-preview-0409"}, {"entityId": "gemini-1.5-flash-001"}, {"entityId": "gemini-pro-vision"}, {"entityId": "gemini-pro"}, {"entityId": "meta.llama3-8b-instruct-v1"}, {"entityId": "meta.llama3-70b-instruct-v1"}, {"entityId": "databricks-dbrx-instruct"}, {"entityId": "databricks-mixtral-8x7b-instruct"}]'
+  next-public-overlay-host:
+    required: true
+    description: "Overlay domain host"
+    type: string
+  simple-request-model:
+    description: "Model used for simple requests, with or without system prompts, e.g. arithmetic operations, markdown tables generation etc"
+    type: string
+    default: 'gpt-35-turbo'
+  test-repository:
+    description: "E2E tests Git repository"
+    type: string
+    default: "epam/ai-dial-chat"
+  test-branch:
+    description: "E2E tests Git branch"
+    type: string
+    default: "development"
+  tms-url:
+    description: "TMS URL"
+    type: string
+    default: "https://jira.epam.com/jira/browse"
+
+env:
+  ALLURE_VERSION: 2.24.0
+  PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
+  PLAYWRIGHT_ACTION_TIMEOUT: 60000
+  PLAYWRIGHT_EXPECT_TIMEOUT: 60000
+  TMS_URL: ${{ inputs.tms-url }}
+  ISSUE_URL: ${{ inputs.issue-url }}
+  E2E_HOST: ${{ inputs.e2e-host }}
+  E2E_ADMIN: ${{ inputs.e2e-admin }}
+  E2E_USERNAME: ${{ inputs.e2e-username }}
+  E2E_OVERLAY_USERNAME: ${{ inputs.e2e-overlay-username }}
+  E2E_PASSWORD: ${{ inputs.e2e-password }}
+  E2E_WORKERS: ${{ inputs.e2e-workers }}
+  E2E_OVERLAY_WORKERS: ${{ inputs.e2e-overlay-workers }}
+  NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
+  AUTH_PROVIDER: ${{ inputs.auth-provider }}
+  ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS: ${{ inputs.entity-arithmetic-request-for-api-tests }}
+  ENTITY_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.entity-plus-addons-for-api-tests }}
+  ENTITY_SIMPLE_REQUEST_FOR_API_TESTS: ${{ inputs.entity-simple-request-for-api-tests }}
+  ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS: ${{ inputs.entity-plus-attachment-for-api-tests }}
+  ASSISTANT_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.assistant-plus-addons-for-api-tests }}
+  MODELS_LIST_FOR_TESTS: ${{ inputs.models-list-for-tests }}
+  ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
+  SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: ${{ github.event.inputs.test-repository }}
+        ref: ${{ github.event.inputs.test-branch }}
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'microsoft'
+        java-version: '17'
+    - name: Install Allure
+      run: |
+        set -euo pipefail
+        curl -fsSL https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz | tar -xzf -
+        ./allure-${ALLURE_VERSION}/bin/allure --version
+    - name: Install playwright
+      run: npm install -D @playwright/test
+    - name: Wait for environment
+      run: |
+        set -euo pipefail
+        echo "Expected environment URL ${E2E_HOST}, waiting to be available..."
+        ENV_HOSTNAME=$(echo "$E2E_HOST" | awk -F/ '{print $3}')
+        curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_HOSTNAME}"
+        curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${E2E_HOST}"/api/health
+    - name: Run tests
+      run: |
+        set -euo pipefail
+        echo "Host to run e2e tests ${E2E_HOST}"
+        echo "Host to run overlay e2e tests ${NEXT_PUBLIC_OVERLAY_HOST}"
+        echo "Config for arithmetic e2e api tests ${ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS}"
+        echo "Config for attachment request e2e api tests ${ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS}"
+        echo "Config for attachment response e2e api tests ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
+        echo "Simple requests model for e2e tests ${SIMPLE_REQUEST_MODEL}"
+        npm run e2e:ci
+    - name: Generate Allure Chat Report
+      run: ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-chat-results -o ./apps/chat-e2e/allure-chat-report --clean
+    - name: Generate Allure Overlay Report
+      run: ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-overlay-results -o ./apps/chat-e2e/allure-overlay-report --clean
+    - name: Upload Allure Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: allure-report
+        path: |
+          apps/chat-e2e/allure-chat-report
+          apps/chat-e2e/allure-overlay-report
+        retention-days: 30
