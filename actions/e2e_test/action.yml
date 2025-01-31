@@ -6,6 +6,9 @@ inputs:
     description: "Dial entities used for listing test"
     type: string
     default: '[{"entityId":"addon-wolfram"}, {"entityId":"addon-xweather"}]'
+  allure-version:
+    type: string
+    default: "2.24.0"
   auth-provider:
     description: "Name of authentication provider"
     type: string
@@ -89,35 +92,11 @@ inputs:
 
 runs:
   using: "composite"
-  env:
-    ALLURE_VERSION: 2.24.0
-    PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
-    PLAYWRIGHT_ACTION_TIMEOUT: 60000
-    PLAYWRIGHT_EXPECT_TIMEOUT: 60000
-    TMS_URL: ${{ inputs.tms-url }}
-    ISSUE_URL: ${{ inputs.issue-url }}
-    E2E_HOST: ${{ inputs.e2e-host }}
-    E2E_ADMIN: ${{ inputs.e2e-admin }}
-    E2E_USERNAME: ${{ inputs.e2e-username }}
-    E2E_OVERLAY_USERNAME: ${{ inputs.e2e-overlay-username }}
-    E2E_PASSWORD: ${{ inputs.e2e-password }}
-    E2E_WORKERS: ${{ inputs.e2e-workers }}
-    E2E_OVERLAY_WORKERS: ${{ inputs.e2e-overlay-workers }}
-    NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
-    AUTH_PROVIDER: ${{ inputs.auth-provider }}
-    ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS: ${{ inputs.entity-arithmetic-request-for-api-tests }}
-    ENTITY_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.entity-plus-addons-for-api-tests }}
-    ENTITY_SIMPLE_REQUEST_FOR_API_TESTS: ${{ inputs.entity-simple-request-for-api-tests }}
-    ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS: ${{ inputs.entity-plus-attachment-for-api-tests }}
-    ASSISTANT_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.assistant-plus-addons-for-api-tests }}
-    MODELS_LIST_FOR_TESTS: ${{ inputs.models-list-for-tests }}
-    ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
-    SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
   steps:
     - uses: actions/checkout@v4
       with:
-        repository: ${{ github.event.inputs.test-repository }}
-        ref: ${{ github.event.inputs.test-branch }}
+        repository: ${{ inputs.test-repository }}
+        ref: ${{ inputs.test-branch }}
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
@@ -130,6 +109,8 @@ runs:
         set -euo pipefail
         curl -fsSL https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz | tar -xzf -
         ./allure-${ALLURE_VERSION}/bin/allure --version
+      env:
+        ALLURE_VERSION: ${{ inputs.allure-version }}
     - name: Install playwright
       run: npm install -D @playwright/test
     - name: Wait for environment
@@ -139,6 +120,8 @@ runs:
         ENV_HOSTNAME=$(echo "$E2E_HOST" | awk -F/ '{print $3}')
         curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_HOSTNAME}"
         curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${E2E_HOST}"/api/health
+      env:
+        E2E_HOST: ${{ inputs.e2e-host }}
     - name: Run tests
       run: |
         set -euo pipefail
@@ -149,10 +132,37 @@ runs:
         echo "Config for attachment response e2e api tests ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
         echo "Simple requests model for e2e tests ${SIMPLE_REQUEST_MODEL}"
         npm run e2e:ci
+      env:
+        PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
+        PLAYWRIGHT_ACTION_TIMEOUT: 60000
+        PLAYWRIGHT_EXPECT_TIMEOUT: 60000
+        TMS_URL: ${{ inputs.tms-url }}
+        ISSUE_URL: ${{ inputs.issue-url }}
+        E2E_HOST: ${{ inputs.e2e-host }}
+        E2E_ADMIN: ${{ inputs.e2e-admin }}
+        E2E_USERNAME: ${{ inputs.e2e-username }}
+        E2E_OVERLAY_USERNAME: ${{ inputs.e2e-overlay-username }}
+        E2E_PASSWORD: ${{ inputs.e2e-password }}
+        E2E_WORKERS: ${{ inputs.e2e-workers }}
+        E2E_OVERLAY_WORKERS: ${{ inputs.e2e-overlay-workers }}
+        NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
+        AUTH_PROVIDER: ${{ inputs.auth-provider }}
+        ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS: ${{ inputs.entity-arithmetic-request-for-api-tests }}
+        ENTITY_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.entity-plus-addons-for-api-tests }}
+        ENTITY_SIMPLE_REQUEST_FOR_API_TESTS: ${{ inputs.entity-simple-request-for-api-tests }}
+        ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS: ${{ inputs.entity-plus-attachment-for-api-tests }}
+        ASSISTANT_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.assistant-plus-addons-for-api-tests }}
+        MODELS_LIST_FOR_TESTS: ${{ inputs.models-list-for-tests }}
+        ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
+        SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
     - name: Generate Allure Chat Report
       run: ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-chat-results -o ./apps/chat-e2e/allure-chat-report --clean
+      env:
+        ALLURE_VERSION: ${{ inputs.allure-version }}
     - name: Generate Allure Overlay Report
       run: ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-overlay-results -o ./apps/chat-e2e/allure-overlay-report --clean
+      env:
+        ALLURE_VERSION: ${{ inputs.allure-version }}
     - name: Upload Allure Report
       uses: actions/upload-artifact@v4
       with:
