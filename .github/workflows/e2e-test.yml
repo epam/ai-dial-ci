@@ -8,7 +8,7 @@ on:
         description: "The ID or path of the project owned by the authenticated user."
         type: string
       gitlab-project-ref:
-        default: "master"
+        default: "github-e2e" # replace with 'master' after testing
         description: "The branch or tag to run the pipeline on."
         type: string
     secrets:
@@ -18,13 +18,24 @@ on:
         required: true
       DEPLOY_ACCESS_TOKEN:
         required: true
+      E2E_ADMIN:
+        required: true
+      E2E_USERNAME:
+        required: true
+      E2E_OVERLAY_USERNAME:
+        required: true
+      E2E_PASSWORD:
+        required: true
 
 jobs:
-  trigger-pipeline:
+  deploy-env:
     runs-on: ubuntu-latest
     concurrency: e2e-test
     environment:
       name: e2e-test
+    outputs:
+      GITHUB_APP: ${{ github.event.repository.name }}
+      GITHUB_SHA: ${{ steps.sha.outputs.SHA }}
     steps:
       - name: Obtain short sha
         id: sha
@@ -44,5 +55,54 @@ jobs:
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ github.event.repository.name }}",
-              "TRIGGER_GITHUB_SHA": "${{ steps.sha.outputs.SHA }}"
+              "TRIGGER_GITHUB_SHA": "${{ steps.sha.outputs.SHA }}",
+              "ALLOW_DEPLOY": "true",
+              "ALLOW_DESTROY": "false"
+            }
+
+  e2e-test:
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@gh-e2e-test
+    concurrency: e2e-test
+    needs:
+      - deploy-env
+    with:
+      e2e-host: "https://chat-${{ needs.deploy-env.outputs.GITHUB_APP }}-${{ needs.deploy-env.outputs.GITHUB_SHA }}.nightly-test.deltixhub.io"
+      next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.GITHUB_APP }}-${{ needs.deploy-env.outputs.GITHUB_SHA }}.nightly-test.deltixhub.io"
+      e2e-workers: 6
+      entity-arithmetic-request-for-api-tests: '[{ "entityId": "gpt-35-turbo", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-16k", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-1106", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0613", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0125", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0301", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0613-adapter", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-1106-preview", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-0125-preview", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-turbo-2024-04-09", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-turbo", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-32k-0314", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-32k-0613", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4o-2024-05-13", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4o-2024-08-06", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4o-mini-2024-07-18", "isSysPromptAllowed": "true" },{ "entityId": "amazon.titan-tg1-large", "isSysPromptAllowed": "true" },{ "entityId": "ai21.j2-grande-instruct", "isSysPromptAllowed": "true" },{ "entityId": "ai21.j2-jumbo-instruct", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-instant-v1", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v2", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v2-1", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v3-haiku", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v3-sonnet", "isSysPromptAllowed": "true" },{ "entityId": "meta.llama3-8b-instruct-v1", "isSysPromptAllowed": "true" },{ "entityId": "meta.llama3-70b-instruct-v1", "isSysPromptAllowed": "true" },{ "entityId": "mistral-large-azure", "isSysPromptAllowed": "true" },{ "entityId": "chat-bison@001", "isSysPromptAllowed": "true" },{ "entityId": "chat-bison-32k@002", "isSysPromptAllowed": "true" },{ "entityId": "codechat-bison@001", "isSysPromptAllowed": "true" },{ "entityId": "codechat-bison-32k@002", "isSysPromptAllowed": "true" },{ "entityId": "gemini-pro", "isSysPromptAllowed": "true" },{ "entityId": "gemini-1.5-pro-preview-0409", "isSysPromptAllowed": "true" },{ "entityId": "gemini-1.5-flash-001", "isSysPromptAllowed": "true" }]'
+      entity-plus-attachment-for-api-tests: '[{ "entityId": "gpt-4-vision-preview", "attachmentName": "sun.jpg", "response": "sun" },{ "entityId": "gemini-pro-vision", "attachmentName": "sun.jpg", "request": "what is on picture?", "response": "sun" }]'
+      entity-simple-request-for-api-tests: '[{ "entityId": "stability.stable-diffusion-xl", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}, { "entityId": "stability.stable-image-core-v1", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}, { "entityId": "stability.stable-image-ultra-v1", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}, { "entityId": "stability.sd3-large-v1", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}, { "entityId": "dall-e-3", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}, { "entityId": "imagegeneration@005", "request": "draw smiling emoticon", "isAttachmentResponse": "true"} ]'
+      models-list-for-tests: '[{"entityId":"gpt-35-turbo"}, {"entityId":"gpt-35-turbo-0301"}, {"entityId":"gpt-35-turbo-0613"}, {"entityId":"gpt-35-turbo-1106"}, {"entityId":"gpt-35-turbo-16k"}, {"entityId":"gpt-35-turbo-0125"}, {"entityId":"gpt-35-turbo-0613-adapter"}, {"entityId":"gpt-4"}, {"entityId":"gpt-4-0613"}, {"entityId":"gpt-4-1106-preview"}, {"entityId":"gpt-4-0125-preview"}, {"entityId":"gpt-4-turbo-2024-04-09"}, {"entityId":"gpt-4-turbo"}, {"entityId":"gpt-4-32k"}, {"entityId":"gpt-4-32k-0314"}, {"entityId":"gpt-4-32k-0613"}, {"entityId":"gpt-4-vision-preview"}, {"entityId":"gpt-4o"}, {"entityId":"gpt-4o-2024-05-13"}, {"entityId": "gpt-4o-2024-08-06"}, {"entityId": "gpt-4o-mini-2024-07-18"}, {"entityId": "chat-bison"}, {"entityId": "chat-bison@001"}, {"entityId": "chat-bison-32k@002"}, {"entityId": "codechat-bison"}, {"entityId": "codechat-bison@001"}, {"entityId": "codechat-bison-32k@002"}, {"entityId": "dall-e-3"}, {"entityId": "amazon.titan-tg1-large"}, {"entityId": "ai21.j2-grande-instruct"}, {"entityId": "ai21.j2-jumbo-instruct"}, {"entityId": "anthropic.claude"}, {"entityId": "anthropic.claude-instant-v1"}, {"entityId": "anthropic.claude-v2"}, {"entityId": "anthropic.claude-v2-1"}, {"entityId": "anthropic.claude-v3-sonnet"}, {"entityId": "anthropic.claude-v3-5-sonnet"}, {"entityId": "anthropic.claude-v3-haiku"}, {"entityId": "anthropic.claude-v3-opus"}, {"entityId": "stability.stable-diffusion-xl"}, {"entityId": "imagegeneration@005"}, {"entityId": "gemini-1.5-pro-preview-0409"}, {"entityId": "gemini-1.5-flash-001"}, {"entityId": "gemini-pro-vision"}, {"entityId": "gemini-pro"}, {"entityId": "meta.llama3-8b-instruct-v1"}, {"entityId": "meta.llama3-70b-instruct-v1"}, {"entityId": "mistral-large-azure"}, {"entityId": "databricks-dbrx-instruct"}, {"entityId": "databricks-mixtral-8x7b-instruct"}, {"entityId": "databricks-llama-2-70b-chat"}, {"entityId": "stability.stable-image-core-v1"}, {"entityId": "stability.stable-image-ultra-v1"}, {"entityId": "stability.sd3-large-v1"}]'
+      addons-list-for-tests: '[{"entityId":"addon-wolfram"}, {"entityId":"addon-xweather"}]'
+      simple-request-model: 'gpt-35-turbo'
+    secrets:
+      E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+
+  destroy-env:
+    runs-on: ubuntu-latest
+    concurrency: e2e-test
+    environment:
+      name: e2e-test
+    needs:
+      - deploy-env
+    if: always()
+    steps:
+      - name: Destroy environment
+        id: destroy
+        uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
+          access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
+          id: ${{ inputs.gitlab-project-id }}
+          ref: ${{ inputs.gitlab-project-ref }}
+          variables: >
+            {
+              "TRIGGER_GITHUB_APP":"${{ needs.deploy-env.outputs.GITHUB_APP }}",
+              "TRIGGER_GITHUB_SHA": "${{ needs.deploy-env.outputs.GITHUB_SHA }}",
+              "ALLOW_DEPLOY": "false",
+              "ALLOW_DESTROY": "true"
             }
