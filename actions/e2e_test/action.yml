@@ -87,33 +87,32 @@ inputs:
     type: string
     default: "https://jira.epam.com/jira/browse"
 
-env:
-  ALLURE_VERSION: 2.24.0
-  PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
-  PLAYWRIGHT_ACTION_TIMEOUT: 60000
-  PLAYWRIGHT_EXPECT_TIMEOUT: 60000
-  TMS_URL: ${{ inputs.tms-url }}
-  ISSUE_URL: ${{ inputs.issue-url }}
-  E2E_HOST: ${{ inputs.e2e-host }}
-  E2E_ADMIN: ${{ inputs.e2e-admin }}
-  E2E_USERNAME: ${{ inputs.e2e-username }}
-  E2E_OVERLAY_USERNAME: ${{ inputs.e2e-overlay-username }}
-  E2E_PASSWORD: ${{ inputs.e2e-password }}
-  E2E_WORKERS: ${{ inputs.e2e-workers }}
-  E2E_OVERLAY_WORKERS: ${{ inputs.e2e-overlay-workers }}
-  NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
-  AUTH_PROVIDER: ${{ inputs.auth-provider }}
-  ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS: ${{ inputs.entity-arithmetic-request-for-api-tests }}
-  ENTITY_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.entity-plus-addons-for-api-tests }}
-  ENTITY_SIMPLE_REQUEST_FOR_API_TESTS: ${{ inputs.entity-simple-request-for-api-tests }}
-  ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS: ${{ inputs.entity-plus-attachment-for-api-tests }}
-  ASSISTANT_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.assistant-plus-addons-for-api-tests }}
-  MODELS_LIST_FOR_TESTS: ${{ inputs.models-list-for-tests }}
-  ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
-  SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
-
 runs:
   using: "composite"
+  env:
+    ALLURE_VERSION: 2.24.0
+    PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
+    PLAYWRIGHT_ACTION_TIMEOUT: 60000
+    PLAYWRIGHT_EXPECT_TIMEOUT: 60000
+    TMS_URL: ${{ inputs.tms-url }}
+    ISSUE_URL: ${{ inputs.issue-url }}
+    E2E_HOST: ${{ inputs.e2e-host }}
+    E2E_ADMIN: ${{ inputs.e2e-admin }}
+    E2E_USERNAME: ${{ inputs.e2e-username }}
+    E2E_OVERLAY_USERNAME: ${{ inputs.e2e-overlay-username }}
+    E2E_PASSWORD: ${{ inputs.e2e-password }}
+    E2E_WORKERS: ${{ inputs.e2e-workers }}
+    E2E_OVERLAY_WORKERS: ${{ inputs.e2e-overlay-workers }}
+    NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
+    AUTH_PROVIDER: ${{ inputs.auth-provider }}
+    ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS: ${{ inputs.entity-arithmetic-request-for-api-tests }}
+    ENTITY_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.entity-plus-addons-for-api-tests }}
+    ENTITY_SIMPLE_REQUEST_FOR_API_TESTS: ${{ inputs.entity-simple-request-for-api-tests }}
+    ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS: ${{ inputs.entity-plus-attachment-for-api-tests }}
+    ASSISTANT_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.assistant-plus-addons-for-api-tests }}
+    MODELS_LIST_FOR_TESTS: ${{ inputs.models-list-for-tests }}
+    ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
+    SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
   steps:
     - uses: actions/checkout@v4
       with:
