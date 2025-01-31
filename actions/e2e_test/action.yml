@@ -109,10 +109,12 @@ runs:
         set -euo pipefail
         curl -fsSL https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz | tar -xzf -
         ./allure-${ALLURE_VERSION}/bin/allure --version
+      shell: bash
       env:
         ALLURE_VERSION: ${{ inputs.allure-version }}
     - name: Install playwright
       run: npm install -D @playwright/test
+      shell: bash
     - name: Wait for environment
       run: |
         set -euo pipefail
@@ -120,6 +122,7 @@ runs:
         ENV_HOSTNAME=$(echo "$E2E_HOST" | awk -F/ '{print $3}')
         curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_HOSTNAME}"
         curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${E2E_HOST}"/api/health
+      shell: bash
       env:
         E2E_HOST: ${{ inputs.e2e-host }}
     - name: Run tests
@@ -132,6 +135,7 @@ runs:
         echo "Config for attachment response e2e api tests ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
         echo "Simple requests model for e2e tests ${SIMPLE_REQUEST_MODEL}"
         npm run e2e:ci
+      shell: bash
       env:
         PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
         PLAYWRIGHT_ACTION_TIMEOUT: 60000
@@ -157,10 +161,12 @@ runs:
         SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
     - name: Generate Allure Chat Report
       run: ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-chat-results -o ./apps/chat-e2e/allure-chat-report --clean
+      shell: bash
       env:
         ALLURE_VERSION: ${{ inputs.allure-version }}
     - name: Generate Allure Overlay Report
       run: ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-overlay-results -o ./apps/chat-e2e/allure-overlay-report --clean
+      shell: bash
       env:
         ALLURE_VERSION: ${{ inputs.allure-version }}
     - name: Upload Allure Report
