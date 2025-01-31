@@ -36,7 +36,7 @@ inputs:
   e2e-workers:
     description: "Number of threads to run e2e tests"
     type: number
-    default: 3
+    default: 6
   e2e-overlay-workers:
     description: "Number of threads to run e2e overlay tests"
     type: number
