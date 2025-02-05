@@ -28,10 +28,10 @@ inputs:
     description: "E2E tests password"
   e2e-workers:
     description: "Number of threads to run e2e tests"
-    default: 3
+    default: '3'
   e2e-overlay-workers:
     description: "Number of threads to run e2e overlay tests"
-    default: 1
+    default: '1'
   entity-arithmetic-request-for-api-tests:
     description: "Dial entities used for simple arithmetic API test"
     default: ''
