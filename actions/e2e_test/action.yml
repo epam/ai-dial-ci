@@ -94,7 +94,6 @@ runs:
         java-version: ${{ inputs.java-version }}
     - name: Install Allure
       run: |
-        set -euo pipefail
         curl -fsSL https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz | tar -xzf -
         ./allure-${ALLURE_VERSION}/bin/allure --version
       shell: bash
@@ -105,7 +104,6 @@ runs:
       shell: bash
     - name: Wait for environment
       run: |
-        set -euo pipefail
         echo "Expected environment URL ${E2E_HOST}, waiting to be available..."
         ENV_HOSTNAME=$(echo "$E2E_HOST" | awk -F/ '{print $3}')
         ENV_OVERLAY_HOSTNAME=$(echo "$NEXT_PUBLIC_OVERLAY_HOST" | awk -F/ '{print $3}')
@@ -119,7 +117,6 @@ runs:
         NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
     - name: Run tests
       run: |
-        set -euo pipefail
         echo "Host to run e2e tests ${E2E_HOST}"
         echo "Host to run overlay e2e tests ${NEXT_PUBLIC_OVERLAY_HOST}"
         echo "Config for arithmetic e2e api tests ${ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS}"
