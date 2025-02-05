@@ -73,6 +73,10 @@ inputs:
     required: true
     description: "Overlay domain host"
     type: string
+  node-version:
+    description: "NodeJS version"
+    type: string
+    default: 'lts/*'
   simple-request-model:
     description: "Model used for simple requests, with or without system prompts, e.g. arithmetic operations, markdown tables generation etc"
     type: string
@@ -99,7 +103,7 @@ runs:
         ref: ${{ inputs.test-branch }}
     - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
       with:
-        node-version: lts/*
+        node-version: ${{ inputs.node-version }}
     - uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b # v4.6.0
       with:
         distribution: 'microsoft'
