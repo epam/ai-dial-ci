@@ -159,13 +159,10 @@ runs:
         MODELS_LIST_FOR_TESTS: ${{ inputs.models-list-for-tests }}
         ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
         SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
-    - name: Generate Allure Chat Report
-      run: ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-chat-results -o ./apps/chat-e2e/allure-chat-report --clean
-      shell: bash
-      env:
-        ALLURE_VERSION: ${{ inputs.allure-version }}
-    - name: Generate Allure Overlay Report
-      run: ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-overlay-results -o ./apps/chat-e2e/allure-overlay-report --clean
+    - name: Generate Allure Report
+      run: |
+        ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-chat-results -o ./apps/chat-e2e/allure-chat-report --clean
+        ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-overlay-results -o ./apps/chat-e2e/allure-overlay-report --clean
       shell: bash
       env:
         ALLURE_VERSION: ${{ inputs.allure-version }}
