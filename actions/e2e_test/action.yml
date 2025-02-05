@@ -15,19 +15,15 @@ inputs:
     required: true
     description: "The host URL for end-to-end testing"
   e2e-admin:
-    required: true
     description: "Username for admin authentication"
     default: ${{ secrets.E2E_ADMIN }}
   e2e-username:
-    required: true
     description: "Comma-separated list of usernames for e2e authentication. Provide enough usernames for all main users, additional users, and second additional users (number of workers * 3)."
     default: ${{ secrets.E2E_USERNAME }}
   e2e-overlay-username:
-    required: true
     description: "Comma separated list of usernames for overlay sandbox authentification. The number of users should be equal to number of workers"
     default: ${{ secrets.E2E_OVERLAY_USERNAME }}
   e2e-password:
-    required: true
     description: "E2E tests password"
     default: ${{ secrets.E2E_PASSWORD }}
   e2e-workers:
@@ -153,6 +149,7 @@ runs:
         ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
         SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
     - name: Generate Allure Report
+      if: ${{ !cancelled() }}
       run: |
         ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-chat-results -o ./apps/chat-e2e/allure-chat-report --clean
         ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-overlay-results -o ./apps/chat-e2e/allure-overlay-report --clean
@@ -161,6 +158,7 @@ runs:
         ALLURE_VERSION: ${{ inputs.allure-version }}
     - name: Upload Allure Report
       uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+      if: ${{ !cancelled() }}
       with:
         name: allure-report
         path: |
