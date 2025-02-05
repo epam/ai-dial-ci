@@ -65,6 +65,14 @@ inputs:
     description: "Issue URL"
     type: string
     default: ''
+  java-distribution:
+    description: "Java distribution"
+    type: string
+    default: 'temurin'
+  java-version:
+    description: "Java version"
+    type: string
+    default: '17'
   models-list-for-tests:
     description: "Dial entities used for listing test"
     type: string
@@ -106,8 +114,8 @@ runs:
         node-version: ${{ inputs.node-version }}
     - uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b # v4.6.0
       with:
-        distribution: 'microsoft'
-        java-version: '17'
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
     - name: Install Allure
       run: |
         set -euo pipefail
