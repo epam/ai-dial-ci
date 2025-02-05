@@ -16,16 +16,12 @@ inputs:
     description: "The host URL for end-to-end testing"
   e2e-admin:
     description: "Username for admin authentication"
-    default: ${{ secrets.E2E_ADMIN }}
   e2e-username:
     description: "Comma-separated list of usernames for e2e authentication. Provide enough usernames for all main users, additional users, and second additional users (number of workers * 3)."
-    default: ${{ secrets.E2E_USERNAME }}
   e2e-overlay-username:
     description: "Comma separated list of usernames for overlay sandbox authentification. The number of users should be equal to number of workers"
-    default: ${{ secrets.E2E_OVERLAY_USERNAME }}
   e2e-password:
     description: "E2E tests password"
-    default: ${{ secrets.E2E_PASSWORD }}
   e2e-workers:
     description: "Number of threads to run e2e tests"
     default: '3'
