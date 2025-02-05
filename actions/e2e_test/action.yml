@@ -106,7 +106,7 @@ runs:
         curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_HOSTNAME}"
         curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_OVERLAY_HOSTNAME}"
         curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${E2E_HOST}"/api/health
-        curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${$NEXT_PUBLIC_OVERLAY_HOST}"/api/health
+        curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${NEXT_PUBLIC_OVERLAY_HOST}"/api/health
       shell: bash
       env:
         E2E_HOST: ${{ inputs.e2e-host }}
