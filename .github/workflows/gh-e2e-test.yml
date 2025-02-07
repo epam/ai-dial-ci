@@ -37,12 +37,12 @@ on:
         default: ${{ secrets.E2E_PASSWORD }}
       e2e-workers:
         description: "Number of threads to run e2e tests"
-        type: string
-        default: "6"
+        type: number
+        default: 6
       e2e-overlay-workers:
         description: "Number of threads to run e2e overlay tests"
-        type: string
-        default: "1"
+        type: number
+        default: 1
       entity-arithmetic-request-for-api-tests:
         description: "Dial entities used for simple arithmetic API test"
         type: string
