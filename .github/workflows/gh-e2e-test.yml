@@ -19,22 +19,6 @@ on:
         required: true
         description: "The host URL for end-to-end testing"
         type: string
-      e2e-admin:
-        required: true
-        description: "Username for admin authentication"
-        type: string
-      e2e-username:
-        required: true
-        description: "Comma-separated list of usernames for e2e authentication. Provide enough usernames for all main users, additional users, and second additional users (number of workers * 3)."
-        type: string
-      e2e-overlay-username:
-        required: true
-        description: "Comma separated list of usernames for overlay sandbox authentification. The number of users should be equal to number of workers"
-        type: string
-      e2e-password:
-        required: true
-        description: "E2E tests password"
-        type: string
       e2e-workers:
         description: "Number of threads to run e2e tests"
         type: number
@@ -103,6 +87,15 @@ on:
         description: "TMS URL"
         type: string
         default: ""
+    secrets:
+      E2E_ADMIN:
+        required: true
+      E2E_USERNAME:
+        required: true
+      E2E_OVERLAY_USERNAME:
+        required: true
+      E2E_PASSWORD:
+        required: true
 
 jobs:
   e2e-test:
@@ -160,10 +153,10 @@ jobs:
           TMS_URL: ${{ inputs.tms-url }}
           ISSUE_URL: ${{ inputs.issue-url }}
           E2E_HOST: ${{ inputs.e2e-host }}
-          E2E_ADMIN: ${{ inputs.e2e-admin }}
-          E2E_USERNAME: ${{ inputs.e2e-username }}
-          E2E_OVERLAY_USERNAME: ${{ inputs.e2e-overlay-username }}
-          E2E_PASSWORD: ${{ inputs.e2e-password }}
+          E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
+          E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+          E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           E2E_WORKERS: ${{ inputs.e2e-workers }}
           E2E_OVERLAY_WORKERS: ${{ inputs.e2e-overlay-workers }}
           NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
