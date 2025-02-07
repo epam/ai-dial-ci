@@ -20,21 +20,21 @@ on:
         description: "The host URL for end-to-end testing"
         type: string
       e2e-admin:
+        required: true
         description: "Username for admin authentication"
         type: string
-        default: ${{ secrets.E2E_ADMIN }}
       e2e-username:
+        required: true
         description: "Comma-separated list of usernames for e2e authentication. Provide enough usernames for all main users, additional users, and second additional users (number of workers * 3)."
         type: string
-        default: ${{ secrets.E2E_USERNAME }}
       e2e-overlay-username:
+        required: true
         description: "Comma separated list of usernames for overlay sandbox authentification. The number of users should be equal to number of workers"
         type: string
-        default: ${{ secrets.E2E_OVERLAY_USERNAME }}
       e2e-password:
+        required: true
         description: "E2E tests password"
         type: string
-        default: ${{ secrets.E2E_PASSWORD }}
       e2e-workers:
         description: "Number of threads to run e2e tests"
         type: number
@@ -103,15 +103,6 @@ on:
         description: "TMS URL"
         type: string
         default: ""
-    secrets:
-      E2E_ADMIN:
-        required: true
-      E2E_USERNAME:
-        required: true
-      E2E_OVERLAY_USERNAME:
-        required: true
-      E2E_PASSWORD:
-        required: true
 
 jobs:
   e2e-test:
