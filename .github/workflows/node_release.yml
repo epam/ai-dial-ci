@@ -57,7 +57,7 @@ on:
         description: Enable publish to npmjs
       node_version:
         type: string
-        default: "20"
+        default: "22"
         description: NodeJS version to use
 
 env:
