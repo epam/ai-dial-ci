@@ -7,9 +7,6 @@ on:
 jobs:
   deploy-env:
     runs-on: ubuntu-latest
-    concurrency: e2e-test
-    environment:
-      name: e2e-test
     outputs:
       github-app: ${{ github.event.client_payload.github-app }}
       github-sha: ${{ steps.sha.outputs.SHA }}
@@ -18,10 +15,10 @@ jobs:
         id: sha
         shell: bash
         env:
-          _GITHUB_SHA: ${{ github.event.client_payload.github-sha}}
+          TRIGGER_GITHUB_SHA: ${{ github.event.client_payload.github-sha}}
         run: |
           # shorten the commit SHA to the first 7 characters
-          echo "SHA=${_GITHUB_SHA:0:7}" >>$GITHUB_OUTPUT
+          echo "SHA=${TRIGGER_GITHUB_SHA:0:7}" >>$GITHUB_OUTPUT
       - name: Deploy environment
         id: deploy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
@@ -41,12 +38,11 @@ jobs:
 
   e2e-test:
     uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@gh-e2e-test
-    concurrency: e2e-test
     needs:
       - deploy-env
     with:
-      e2e-host: "https://chat-${{ needs.deploy-env.outputs.GITHUB_APP }}-${{ needs.deploy-env.outputs.GITHUB_SHA }}.nightly-test.deltixhub.io"
-      next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.GITHUB_APP }}-${{ needs.deploy-env.outputs.GITHUB_SHA }}.nightly-test.deltixhub.io"
+      e2e-host: "https://chat-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
+      next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
       e2e-workers: 6
       entity-arithmetic-request-for-api-tests: '[{ "entityId": "gpt-35-turbo", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-16k", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-1106", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0613", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0125", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0301", "isSysPromptAllowed": "true" },{ "entityId": "gpt-35-turbo-0613-adapter", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-1106-preview", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-0125-preview", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-turbo-2024-04-09", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-turbo", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-32k-0314", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4-32k-0613", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4o-2024-05-13", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4o-2024-08-06", "isSysPromptAllowed": "true" },{ "entityId": "gpt-4o-mini-2024-07-18", "isSysPromptAllowed": "true" },{ "entityId": "amazon.titan-tg1-large", "isSysPromptAllowed": "true" },{ "entityId": "ai21.j2-grande-instruct", "isSysPromptAllowed": "true" },{ "entityId": "ai21.j2-jumbo-instruct", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-instant-v1", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v2", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v2-1", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v3-haiku", "isSysPromptAllowed": "true" },{ "entityId": "anthropic.claude-v3-sonnet", "isSysPromptAllowed": "true" },{ "entityId": "meta.llama3-8b-instruct-v1", "isSysPromptAllowed": "true" },{ "entityId": "meta.llama3-70b-instruct-v1", "isSysPromptAllowed": "true" },{ "entityId": "mistral-large-azure", "isSysPromptAllowed": "true" },{ "entityId": "chat-bison@001", "isSysPromptAllowed": "true" },{ "entityId": "chat-bison-32k@002", "isSysPromptAllowed": "true" },{ "entityId": "codechat-bison@001", "isSysPromptAllowed": "true" },{ "entityId": "codechat-bison-32k@002", "isSysPromptAllowed": "true" },{ "entityId": "gemini-pro", "isSysPromptAllowed": "true" },{ "entityId": "gemini-1.5-pro-preview-0409", "isSysPromptAllowed": "true" },{ "entityId": "gemini-1.5-flash-001", "isSysPromptAllowed": "true" }]'
       entity-plus-attachment-for-api-tests: '[{ "entityId": "gpt-4-vision-preview", "attachmentName": "sun.jpg", "response": "sun" },{ "entityId": "gemini-pro-vision", "attachmentName": "sun.jpg", "request": "what is on picture?", "response": "sun" }]'
@@ -62,9 +58,6 @@ jobs:
 
   destroy-env:
     runs-on: ubuntu-latest
-    concurrency: e2e-test
-    environment:
-      name: e2e-test
     needs:
       - deploy-env
       - e2e-test
