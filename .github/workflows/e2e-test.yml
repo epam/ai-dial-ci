@@ -11,12 +11,14 @@ jobs:
     environment:
       name: e2e-test
     outputs:
-      GITHUB_APP: ${{ github.event.repository.name }}
+      GITHUB_APP: ${{ github.event.client_payload.github-app }}
       GITHUB_SHA: ${{ steps.sha.outputs.SHA }}
     steps:
       - name: Obtain short sha
         id: sha
         shell: bash
+        env:
+          GITHUB_SHA: ${{ github.event.client_payload.github-sha}}
         run: |
           # shorten the commit SHA to the first 7 characters
           echo "SHA=${GITHUB_SHA:0:7}" >>$GITHUB_OUTPUT
@@ -31,7 +33,7 @@ jobs:
           ref: ${{ github.event.client_payload.gitlab-project-ref || 'github-e2e' }} # TODO: replace with 'master' before merge
           variables: >
             {
-              "TRIGGER_GITHUB_APP":"${{ github.event.repository.name }}",
+              "TRIGGER_GITHUB_APP":"${{ github.event.client_payload.github-app }}",
               "TRIGGER_GITHUB_SHA": "${{ steps.sha.outputs.SHA }}",
               "ALLOW_DEPLOY": "true",
               "ALLOW_DESTROY": "false"
@@ -75,7 +77,7 @@ jobs:
           trigger_token: ${{ secrets.E2E_DEPLOY_TRIGGER_TOKEN }}
           access_token: ${{ secrets.E2E_DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
-          ref: ${{ github.event.client_payload.gitlab-project-ref }}
+          ref: ${{ github.event.client_payload.gitlab-project-ref || 'github-e2e' }} # TODO: replace with 'master' before merge
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ needs.deploy-env.outputs.GITHUB_APP }}",
