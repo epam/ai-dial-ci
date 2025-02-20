@@ -1,31 +1,8 @@
 name: Run e2e-tests
 
 on:
-  workflow_call:
-    inputs:
-      gitlab-project-id:
-        required: true
-        description: "The ID or path of the project owned by the authenticated user."
-        type: string
-      gitlab-project-ref:
-        default: "github-e2e" # replace with 'master' after testing
-        description: "The branch or tag to run the pipeline on."
-        type: string
-    secrets:
-      DEPLOY_HOST:
-        required: true
-      DEPLOY_TRIGGER_TOKEN:
-        required: true
-      DEPLOY_ACCESS_TOKEN:
-        required: true
-      E2E_ADMIN:
-        required: true
-      E2E_USERNAME:
-        required: true
-      E2E_OVERLAY_USERNAME:
-        required: true
-      E2E_PASSWORD:
-        required: true
+  repository_dispatch:
+    types: [e2e-tests-workflow]
 
 jobs:
   deploy-env:
@@ -48,10 +25,10 @@ jobs:
         uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
-          trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
-          access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
-          id: ${{ inputs.gitlab-project-id }}
-          ref: ${{ inputs.gitlab-project-ref }}
+          trigger_token: ${{ secrets.E2E_DEPLOY_TRIGGER_TOKEN }}
+          access_token: ${{ secrets.E2E_DEPLOY_ACCESS_TOKEN }}
+          id: ${{ github.event.client_payload.gitlab-project-id }}
+          ref: ${{ github.event.client_payload.gitlab-project-ref || 'github-e2e' }} # TODO: replace with 'master' before merge
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ github.event.repository.name }}",
@@ -95,10 +72,10 @@ jobs:
         uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
-          trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
-          access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
-          id: ${{ inputs.gitlab-project-id }}
-          ref: ${{ inputs.gitlab-project-ref }}
+          trigger_token: ${{ secrets.E2E_DEPLOY_TRIGGER_TOKEN }}
+          access_token: ${{ secrets.E2E_DEPLOY_ACCESS_TOKEN }}
+          id: ${{ github.event.client_payload.gitlab-project-id }}
+          ref: ${{ github.event.client_payload.gitlab-project-ref }}
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ needs.deploy-env.outputs.GITHUB_APP }}",
