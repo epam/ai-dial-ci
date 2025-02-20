@@ -67,6 +67,7 @@ jobs:
       name: e2e-test
     needs:
       - deploy-env
+      - e2e-test
     if: always()
     steps:
       - name: Destroy environment
