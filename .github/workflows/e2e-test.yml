@@ -11,17 +11,17 @@ jobs:
     environment:
       name: e2e-test
     outputs:
-      GITHUB_APP: ${{ github.event.client_payload.github-app }}
-      GITHUB_SHA: ${{ steps.sha.outputs.SHA }}
+      github-app: ${{ github.event.client_payload.github-app }}
+      github-sha: ${{ steps.sha.outputs.SHA }}
     steps:
       - name: Obtain short sha
         id: sha
         shell: bash
         env:
-          GITHUB_SHA: ${{ github.event.client_payload.github-sha}}
+          _GITHUB_SHA: ${{ github.event.client_payload.github-sha}}
         run: |
           # shorten the commit SHA to the first 7 characters
-          echo "SHA=${GITHUB_SHA:0:7}" >>$GITHUB_OUTPUT
+          echo "SHA=${_GITHUB_SHA:0:7}" >>$GITHUB_OUTPUT
       - name: Deploy environment
         id: deploy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
@@ -80,8 +80,8 @@ jobs:
           ref: ${{ github.event.client_payload.gitlab-project-ref || 'github-e2e' }} # TODO: replace with 'master' before merge
           variables: >
             {
-              "TRIGGER_GITHUB_APP":"${{ needs.deploy-env.outputs.GITHUB_APP }}",
-              "TRIGGER_GITHUB_SHA": "${{ needs.deploy-env.outputs.GITHUB_SHA }}",
+              "TRIGGER_GITHUB_APP":"${{ needs.deploy-env.outputs.github-app }}",
+              "TRIGGER_GITHUB_SHA": "${{ needs.deploy-env.outputs.github-sha }}",
               "ALLOW_DEPLOY": "false",
               "ALLOW_DESTROY": "true"
             }
