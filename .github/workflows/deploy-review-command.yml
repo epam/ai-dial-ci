@@ -121,7 +121,7 @@ jobs:
           fi
 
   e2e-test:
-    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@1.12.0
+    uses: tataranovich/ai-dial-ci/.github/workflows/gh-e2e-test.yml@gh-e2e-test
     needs:
       - deploy-review
       - set-test-branch
