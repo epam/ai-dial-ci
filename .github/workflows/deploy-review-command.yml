@@ -50,10 +50,10 @@ jobs:
         uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
-          trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
-          access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
-          id: ${{ secrets.DEPLOY_PROJECT_ID }}
-          ref: ${{ secrets.DEPLOY_REF }}
+          trigger_token: ${{ secrets.REVIEW_DEPLOY_TRIGGER_TOKEN }}
+          access_token: ${{ secrets.REVIEW_DEPLOY_ACCESS_TOKEN }}
+          id: ${{ secrets.REVIEW_DEPLOY_PROJECT_ID }}
+          ref: ${{ secrets.REVIEW_DEPLOY_REF }}
           variables: >
             {
               "GITHUB_APP":"${{ github.event.client_payload.slash_command.args.named.application }}",
@@ -121,7 +121,7 @@ jobs:
           fi
 
   e2e-test:
-    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@gh-e2e-test
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@1.12.0
     needs:
       - deploy-review
       - set-test-branch
