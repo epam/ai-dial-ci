@@ -53,7 +53,7 @@ on:
         description: Do not fail pipeline if Trivy failed
       node_version:
         type: string
-        default: "20"
+        default: "22"
         description: NodeJS version to use
 
 env:
