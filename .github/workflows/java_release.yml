@@ -105,7 +105,7 @@ jobs:
         shell: bash
         run: |
           sed -i -E "s/^([ \t]*version[ \t]*=[ \t]*)[\"'].*[\"']/\1\"${{ needs.calculate_version.outputs.next_version }}\"/g" build.gradle
-      - uses: epam/ai-dial-ci/actions/build_docker@1.11.1
+      - uses: epam/ai-dial-ci/actions/build_docker@jclouds
         with:
           ghcr_username: ${{ github.actor }}
           ghcr_password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -116,6 +116,8 @@ jobs:
           push: true
           scan: ${{ inputs.enable_trivy }}
           bypass_checks: ${{ inputs.bypass_trivy }}
+          maven_username: ${GITHUB_ACTOR}
+          maven_password: ${{ secrets.GITHUB_TOKEN }}
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
             ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}

@@ -59,6 +59,9 @@ jobs:
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_style_checks }}
         shell: bash
+        env:
+          USERNAME: ${GITHUB_ACTOR}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./gradlew checkstyleMain
 
@@ -76,6 +79,9 @@ jobs:
       - name: Test
         continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_code_checks }}
         shell: bash
+        env:
+          USERNAME: ${GITHUB_ACTOR}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./gradlew check || { echo "::error::Tests failed" && exit 1; } # TODO: figure out why we need to capture exit code
 
