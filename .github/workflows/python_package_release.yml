@@ -43,6 +43,14 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if Trivy failed
+      severity_trivy:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: Severities of vulnerabilities to be displayed
+      limit_severities_for_sarif_trivy:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: Limit severities for SARIF format
       python_version:
         type: string
         default: "3.11"
@@ -70,6 +78,8 @@ jobs:
       ort_version: ${{ inputs.ort_version }}
       enable_trivy: ${{ inputs.enable_trivy }}
       bypass_trivy: ${{ inputs.bypass_trivy }}
+      scan_severity: ${{ inputs.severity_trivy }}
+      scan_limit_severities_for_sarif: ${{ inputs.limit_severities_for_sarif_trivy }}
       python_version: ${{ inputs.python_version }}
       test_python_versions: ${{ inputs.test_python_versions }}
 

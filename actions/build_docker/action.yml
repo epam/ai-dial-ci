@@ -13,7 +13,11 @@ inputs:
     required: false
     default: "true"
   scan_severity:
-    description: "Severity of vulnerabilities to fail the build"
+    description: "Severities of vulnerabilities to be displayed"
+    required: false
+    default: "CRITICAL,HIGH"
+  scan_limit_severities_for_sarif:
+    description: "Limit severities for SARIF format"
     required: false
     default: "CRITICAL,HIGH"
   scan_vuln_type:
@@ -97,6 +101,7 @@ runs:
         ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
         vuln-type: ${{ inputs.scan_vuln_type }}
         severity: ${{ inputs.scan_severity }}
+        limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
       env:
         CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
         TRIVY_DISABLE_VEX_NOTICE: true
@@ -113,7 +118,7 @@ runs:
         ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
         vuln-type: ${{ inputs.scan_vuln_type }}
         severity: ${{ inputs.scan_severity }}
-        limit-severities-for-sarif: true
+        limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
         skip-setup-trivy: true # We already have trivy installed just above
       env:
         TRIVY_SKIP_DB_UPDATE: true # We already have the DB updated just above

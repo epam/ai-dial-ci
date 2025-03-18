@@ -51,6 +51,14 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if Trivy failed
+      severity_trivy:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: Severities of vulnerabilities to be displayed
+      limit_severities_for_sarif_trivy:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: Limit severities for SARIF format
       enable_publish:
         type: boolean
         default: true
@@ -126,6 +134,8 @@ jobs:
           push: true
           scan: ${{ inputs.enable_trivy }}
           bypass_checks: ${{ inputs.bypass_trivy }}
+          scan_severity: ${{ inputs.severity_trivy }}
+          scan_limit_severities_for_sarif: ${{ inputs.limit_severities_for_sarif_trivy }}
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
             ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}

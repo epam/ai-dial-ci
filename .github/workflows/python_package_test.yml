@@ -32,9 +32,13 @@ on:
         default: false
         description: Do not fail pipeline if Trivy failed
       scan_severity:
-        description: "Severity of vulnerabilities to fail the build"
         type: string
         default: "CRITICAL,HIGH"
+        description: "Severities of vulnerabilities to be displayed"
+      scan_limit_severities_for_sarif:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: Limit severities for SARIF format
       scan_vuln_type:
         description: "Type of vulnerabilities to scan"
         type: string
@@ -140,6 +144,7 @@ jobs:
           ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
           vuln-type: ${{ inputs.scan_vuln_type }}
           severity: ${{ inputs.scan_severity }}
+          limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
         continue-on-error: ${{ inputs.bypass_trivy }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
@@ -156,7 +161,7 @@ jobs:
           ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
           vuln-type: ${{ inputs.scan_vuln_type }}
           severity: ${{ inputs.scan_severity }}
-          limit-severities-for-sarif: true
+          limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
         continue-on-error: ${{ inputs.bypass_trivy }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
