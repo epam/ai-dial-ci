@@ -48,8 +48,8 @@ on:
         default: "CRITICAL,HIGH"
         description: Severities of vulnerabilities to be displayed
       limit_severities_for_sarif_trivy:
-        type: string
-        default: "CRITICAL,HIGH"
+        type: boolean
+        default: true
         description: Limit severities for SARIF format
 
 env:

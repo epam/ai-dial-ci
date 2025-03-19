@@ -34,10 +34,10 @@ on:
       scan_severity:
         type: string
         default: "CRITICAL,HIGH"
-        description: "Severities of vulnerabilities to be displayed"
+        description: Severities of vulnerabilities to be displayed
       scan_limit_severities_for_sarif:
-        type: string
-        default: "CRITICAL,HIGH"
+        type: boolean
+        default: true
         description: Limit severities for SARIF format
       scan_vuln_type:
         description: "Type of vulnerabilities to scan"

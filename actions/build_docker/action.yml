@@ -19,7 +19,7 @@ inputs:
   scan_limit_severities_for_sarif:
     description: "Limit severities for SARIF format"
     required: false
-    default: "CRITICAL,HIGH"
+    default: "true"
   scan_vuln_type:
     description: "Type of vulnerabilities to scan"
     required: false
