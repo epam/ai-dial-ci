@@ -116,8 +116,8 @@ jobs:
           push: true
           scan: ${{ inputs.enable_trivy }}
           bypass_checks: ${{ inputs.bypass_trivy }}
-          maven_username: ${GITHUB_ACTOR}
-          maven_password: ${{ secrets.GITHUB_TOKEN }}
+          gpr_username: ${{ github.actor }}
+          gpr_password: ${{ secrets.GITHUB_TOKEN }}
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}
             ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}

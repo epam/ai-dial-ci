@@ -50,10 +50,10 @@ inputs:
     description: "Docker Hub password"
     required: false
     default: ""
-  maven_username:
+  gpr_username:
     required: false
-    default: ""
-  maven_password:
+    default: ${{ github.actor }}
+  gpr_password:
     required: false
     default: ""
 
@@ -95,8 +95,8 @@ runs:
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
         secrets: |
-          USERNAME=${{ inputs.maven_username }}
-          TOKEN=${{ inputs.maven_password }}
+          GPR_USERNAME=${{ inputs.gpr_username }}
+          GPR_PASSWORD=${{ inputs.gpr_password }}
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
     - name: Run Trivy vulnerability scanner (stdout, table view, no fail)
@@ -161,7 +161,7 @@ runs:
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
         secrets: |
-          USERNAME=${{ inputs.maven_username }}
-          TOKEN=${{ inputs.maven_password }}
+          GPR_USERNAME=${{ inputs.gpr_username }}
+          GPR_PASSWORD=${{ inputs.gpr_password }}
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false

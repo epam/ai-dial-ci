@@ -82,8 +82,8 @@ jobs:
           java_distribution: ${{ inputs.java_distribution }}
       - run: ./gradlew build -x test
         env:
-          USERNAME: ${GITHUB_ACTOR}
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPR_USERNAME: ${{ github.actor }}
+          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
   docker_build:
     runs-on: ubuntu-latest
@@ -97,5 +97,5 @@ jobs:
           image_tag: test
           scan: ${{ inputs.enable_trivy }}
           bypass_checks: ${{ inputs.bypass_trivy }}
-          maven_username: ${GITHUB_ACTOR}
-          maven_password: ${{ secrets.GITHUB_TOKEN }}
+          gpr_username: ${{ github.actor }}
+          gpr_password: ${{ secrets.GITHUB_TOKEN }}
