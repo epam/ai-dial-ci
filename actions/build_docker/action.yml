@@ -90,7 +90,7 @@ runs:
         DOCKER_BUILD_RECORD_UPLOAD: false
     - name: Run Trivy vulnerability scanner (stdout, table view, no fail)
       if: ${{ fromJSON(inputs.scan) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # v0.29.0
+      uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5 # v0.30.0
       with:
         image-ref: "${{ inputs.image_name }}:${{ inputs.image_tag }}"
         format: "table"
@@ -104,7 +104,7 @@ runs:
     - name: Run Trivy vulnerability scanner (SARIF, may fail)
       # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
       if: ${{ fromJSON(inputs.scan) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # v0.29.0
+      uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5 # v0.30.0
       with:
         image-ref: "${{ inputs.image_name }}:${{ inputs.image_tag }}"
         format: "sarif"
