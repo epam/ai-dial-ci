@@ -117,7 +117,7 @@ jobs:
           if [ ${{ github.event.client_payload.github.payload.repository.name }} == "ai-dial-chat" ]; then
             echo "test_branch=${{ github.event.client_payload.pull_request.head.ref }}" >> $GITHUB_OUTPUT
           else
-            echo "test_branch=feat/e2e-github-fixes" # FIXME: Revert back to 'development' before merge
+            echo "test_branch=feat/e2e-github-fixes" >> $GITHUB_OUTPUT # FIXME: Revert back to 'development' before merge
           fi
 
   e2e-test:
