@@ -54,10 +54,18 @@ inputs:
     description: "Docker Hub password"
     required: false
     default: ""
+  gpr_username:
+    required: false
+    default: ${{ github.actor }}
+  gpr_password:
+    required: false
+    default: ""
 
 runs:
   using: "composite"
   steps:
+    - name: Setup Docker buildx
+      uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
     - name: Login to GitHub Container Registry
       if: ${{ fromJSON(inputs.push) }} # workaround for composite jobs not being able to pass boolean inputs
       uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
@@ -90,6 +98,9 @@ runs:
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
+        secrets: |
+          GPR_USERNAME=${{ inputs.gpr_username }}
+          GPR_PASSWORD=${{ inputs.gpr_password }}
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
     - name: Run Trivy vulnerability scanner (SARIF, all severities, no fail)
@@ -153,5 +164,8 @@ runs:
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
+        secrets: |
+          GPR_USERNAME=${{ inputs.gpr_username }}
+          GPR_PASSWORD=${{ inputs.gpr_password }}
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
