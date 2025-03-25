@@ -92,7 +92,7 @@ runs:
           org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
-    - name: Run Trivy vulnerability scanner (SARIF, no fail)
+    - name: Run Trivy vulnerability scanner (SARIF, all severities, no fail)
       # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
       if: ${{ fromJSON(inputs.scan) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
       uses: aquasecurity/trivy-action@0.30.0
@@ -103,21 +103,21 @@ runs:
         output: "trivy-results.sarif"
         ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
         vuln-type: ${{ inputs.scan_vuln_type }}
-        limit-severities-for-sarif: false
+        limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
       env:
         CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Upload Trivy scan results to GitHub Security tab
       # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
       if: ${{ !cancelled() && fromJSON(inputs.scan) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: github/codeql-action/upload-sarif@v3 #v3.28.0
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: "trivy-results.sarif"
         category: trivy
       env:
         CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
-    - name: Run Trivy vulnerability scanner (stdout, table view, may fail)
+    - name: Run Trivy vulnerability scanner (stdout, table view, chosen severities, may fail)
       if: ${{ fromJSON(inputs.scan) }} # workaround for composite jobs not being able to pass boolean inputs
       uses: aquasecurity/trivy-action@0.30.0
       with:
