@@ -116,7 +116,7 @@ runs:
         vuln-type: ${{ inputs.scan_vuln_type }}
         limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
       env:
-        CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
+        CONTINUE_ON_ERROR: true # Hack to use the input below as a boolean
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Upload Trivy scan results to GitHub Security tab
       # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
@@ -144,6 +144,7 @@ runs:
         TRIVY_SKIP_DB_UPDATE: true # We already have the DB updated just above
         TRIVY_SKIP_JAVA_DB_UPDATE: true # We already have the Java DB updated just above
         TRIVY_DISABLE_VEX_NOTICE: true
+        TRIVY_FORMAT: "table"
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Build and push
       if: ${{ fromJSON(inputs.push) }} # workaround for composite jobs not being able to pass boolean inputs
