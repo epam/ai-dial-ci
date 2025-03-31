@@ -145,6 +145,7 @@ runs:
         TRIVY_SKIP_JAVA_DB_UPDATE: true # We already have the Java DB updated just above
         TRIVY_DISABLE_VEX_NOTICE: true
         TRIVY_FORMAT: "table"
+        TRIVY_OUTPUT: ""
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Build and push
       if: ${{ fromJSON(inputs.push) }} # workaround for composite jobs not being able to pass boolean inputs
