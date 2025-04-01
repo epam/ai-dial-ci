@@ -34,7 +34,7 @@ on:
       scan_severity:
         type: string
         default: "CRITICAL,HIGH"
-        description: Severities of vulnerabilities to be displayed
+        description: Severities of vulnerabilities to fail the build
       scan_limit_severities_for_sarif:
         type: boolean
         default: true

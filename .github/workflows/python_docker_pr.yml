@@ -46,7 +46,7 @@ on:
       severity_trivy:
         type: string
         default: "CRITICAL,HIGH"
-        description: Severities of vulnerabilities to be displayed
+        description: Severities of vulnerabilities to fail the build
       limit_severities_for_sarif_trivy:
         type: boolean
         default: true
