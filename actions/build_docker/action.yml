@@ -16,6 +16,10 @@ inputs:
     description: "Severities of vulnerabilities to fail the build"
     required: false
     default: "CRITICAL,HIGH"
+  scan_severity_for_sarif:
+    description: "Severities of vulnerabilities in SARIF report"
+    required: false
+    default: "CRITICAL,HIGH"
   scan_limit_severities_for_sarif:
     description: "Limit severities for SARIF format"
     required: false
@@ -114,7 +118,7 @@ runs:
         output: "trivy-results.sarif"
         ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
         vuln-type: ${{ inputs.scan_vuln_type }}
-        severity: ${{ inputs.scan_severity }}
+        severity: ${{ inputs.scan_severity_for_sarif }}
         limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
       env:
         TRIVY_DISABLE_VEX_NOTICE: true

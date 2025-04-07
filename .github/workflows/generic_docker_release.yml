@@ -47,6 +47,10 @@ on:
         type: string
         default: "CRITICAL,HIGH"
         description: Severities of vulnerabilities to fail the build
+      severity_for_sarif_trivy:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: "Severities of vulnerabilities in SARIF report"
       limit_severities_for_sarif_trivy:
         type: boolean
         default: true
@@ -105,6 +109,7 @@ jobs:
           scan: ${{ inputs.enable_trivy }}
           bypass_checks: ${{ inputs.bypass_trivy }}
           scan_severity: ${{ inputs.severity_trivy }}
+          scan_severity_for_sarif: ${{ inputs.severity_for_sarif_trivy }}
           scan_limit_severities_for_sarif: ${{ inputs.limit_severities_for_sarif_trivy }}
           image_extra_aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next_version }}

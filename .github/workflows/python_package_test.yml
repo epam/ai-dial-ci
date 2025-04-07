@@ -35,6 +35,10 @@ on:
         type: string
         default: "CRITICAL,HIGH"
         description: Severities of vulnerabilities to fail the build
+      severity_for_sarif_trivy:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: "Severities of vulnerabilities in SARIF report"
       scan_limit_severities_for_sarif:
         type: boolean
         default: true
