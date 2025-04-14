@@ -90,7 +90,7 @@ on:
     outputs:
       status:
         description: "Status of E2E test"
-        value: ${{ jobs.e2e-test-chat.outputs.status && jobs.e2e-test-overlay.outputs.status  }}
+        value: ${{ jobs.chat.outputs.status && jobs.overlay.outputs.status  }}
     secrets:
       E2E_ADMIN:
         required: true
@@ -102,7 +102,7 @@ on:
         required: true
 
 jobs:
-  e2e-test-chat:
+  chat:
     runs-on: ubuntu-latest
     outputs:
       status: ${{ steps.e2e-test-chat.outcome }}
@@ -191,7 +191,7 @@ jobs:
           path: |
             apps/chat-e2e/allure-chat-report
           retention-days: 30
-  e2e-test-overlay:
+  overlay:
     runs-on: ubuntu-latest
     outputs:
       status: ${{ steps.e2e-test-overlay.outcome }}
