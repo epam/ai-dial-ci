@@ -90,7 +90,7 @@ on:
     outputs:
       status:
         description: "Status of E2E test"
-        value: ${{ jobs.e2e-test.outputs.status }}
+        value: ${{ jobs.e2e-test-chat.outputs.status && jobs.e2e-test-overlay.outputs.status  }}
     secrets:
       E2E_ADMIN:
         required: true
@@ -102,10 +102,10 @@ on:
         required: true
 
 jobs:
-  e2e-test:
+  e2e-test-chat:
     runs-on: ubuntu-latest
     outputs:
-      status: ${{ steps.e2e-test.outcome }}
+      status: ${{ steps.e2e-test-chat.outcome }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -143,7 +143,7 @@ jobs:
           E2E_HOST: ${{ inputs.e2e-host }}
           NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
       - name: Run tests
-        id: e2e-test
+        id: e2e-test-chat
         run: |
           echo "Host to run e2e tests ${E2E_HOST}"
           echo "Host to run overlay e2e tests ${NEXT_PUBLIC_OVERLAY_HOST}"
@@ -151,7 +151,7 @@ jobs:
           echo "Config for attachment request e2e api tests ${ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS}"
           echo "Config for attachment response e2e api tests ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
           echo "Simple requests model for e2e tests ${SIMPLE_REQUEST_MODEL}"
-          npm run e2e:ci
+          npx nx run chat-e2e:e2e:chat --configuration=production --output-style=stream --skipInstall
         shell: bash
         env:
           PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
@@ -180,7 +180,6 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-chat-results -o ./apps/chat-e2e/allure-chat-report --clean
-          ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-overlay-results -o ./apps/chat-e2e/allure-overlay-report --clean
         shell: bash
         env:
           ALLURE_VERSION: ${{ inputs.allure-version }}
@@ -191,5 +190,93 @@ jobs:
           name: allure-report
           path: |
             apps/chat-e2e/allure-chat-report
+          retention-days: 30
+  e2e-test-overlay:
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.e2e-test-overlay.outcome }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ inputs.test-repository }}
+          ref: ${{ inputs.test-branch }}
+          lfs: true
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: ${{ inputs.node-version }}
+      - uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b # v4.6.0
+        with:
+          distribution: ${{ inputs.java-distribution }}
+          java-version: ${{ inputs.java-version }}
+      - name: Install Allure
+        run: |
+          curl -fsSL https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz | tar -xzf -
+          ./allure-${ALLURE_VERSION}/bin/allure --version
+        shell: bash
+        env:
+          ALLURE_VERSION: ${{ inputs.allure-version }}
+      - name: Install playwright
+        run: npm install -D @playwright/test
+        shell: bash
+      - name: Wait for environment
+        run: |
+          echo "Expected environment URL ${E2E_HOST}, waiting to be available..."
+          ENV_HOSTNAME=$(echo "$E2E_HOST" | awk -F/ '{print $3}')
+          ENV_OVERLAY_HOSTNAME=$(echo "$NEXT_PUBLIC_OVERLAY_HOST" | awk -F/ '{print $3}')
+          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_HOSTNAME}"
+          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_OVERLAY_HOSTNAME}"
+          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${E2E_HOST}"/api/health
+          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${NEXT_PUBLIC_OVERLAY_HOST}"/api/health
+        shell: bash
+        env:
+          E2E_HOST: ${{ inputs.e2e-host }}
+          NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
+      - name: Run tests
+        id: e2e-test-overlay
+        run: |
+          echo "Host to run e2e tests ${E2E_HOST}"
+          echo "Host to run overlay e2e tests ${NEXT_PUBLIC_OVERLAY_HOST}"
+          echo "Config for arithmetic e2e api tests ${ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS}"
+          echo "Config for attachment request e2e api tests ${ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS}"
+          echo "Config for attachment response e2e api tests ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
+          echo "Simple requests model for e2e tests ${SIMPLE_REQUEST_MODEL}"
+          npx nx run chat-e2e:e2e:overlay --configuration=production --output-style=stream --skipInstall
+        shell: bash
+        env:
+          PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
+          PLAYWRIGHT_ACTION_TIMEOUT: 60000
+          PLAYWRIGHT_EXPECT_TIMEOUT: 60000
+          TMS_URL: ${{ inputs.tms-url }}
+          ISSUE_URL: ${{ inputs.issue-url }}
+          E2E_HOST: ${{ inputs.e2e-host }}
+          E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
+          E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+          E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          E2E_WORKERS: ${{ inputs.e2e-workers }}
+          E2E_OVERLAY_WORKERS: ${{ inputs.e2e-overlay-workers }}
+          NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
+          AUTH_PROVIDER: ${{ inputs.auth-provider }}
+          ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS: ${{ inputs.entity-arithmetic-request-for-api-tests }}
+          ENTITY_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.entity-plus-addons-for-api-tests }}
+          ENTITY_SIMPLE_REQUEST_FOR_API_TESTS: ${{ inputs.entity-simple-request-for-api-tests }}
+          ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS: ${{ inputs.entity-plus-attachment-for-api-tests }}
+          ASSISTANT_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.assistant-plus-addons-for-api-tests }}
+          MODELS_LIST_FOR_TESTS: ${{ inputs.models-list-for-tests }}
+          ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
+          SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
+      - name: Generate Allure Report for overlay
+        if: ${{ !cancelled() }}
+        run: |
+          ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-overlay-results -o ./apps/chat-e2e/allure-overlay-report --clean
+        shell: bash
+        env:
+          ALLURE_VERSION: ${{ inputs.allure-version }}
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        if: ${{ !cancelled() }}
+        with:
+          name: allure-report
+          path: |
             apps/chat-e2e/allure-overlay-report
           retention-days: 30
