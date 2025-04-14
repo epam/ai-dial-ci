@@ -187,7 +187,7 @@ jobs:
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         if: ${{ !cancelled() }}
         with:
-          name: allure-report
+          name: allure-report-chat
           path: |
             apps/chat-e2e/allure-chat-report
           retention-days: 30
@@ -276,7 +276,7 @@ jobs:
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         if: ${{ !cancelled() }}
         with:
-          name: allure-report
+          name: allure-report-overlay
           path: |
             apps/chat-e2e/allure-overlay-report
           retention-days: 30
