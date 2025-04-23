@@ -90,7 +90,7 @@ on:
     outputs:
       status:
         description: "Status of E2E test"
-        value: ${{ jobs.chat.outputs.status && jobs.overlay.outputs.status  }}
+        value: ${{ jobs.chat.outputs.status == true && jobs.overlay.outputs.status == true  }}
     secrets:
       E2E_ADMIN:
         required: true
