@@ -41,7 +41,6 @@ jobs:
     needs:
       - deploy-env
     with:
-      test-branch: "feat/e2e-github-fixes" # FIXME: Delete this when test fixes will be merged
       e2e-host: "https://chat-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
       next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
       e2e-workers: 6
