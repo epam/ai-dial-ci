@@ -153,4 +153,5 @@ jobs:
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           body: |
-            >E2E tests status: ${{ needs.e2e-test.outputs.status }}
+            >Chat E2E tests status: ${{ needs.e2e-test.outputs.chat-status }}
+            >Overlay E2E tests status: ${{ needs.e2e-test.outputs.overlay-status }}

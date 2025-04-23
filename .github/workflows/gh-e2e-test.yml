@@ -88,9 +88,12 @@ on:
         type: string
         default: ""
     outputs:
-      status:
-        description: "Status of E2E test"
-        value: ${{ jobs.chat.outputs.status == true && jobs.overlay.outputs.status == true  }}
+      chat-status:
+        description: "Status of Chat E2E test"
+        value: ${{ jobs.chat.outputs.status }}
+      overlay-status:
+        description: "Status of Overlay E2E test"
+        value: ${{ jobs.overlay.outputs.status }}
     secrets:
       E2E_ADMIN:
         required: true
