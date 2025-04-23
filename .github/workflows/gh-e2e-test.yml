@@ -91,9 +91,15 @@ on:
       chat-status:
         description: "Status of Chat E2E test"
         value: ${{ jobs.chat.outputs.status }}
+      chat-job-url:
+        description: "URL to Chat E2E test job"
+        value: ${{ jobs.chat.outputs.job-url }}
       overlay-status:
         description: "Status of Overlay E2E test"
         value: ${{ jobs.overlay.outputs.status }}
+      overlay-job-url:
+          description: "URL to Chat E2E test job"
+          value: ${{ jobs.overlay.outputs.job-url }}
     secrets:
       E2E_ADMIN:
         required: true
@@ -109,6 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       status: ${{ steps.e2e-test-chat.outcome }}
+      job-url: ${{ github.server_url }}/${{ github.repository_owner }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -198,6 +205,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       status: ${{ steps.e2e-test-overlay.outcome }}
+      job-url: ${{ github.server_url }}/${{ github.repository_owner }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:

@@ -93,7 +93,7 @@ jobs:
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           body: |
-            >Environment URL: https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.nightly-test.deltixhub.io
+            >Environment URL: [review-environment](https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.nightly-test.deltixhub.io) | [pipeline](${{ steps.deploy.outputs.web_url }})
 
       - name: Return status
         if: success() || failure()
@@ -153,5 +153,5 @@ jobs:
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           body: |
-            >Chat E2E tests status: ${{ needs.e2e-test.outputs.chat-status }}
-            >Overlay E2E tests status: ${{ needs.e2e-test.outputs.overlay-status }}
+            >Chat E2E tests status: [${{ needs.e2e-test.outputs.chat-status }}](${{ needs.e2e-test.outputs.chat-job-url }})
+            >Overlay E2E tests status: [${{ needs.e2e-test.outputs.overlay-status }}](${{ needs.e2e-test.outputs.overlay-job-url }})
