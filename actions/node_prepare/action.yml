@@ -4,7 +4,7 @@ description: "Set up NodeJS, (optionally) perform clean install of NPM dependenc
 inputs:
   node_version:
     description: "NodeJS version to use"
-    default: "20"
+    default: "22"
   cache:
     description: "Cache type. Supported values: npm, yarn, pnpm"
     default: "npm"
