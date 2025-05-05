@@ -135,7 +135,7 @@ runs:
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Run Trivy vulnerability scanner (stdout, table view, may fail)
       if: ${{ fromJSON(inputs.scan) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # v0.29.0
+      uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # TODO: v0.31.0+
       with:
         image-ref: "${{ inputs.image_name }}:${{ inputs.image_tag }}"
         format: "table"
@@ -149,6 +149,8 @@ runs:
         TRIVY_SKIP_DB_UPDATE: true # We already have the DB updated just above
         TRIVY_SKIP_JAVA_DB_UPDATE: true # We already have the Java DB updated just above
         TRIVY_DISABLE_VEX_NOTICE: true
+        TRIVY_FORMAT: "table" # TODO: remove after fix in aquasecurity/trivy-action
+        TRIVY_OUTPUT: "" # TODO: remove after fix in aquasecurity/trivy-action
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Build and push
       if: ${{ fromJSON(inputs.push) }} # workaround for composite jobs not being able to pass boolean inputs
