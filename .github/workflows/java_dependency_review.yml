@@ -58,7 +58,7 @@ jobs:
         with:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 600
-      - if: ${{ needs.dependency-review.outputs.comment-content != null }}
+      - if: ${{ steps.dependency-review.outputs.comment-content != null }}
         run: |
           printf "%s" "${{ steps.dependency-review.outputs.comment-content }}" > openssf-report.html
       - name: Display openssf report
