@@ -59,7 +59,8 @@ jobs:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 600
       - if: ${{ needs.dependency-review.outputs.comment-content != null }}
-        run: echo "${{ needs.dependency-review.outputs.comment-content }}" > openssf-report.html
+        run: |
+          echo "${{ steps.dependency-review.outputs.comment-content }}" > openssf-report.html
       - if: ${{ steps.dependency-review.outputs.comment-content != null }}
         # Use separate action to comment because the original one can't do it without PR context
         uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728 # v2.9.1
