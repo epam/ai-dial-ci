@@ -3,82 +3,82 @@ name: Python Package tests
 on:
   workflow_call:
     inputs:
-      bypass_checks:
+      bypass-checks:
         type: boolean
         default: false
         description: Do not fail pipeline if checks failed
-      enable_style_checks:
+      style-checks-enabled:
         type: boolean
         default: true
         description: Enable style_checks
-      bypass_style_checks:
+      style-checks-bypassed:
         type: boolean
         default: false
         description: Do not fail pipeline if style_checks failed
-      enable_code_checks:
+      code-checks-enabled:
         type: boolean
         default: true
         description: Enable code_checks
-      bypass_code_checks:
+      code-checks-bypassed:
         type: boolean
         default: false
         description: Do not fail pipeline if code_checks failed
-      enable_trivy:
-        type: boolean
-        default: true
-        description: Enable Trivy scanning
-      bypass_trivy:
-        type: boolean
-        default: false
-        description: Do not fail pipeline if Trivy failed
-      scan_severity:
-        type: string
-        default: "CRITICAL,HIGH"
-        description: Severities of vulnerabilities to fail the build
-      severity_for_sarif_trivy:
-        type: string
-        default: "CRITICAL,HIGH"
-        description: "Severities of vulnerabilities in SARIF report"
-      scan_limit_severities_for_sarif:
-        type: boolean
-        default: true
-        description: Limit severities for SARIF format
-      scan_vuln_type:
-        description: "Type of vulnerabilities to scan"
-        type: string
-        default: "os,library"
-      scan_ignore_unfixed:
-        type: boolean
-        description: "Ignore unpatched/unfixed vulnerabilities"
-        default: true
-      enable_ort:
-        type: boolean
-        default: true
-        description: Enable ORT scanning
-      bypass_ort:
-        type: boolean
-        default: false
-        description: Do not fail pipeline if ORT scan failed
-      ort_version:
-        type: string
-        default: "latest"
-        description: ORT version to use
-      python_version:
-        type: string
-        default: "3.11"
-        description: Python version to use
-      poetry_version:
-        type: string
-        description: "Poetry version to use"
-        default: "latest"
-      test_python_versions:
+      code-checks-python-versions:
         type: string
         description: Python versions to run tests against
         default: '["3.8", "3.9", "3.10", "3.11"]'
+      trivy-enabled:
+        type: boolean
+        default: true
+        description: Enable Trivy scanning
+      trivy-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if Trivy failed
+      trivy-severity:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: Severities of vulnerabilities to fail the build
+      trivy-severity-for-sarif:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: "Severities of vulnerabilities in SARIF report"
+      trivy-limit-severities-for-sarif:
+        type: boolean
+        default: true
+        description: Limit severities for SARIF format
+      trivy-vuln-type:
+        description: "Type of vulnerabilities to scan"
+        type: string
+        default: "os,library"
+      trivy-ignore-unfixed:
+        type: boolean
+        description: "Ignore unpatched/unfixed vulnerabilities"
+        default: true
+      ort-enabled:
+        type: boolean
+        default: true
+        description: Enable ORT scanning
+      ort-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ORT scan failed
+      ort-version:
+        type: string
+        default: "latest"
+        description: ORT version to use
+      python-version:
+        type: string
+        default: "3.11"
+        description: Python version to use
+      poetry-version:
+        type: string
+        description: "Poetry version to use"
+        default: "latest"
 
 jobs:
   style_checks:
-    if: ${{ inputs.enable_style_checks }}
+    if: ${{ inputs.style-checks-enabled }}
     runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -86,31 +86,31 @@ jobs:
           lfs: true
       - uses: epam/ai-dial-ci/actions/python_prepare@1.13.0
         with:
-          python_version: ${{ inputs.python_version }}
-          poetry_version: ${{ inputs.poetry_version }}
+          python-version: ${{ inputs.python-version }}
+          poetry-version: ${{ inputs.poetry-version }}
       - name: Test
-        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_style_checks }}
+        continue-on-error: ${{ inputs.bypass-checks || inputs.style-checks-bypassed }}
         shell: bash
         run: |
           make lint
 
   code_checks:
-    if: ${{ inputs.enable_code_checks }}
+    if: ${{ inputs.code-checks-enabled }}
     runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJSON(inputs.test_python_versions) }}
+        python-version: ${{ fromJSON(inputs.code-checks-python-versions) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/python_prepare@1.13.0
         with:
-          python_version: ${{ matrix.python-version }}
-          poetry_version: ${{ inputs.poetry_version }}
+          python-version: ${{ matrix.python-version }}
+          poetry-version: ${{ inputs.poetry-version }}
       - name: Test
-        continue-on-error: ${{ inputs.bypass_checks || inputs.bypass_code_checks }}
+        continue-on-error: ${{ inputs.bypass-checks || inputs.code-checks-bypassed }}
         shell: bash
         run: |
           pip install twine==5.0.0
@@ -119,7 +119,7 @@ jobs:
           make test PYTHON=${{ matrix.python-version }}
 
   ort:
-    if: ${{ inputs.enable_ort }}
+    if: ${{ inputs.ort-enabled }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -127,16 +127,16 @@ jobs:
           lfs: true
       - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
         env:
-          CONTINUE_ON_ERROR: ${{ inputs.bypass_checks || inputs.bypass_ort }} # Hack to use the input below as a boolean
+          CONTINUE_ON_ERROR: ${{ inputs.bypass-checks || inputs.ort-bypassed }} # Hack to use the input below as a boolean
         with:
-          image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort_version }}"
+          image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
           allow-dynamic-versions: "true"
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
         continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
 
   trivy:
-    if: ${{ inputs.enable_trivy }}
+    if: ${{ inputs.trivy-enabled }}
     runs-on: ubuntu-latest
     steps:
       - name: Run Trivy vulnerability scanner (stdout, table view, no fail)
@@ -145,11 +145,11 @@ jobs:
           scan-type: "fs"
           scan-ref: "."
           format: "table"
-          ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
-          vuln-type: ${{ inputs.scan_vuln_type }}
-          severity: ${{ inputs.scan_severity }}
-          limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
-        continue-on-error: ${{ inputs.bypass_trivy }}
+          ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
+          vuln-type: ${{ inputs.trivy-vuln-type }}
+          severity: ${{ inputs.trivy-severity }}
+          limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
+        continue-on-error: ${{ inputs.trivy-bypassed }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Run Trivy vulnerability scanner (SARIF, may fail)
@@ -162,18 +162,18 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
           exit-code: "1"
-          ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
-          vuln-type: ${{ inputs.scan_vuln_type }}
-          severity: ${{ inputs.scan_severity }}
-          limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
-        continue-on-error: ${{ inputs.bypass_trivy }}
+          ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
+          vuln-type: ${{ inputs.trivy-vuln-type }}
+          severity: ${{ inputs.trivy-severity }}
+          limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
+        continue-on-error: ${{ inputs.trivy-bypassed }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Upload Trivy scan results to GitHub Security tab
         # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
-        if: ${{ !cancelled() && inputs.enable_trivy && !github.event.repository.private }}
+        if: ${{ !cancelled() && inputs.trivy-enabled && !github.event.repository.private }}
         uses: github/codeql-action/upload-sarif@45775bd8235c68ba998cffa5171334d58593da47 #v3.28.15
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy
-        continue-on-error: ${{ inputs.bypass_trivy }}
+        continue-on-error: ${{ inputs.trivy-bypassed }}

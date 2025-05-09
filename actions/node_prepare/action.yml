@@ -2,16 +2,16 @@ name: "Prepare NodeJS"
 description: "Set up NodeJS, (optionally) perform clean install of NPM dependencies"
 
 inputs:
-  node_version:
+  node-version:
     description: "NodeJS version to use"
     default: "22"
   cache:
     description: "Cache type. Supported values: npm, yarn, pnpm"
     default: "npm"
-  clean_install:
+  clean-install:
     description: "Perform a clean install of the dependencies"
     default: "false"
-  registry_url:
+  registry-url:
     description: "Optional registry to set up for auth. Will set the registry in a project level .npmrc and .yarnrc file, and set up auth to read in from env.NODE_AUTH_TOKEN"
     default: ""
 
@@ -21,11 +21,11 @@ runs:
     - name: Use Node.js
       uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
       with:
-        node-version: ${{ inputs.node_version }}
+        node-version: ${{ inputs.node-version }}
         cache: ${{ inputs.cache }}
-        registry-url: ${{ inputs.registry_url }}
+        registry-url: ${{ inputs.registry-url }}
     - name: Install dependencies
-      if: ${{ fromJSON(inputs.clean_install) }} # workaround for composite jobs not being able to pass boolean inputs
+      if: ${{ fromJSON(inputs.clean-install) }} # workaround for composite jobs not being able to pass boolean inputs
       shell: bash
       run: |
         npm ci

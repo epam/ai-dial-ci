@@ -4,11 +4,11 @@ name: Dependency Review
 on:
   workflow_call:
     inputs:
-      java_version:
+      java-version:
         type: string
         default: "17"
         description: Java version to use
-      java_distribution:
+      java-distribution:
         type: string
         default: "temurin"
         description: Java distribution to use
@@ -47,8 +47,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: epam/ai-dial-ci/actions/java_prepare@1.13.0
         with:
-          java_version: ${{ inputs.java_version }}
-          java_distribution: ${{ inputs.java_distribution }}
+          java-version: ${{ inputs.java-version }}
+          java-distribution: ${{ inputs.java-distribution }}
       - uses: gradle/actions/dependency-submission@06832c7b30a0129d7fb559bcc6e43d26f6374244 # v4.3.1
         env:
           GITHUB_DEPENDENCY_GRAPH_REF: "refs/heads/${{ github.event.pull_request.head.ref }}"
