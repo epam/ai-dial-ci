@@ -70,6 +70,5 @@ jobs:
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          header: dependency-analysis
           body-path: openssf-report.html
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
