@@ -12,6 +12,10 @@ on:
         type: string
         default: "temurin"
         description: Java distribution to use
+      show_openssf_scorecard:
+        type: boolean
+        default: true
+        description: Show Openssf Scorecard scores for the dependencies changed in this pull request
     secrets:
       ACTIONS_BOT_TOKEN:
         required: true
@@ -58,6 +62,7 @@ jobs:
         with:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 600
+          show-openssf-scorecard: ${{ inputs.show_openssf_scorecard }}
       - if: ${{ steps.dependency-review.outputs.comment-content != null }}
         # Use separate action to comment because the original one can't do it without PR context
         uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728 # v2.9.1
