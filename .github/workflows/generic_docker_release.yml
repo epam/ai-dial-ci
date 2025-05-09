@@ -55,6 +55,10 @@ on:
         type: boolean
         default: true
         description: Limit severities for SARIF format
+      maximize-build-space:
+        type: boolean
+        default: false
+        description: Maximize build space by removing unwanted software
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -90,6 +94,14 @@ jobs:
       - calculate_version
       - test
     steps:
+      - name: Maximize build space
+        uses: AdityaGarg8/remove-unwanted-software@90e01b21170618765a73370fcc3abbd1684a7793 # v5
+        if: ${{ inputs.maximize-build-space }}
+        with:
+          remove-android: "true"
+          remove-dotnet: "true"
+          remove-haskell: "true"
+          remove-large-packages: "true"
       - uses: epam/ai-dial-ci/actions/generate_release_notes@1.13.0
         with:
           latest_tag: ${{ needs.calculate_version.outputs.latest_tag }}
