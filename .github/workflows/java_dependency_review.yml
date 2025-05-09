@@ -12,10 +12,6 @@ on:
         type: string
         default: "temurin"
         description: Java distribution to use
-      show_openssf_scorecard:
-        type: boolean
-        default: true
-        description: Show Openssf Scorecard scores for the dependencies changed in this pull request
     secrets:
       ACTIONS_BOT_TOKEN:
         required: true
