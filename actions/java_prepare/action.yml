@@ -2,10 +2,10 @@ name: "Prepare Java"
 description: "Set up Java with Gradle"
 
 inputs:
-  java_version:
+  java-version:
     description: "Java version to use"
     default: "17"
-  java_distribution:
+  java-distribution:
     description: "Java distribution to use"
     default: "temurin"
 
@@ -15,8 +15,8 @@ runs:
     - name: Set up JDK
       uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
       with:
-        java-version: ${{ inputs.java_version }}
-        distribution: ${{ inputs.java_distribution }}
+        java-version: ${{ inputs.java-version }}
+        distribution: ${{ inputs.java-distribution }}
         # Not using `cache: gradle` because `setup-gradle` action takes care of it
         # ref: https://github.com/gradle/actions/blob/main/docs/setup-gradle.md#incompatibility-with-other-caching-mechanisms
     - name: Set up Gradle

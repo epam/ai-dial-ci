@@ -2,16 +2,16 @@ name: "Prepare Python"
 description: "Checkout project, set up python"
 
 inputs:
-  python_version:
+  python-version:
     description: "Python version to use"
     default: "3.x"
   cache:
     description: "Cache type. Supported values: pip, pipenv, poetry"
     default: "poetry"
-  install_poetry:
+  poetry-install:
     description: "Install poetry"
     default: "true"
-  poetry_version:
+  poetry-version:
     description: "Poetry version to use"
     default: "latest"
 
@@ -19,14 +19,14 @@ runs:
   using: "composite"
   steps:
     - name: Install Poetry
-      if: ${{ fromJSON(inputs.install_poetry) }} # workaround for composite jobs not being able to pass boolean inputs
+      if: ${{ fromJSON(inputs.poetry-install) }} # workaround for composite jobs not being able to pass boolean inputs
       uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
       with:
         virtualenvs-create: true
         virtualenvs-in-project: true
-        version: ${{ inputs.poetry_version }}
+        version: ${{ inputs.poetry-version }}
     - name: Set up Python
       uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
-        python-version: ${{ inputs.python_version }}
+        python-version: ${{ inputs.python-version }}
         cache: ${{ inputs.cache }}

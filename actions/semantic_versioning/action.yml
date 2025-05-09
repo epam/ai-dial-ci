@@ -2,21 +2,21 @@ name: "Calculate version"
 description: "Calculate version based on semantic versioning @ conventional commits"
 
 outputs:
-  current_version:
+  current-version:
     description: "Current version"
-    value: ${{ steps.semantic.outputs.current_version }}
-  next_version:
+    value: ${{ steps.semantic.outputs.current-version }}
+  next-version:
     description: "Next version"
-    value: ${{ steps.semantic.outputs.next_version }}
-  non_semver_next_version:
-    description: "Next version without semantic versioning"
-    value: ${{ steps.semantic.outputs.non_semver_next_version }}
-  is_latest:
+    value: ${{ steps.semantic.outputs.next-version }}
+  next-version-without-hyphens:
+    description: "Next version without hyphens. Useful for python packages"
+    value: ${{ steps.semantic.outputs.next-version-without-hyphens }}
+  is-latest:
     description: "Is a version semantically latest compared to the latest git tag?"
-    value: ${{ steps.semantic.outputs.is_latest }}
-  latest_tag:
+    value: ${{ steps.semantic.outputs.is-latest }}
+  latest-tag:
     description: "Semantically latest git tag in the repository"
-    value: ${{ steps.semantic.outputs.latest_tag }}
+    value: ${{ steps.semantic.outputs.latest-tag }}
 
 runs:
   using: "composite"
@@ -101,25 +101,25 @@ runs:
         fi
 
         # python packages do not support semantic versioning
-        NON_SEMVER_NEXT_VERSION="${NEXT_VERSION//-/}"
+        NEXT_VERSION_WITHOUT_HYPHENS="${NEXT_VERSION//-/}"
 
         # Outputs to stdout and job summary
         OUTPUTS_SUMMARY=$(cat << EOF
-        | Parameter               | Value                     |
-        |-------------------------|---------------------------|
-        | current_version         | $CURRENT_VERSION          |
-        | next_version            | $NEXT_VERSION             |
-        | non_semver_next_version | $NON_SEMVER_NEXT_VERSION  |
-        | latest_tag              | $LATEST_TAG               |
-        | is_latest               | $IS_LATEST                |
+        | Parameter                    | Value                         |
+        | ---------------------------- | ----------------------------- |
+        | current-version              | $CURRENT_VERSION              |
+        | next-version                 | $NEXT_VERSION                 |
+        | next-version-without-hyphens | $NEXT_VERSION_WITHOUT_HYPHENS |
+        | latest-tag                   | $LATEST_TAG                   |
+        | is-latest                    | $IS_LATEST                    |
         EOF
         )
         echo "$OUTPUTS_SUMMARY"
         echo "$OUTPUTS_SUMMARY" >> "$GITHUB_STEP_SUMMARY"
 
         # Outputs
-        echo "current_version=${CURRENT_VERSION}" >>$GITHUB_OUTPUT
-        echo "next_version=${NEXT_VERSION}" >>$GITHUB_OUTPUT
-        echo "non_semver_next_version=${NON_SEMVER_NEXT_VERSION}" >>$GITHUB_OUTPUT
-        echo "latest_tag=${LATEST_TAG}" >>$GITHUB_OUTPUT
-        echo "is_latest=${IS_LATEST}" >>$GITHUB_OUTPUT
+        echo "current-version=${CURRENT_VERSION}" >>$GITHUB_OUTPUT
+        echo "next-version=${NEXT_VERSION}" >>$GITHUB_OUTPUT
+        echo "next-version-without-hyphens=${NEXT_VERSION_WITHOUT_HYPHENS}" >>$GITHUB_OUTPUT
+        echo "latest-tag=${LATEST_TAG}" >>$GITHUB_OUTPUT
+        echo "is-latest=${IS_LATEST}" >>$GITHUB_OUTPUT
