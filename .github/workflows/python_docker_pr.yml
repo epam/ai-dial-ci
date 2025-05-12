@@ -63,6 +63,10 @@ on:
         type: string
         description: "Poetry version to use"
         default: "1.8.5"
+      maximize-build-space:
+        type: boolean
+        default: false
+        description: Maximize build space by removing unwanted software
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -85,6 +89,14 @@ jobs:
   docker_build:
     runs-on: ubuntu-latest
     steps:
+      - name: Maximize build space
+        uses: AdityaGarg8/remove-unwanted-software@90e01b21170618765a73370fcc3abbd1684a7793 # v5
+        if: ${{ inputs.maximize-build-space }}
+        with:
+          remove-android: "true"
+          remove-dotnet: "true"
+          remove-haskell: "true"
+          remove-large-packages: "true"
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true

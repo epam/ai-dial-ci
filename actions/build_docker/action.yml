@@ -87,7 +87,7 @@ runs:
         password: ${{ inputs.dockerhub-password }}
     - name: Build and export to Docker
       if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+      uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
       with:
         context: .
         load: true
@@ -110,6 +110,7 @@ runs:
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
     - name: Run Trivy vulnerability scanner (SARIF, no fail)
+      id: trivy-sarif
       # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
       if: ${{ fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
       uses: aquasecurity/trivy-action@7aca5acc9500b463826cc47a47a65ad7d404b045 # TODO: v0.31.0+
@@ -124,11 +125,11 @@ runs:
         limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
       env:
         TRIVY_DISABLE_VEX_NOTICE: true
-      continue-on-error: true # Alongside with `exit-code: 0`, ensure not failing the workflow
+      continue-on-error: true # HACK: Alongside with `exit-code: 0`, ensure not failing the workflow
     - name: Upload Trivy scan results to GitHub Security tab
       # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
       if: ${{ !cancelled() && fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: github/codeql-action/upload-sarif@45775bd8235c68ba998cffa5171334d58593da47 #v3.28.15
+      uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b #v3.28.17
       with:
         sarif_file: "trivy-results.sarif"
         category: trivy
@@ -145,16 +146,16 @@ runs:
         ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
         vuln-type: ${{ inputs.trivy-vuln-type }}
         severity: ${{ inputs.trivy-severity }}
-        skip-setup-trivy: true # We already have trivy installed just above
+        skip-setup-trivy: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
       env:
         CONTINUE_ON_ERROR: ${{ inputs.bypass-checks }} # Hack to use the input below as a boolean
-        TRIVY_SKIP_DB_UPDATE: true # We already have the DB updated just above
-        TRIVY_SKIP_JAVA_DB_UPDATE: true # We already have the Java DB updated just above
+        TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
+        TRIVY_SKIP_JAVA_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
         TRIVY_DISABLE_VEX_NOTICE: true
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Build and push
       if: ${{ fromJSON(inputs.push-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+      uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
       with:
         context: .
         push: true
