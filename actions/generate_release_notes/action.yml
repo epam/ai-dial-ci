@@ -2,7 +2,7 @@ name: "Generate release notes"
 description: "Generate release notes based on conventional commits"
 
 inputs:
-  latest_tag:
+  latest-tag:
     description: "Semantically latest git tag in the repository"
     required: true
 
@@ -21,7 +21,7 @@ runs:
       id: generate_changelog
       shell: bash
       env:
-        INPUT_LATEST_TAG: ${{ inputs.latest_tag }}
+        INPUT_LATEST_TAG: ${{ inputs.latest-tag }}
       run: |
         #!/bin/bash
 
