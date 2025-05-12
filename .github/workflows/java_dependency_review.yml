@@ -55,7 +55,7 @@ jobs:
           GITHUB_DEPENDENCY_GRAPH_REF: "refs/heads/${{ github.event.pull_request.head.ref }}"
           GITHUB_DEPENDENCY_GRAPH_SHA: ${{ github.event.pull_request.head.sha }}
       - id: dependency-review
-        uses: actions/dependency-review-action@ce3cf9537a52e8119d91fd484ab5b8a807627bf8 # v4.6.0
+        uses: actions/dependency-review-action@38ecb5b593bf0eb19e335c03f97670f792489a8b # v4.7.0
         with:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 600
