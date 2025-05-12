@@ -62,7 +62,7 @@ jobs:
         env:
           COMMENT_CONTENT: ${{ steps.dependency-review.outputs.comment-content }}
         run: |
-          printf "%s" "${COMMENT_CONTENT}" > openssf-report.html
+          echo "${COMMENT_CONTENT}" > openssf-report.html
       - if: ${{ steps.dependency-review.outputs.comment-content != null }}
         # Use separate action to comment because the original one can't do it without PR context
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
