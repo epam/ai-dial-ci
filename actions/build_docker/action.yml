@@ -108,6 +108,7 @@ runs:
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
     - name: Run Trivy vulnerability scanner (SARIF, no fail)
+      id: trivy-sarif
       # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
       if: ${{ fromJSON(inputs.scan) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
       uses: aquasecurity/trivy-action@7aca5acc9500b463826cc47a47a65ad7d404b045 # TODO: v0.31.0+
@@ -122,7 +123,7 @@ runs:
         limit-severities-for-sarif: ${{ inputs.scan_limit_severities_for_sarif }}
       env:
         TRIVY_DISABLE_VEX_NOTICE: true
-      continue-on-error: true # Alongside with `exit-code: 0`, ensure not failing the workflow
+      continue-on-error: true # HACK: Alongside with `exit-code: 0`, ensure not failing the workflow
     - name: Upload Trivy scan results to GitHub Security tab
       # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
       if: ${{ !cancelled() && fromJSON(inputs.scan) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
@@ -143,11 +144,11 @@ runs:
         ignore-unfixed: ${{ inputs.scan_ignore_unfixed }}
         vuln-type: ${{ inputs.scan_vuln_type }}
         severity: ${{ inputs.scan_severity }}
-        skip-setup-trivy: true # We already have trivy installed just above
+        skip-setup-trivy: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
       env:
         CONTINUE_ON_ERROR: ${{ inputs.bypass_checks }} # Hack to use the input below as a boolean
-        TRIVY_SKIP_DB_UPDATE: true # We already have the DB updated just above
-        TRIVY_SKIP_JAVA_DB_UPDATE: true # We already have the Java DB updated just above
+        TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
+        TRIVY_SKIP_JAVA_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
         TRIVY_DISABLE_VEX_NOTICE: true
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Build and push
