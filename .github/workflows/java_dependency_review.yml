@@ -59,10 +59,8 @@ jobs:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 600
       - if: ${{ steps.dependency-review.outputs.comment-content != null }}
-        env:
-          COMMENT_CONTENT: ${{ steps.dependency-review.outputs.comment-content }}
         run: |
-          echo "${COMMENT_CONTENT}" > openssf-report.html
+          echo "${{ steps.dependency-review.outputs.comment-content }}" > openssf-report.html
       - if: ${{ steps.dependency-review.outputs.comment-content != null }}
         # Use separate action to comment because the original one can't do it without PR context
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
