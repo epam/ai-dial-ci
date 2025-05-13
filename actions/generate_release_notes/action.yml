@@ -2,7 +2,7 @@ name: "Generate release notes"
 description: "Generate release notes based on conventional commits"
 
 inputs:
-  latest_tag:
+  latest-tag:
     description: "Semantically latest git tag in the repository"
     required: true
 
@@ -13,11 +13,15 @@ runs:
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
+        # HACK: there's a bug in actions/checkout, where all subsequent checkouts within single job with `lfs: true`
+        # doesn't actually fetch LFS files. So, we have to use lfs even we don't need it here.
+        # ref: https://github.com/actions/checkout/issues/270
+        lfs: true
     - name: Generate changelog
       id: generate_changelog
       shell: bash
       env:
-        INPUT_LATEST_TAG: ${{ inputs.latest_tag }}
+        INPUT_LATEST_TAG: ${{ inputs.latest-tag }}
       run: |
         #!/bin/bash
 

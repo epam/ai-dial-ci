@@ -1,0 +1,9 @@
+# Visual Studio Code
+.vscode/*
+.history/
+*.vsix
+
+# OSX
+.DS_Store
+
+.idea

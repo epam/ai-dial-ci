@@ -2,10 +2,10 @@ name: "Prepare Java"
 description: "Set up Java with Gradle"
 
 inputs:
-  java_version:
+  java-version:
     description: "Java version to use"
     default: "17"
-  java_distribution:
+  java-distribution:
     description: "Java distribution to use"
     default: "temurin"
 
@@ -13,13 +13,13 @@ runs:
   using: "composite"
   steps:
     - name: Set up JDK
-      uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b # v4.6.0
+      uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
       with:
-        java-version: ${{ inputs.java_version }}
-        distribution: ${{ inputs.java_distribution }}
+        java-version: ${{ inputs.java-version }}
+        distribution: ${{ inputs.java-distribution }}
         # Not using `cache: gradle` because `setup-gradle` action takes care of it
         # ref: https://github.com/gradle/actions/blob/main/docs/setup-gradle.md#incompatibility-with-other-caching-mechanisms
     - name: Set up Gradle
-      uses: gradle/actions/setup-gradle@0bdd871935719febd78681f197cd39af5b6e16a6 # v4.2.2
+      uses: gradle/actions/setup-gradle@06832c7b30a0129d7fb559bcc6e43d26f6374244 # v4.3.1
       with:
         add-job-summary: "on-failure"
