@@ -118,9 +118,21 @@ jobs:
         continue-on-error: ${{ inputs.bypass-checks || inputs.code-checks-bypassed }}
         shell: bash
         run: |
-          pip install twine==5.0.0
+          # Workflow explanation:
+          # 1. Use venv from python_prepare action and build the package(s)
+          # 2. Create a separate venv for twine, install and check the package(s)
+          # 3. Switch back to the original venv and run tests
+          source $VENV
           make build
+          deactivate
+
+          python -m venv .venv-twine
+          source .venv-twine/bin/activate
+          pip install "twine~=6.0"
           twine check dist/*
+          deactivate
+
+          source $VENV
           make test PYTHON=${{ matrix.python-version }}
 
   ort:
