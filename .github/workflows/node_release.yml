@@ -122,6 +122,9 @@ jobs:
           remove-android: "true"
           remove-dotnet: "true"
           remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
+          remove-cached-tools: "true"
           remove-large-packages: "true"
       - uses: epam/ai-dial-ci/actions/generate_release_notes@2.0.1
         with:
