@@ -67,6 +67,11 @@ on:
         type: boolean
         default: false
         description: Maximize build space by removing unwanted software
+      runs-on:
+        type: string
+        description: "Overrides jobs runs-on settings (json-encoded list)"
+        default: '["ubuntu-latest"]'
+        required: false
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -85,9 +90,10 @@ jobs:
       ort-version: ${{ inputs.ort-version }}
       python-version: ${{ inputs.python-version }}
       poetry-version: ${{ inputs.poetry-version }}
+      runs-on: ${{ inputs.runs-on }}
 
   docker_build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - name: Maximize build space
         uses: AdityaGarg8/remove-unwanted-software@90e01b21170618765a73370fcc3abbd1684a7793 # v5

@@ -75,11 +75,16 @@ on:
         type: string
         description: "Poetry version to use"
         default: "latest"
+      runs-on:
+        type: string
+        description: "Overrides jobs runs-on settings (json-encoded list)"
+        default: '["ubuntu-latest"]'
+        required: false
 
 jobs:
   style_checks:
     if: ${{ inputs.style-checks-enabled }}
-    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -96,7 +101,7 @@ jobs:
 
   code_checks:
     if: ${{ inputs.code-checks-enabled }}
-    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     strategy:
       fail-fast: false
       matrix:
@@ -120,7 +125,7 @@ jobs:
 
   ort:
     if: ${{ inputs.ort-enabled }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -137,7 +142,7 @@ jobs:
 
   trivy:
     if: ${{ inputs.trivy-enabled }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - name: Run Trivy vulnerability scanner (SARIF, no fail)
         id: trivy-sarif

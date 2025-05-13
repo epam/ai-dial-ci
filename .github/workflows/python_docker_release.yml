@@ -67,6 +67,11 @@ on:
         type: boolean
         default: false
         description: Maximize build space by removing unwanted software
+      runs-on:
+        type: string
+        description: "Overrides jobs runs-on settings (json-encoded list)"
+        default: '["ubuntu-latest"]'
+        required: false
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -85,9 +90,10 @@ jobs:
       ort-version: ${{ inputs.ort-version }}
       python-version: ${{ inputs.python-version }}
       poetry-version: ${{ inputs.poetry-version }}
+      runs-on: ${{ inputs.runs-on }}
 
   calculate_version:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
       next-version: ${{ steps.semantic_versioning.outputs.next-version }}
       next-version-without-hyphens: ${{ steps.semantic_versioning.outputs.next-version-without-hyphens }}
@@ -98,7 +104,7 @@ jobs:
         id: semantic_versioning
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
       packages: write
