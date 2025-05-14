@@ -75,16 +75,21 @@ on:
         type: string
         description: "Poetry version to use"
         default: "latest"
+      runs-on:
+        type: string
+        description: "Overrides jobs runs-on settings (json-encoded list)"
+        default: '["ubuntu-24.04"]'
+        required: false
 
 jobs:
   style_checks:
     if: ${{ inputs.style-checks-enabled }}
-    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@2.0.1
+      - uses: epam/ai-dial-ci/actions/python_prepare@2.1.0
         with:
           python-version: ${{ inputs.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -96,7 +101,7 @@ jobs:
 
   code_checks:
     if: ${{ inputs.code-checks-enabled }}
-    runs-on: ubuntu-22.04 # TODO: ubuntu-latest have python 3.12 by default and breaks `pip install` system-wide packages
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     strategy:
       fail-fast: false
       matrix:
@@ -105,7 +110,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@2.0.1
+      - uses: epam/ai-dial-ci/actions/python_prepare@2.1.0
         with:
           python-version: ${{ matrix.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -113,14 +118,26 @@ jobs:
         continue-on-error: ${{ inputs.bypass-checks || inputs.code-checks-bypassed }}
         shell: bash
         run: |
-          pip install twine==5.0.0
+          # Workflow explanation:
+          # 1. Use venv from python_prepare action and build the package(s)
+          # 2. Create a separate venv for twine, install and check the package(s)
+          # 3. Switch back to the original venv and run tests
+          source $VENV
           make build
+          deactivate
+
+          python -m venv .venv-twine
+          source .venv-twine/bin/activate
+          pip install "twine~=6.0"
           twine check dist/*
+          deactivate
+
+          source $VENV
           make test PYTHON=${{ matrix.python-version }}
 
   ort:
     if: ${{ inputs.ort-enabled }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -137,7 +154,7 @@ jobs:
 
   trivy:
     if: ${{ inputs.trivy-enabled }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - name: Run Trivy vulnerability scanner (SARIF, no fail)
         id: trivy-sarif
