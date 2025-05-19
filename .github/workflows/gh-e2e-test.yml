@@ -3,54 +3,17 @@ name: Run e2e-tests on GitHub
 on:
   workflow_call:
     inputs:
-      addons-list-for-tests:
-        description: "Dial entities used for listing test"
-        type: string
-        default: ""
       allure-version:
         description: "Allure Report version"
         type: string
         default: "2.24.0"
-      auth-provider:
-        description: "Name of authentication provider"
+      dotenv-file:
+        description: "Path to dotenv file with E2E test variables"
         type: string
-        default: "auth0"
       e2e-host:
         required: true
         description: "The host URL for end-to-end testing"
         type: string
-      e2e-workers:
-        description: "Number of threads to run e2e tests"
-        type: number
-        default: 6
-      e2e-overlay-workers:
-        description: "Number of threads to run e2e overlay tests"
-        type: number
-        default: 1
-      entity-arithmetic-request-for-api-tests:
-        description: "Dial entities used for simple arithmetic API test"
-        type: string
-        default: ""
-      entity-plus-addons-for-api-tests:
-        description: "Dial entities used for entity+addons API test"
-        type: string
-        default: ""
-      entity-simple-request-for-api-tests:
-        description: "Dial entities used for text request API test, attachment can be expected as a response"
-        type: string
-        default: ""
-      entity-plus-attachment-for-api-tests:
-        description: "Dial entities used for attachment request API test"
-        type: string
-        default: ""
-      assistant-plus-addons-for-api-tests:
-        description: "Dial entities used for assistant+addons API test"
-        type: string
-        default: ""
-      issue-url:
-        description: "Issue URL"
-        type: string
-        default: ""
       java-distribution:
         description: "Java distribution"
         type: string
@@ -59,10 +22,6 @@ on:
         description: "Java version"
         type: string
         default: "17"
-      models-list-for-tests:
-        description: "Dial entities used for listing test"
-        type: string
-        default: ""
       next-public-overlay-host:
         required: true
         description: "Overlay domain host"
@@ -71,22 +30,14 @@ on:
         description: "NodeJS version"
         type: string
         default: "lts/*"
-      simple-request-model:
-        description: "Model used for simple requests, with or without system prompts, e.g. arithmetic operations, markdown tables generation etc"
-        type: string
-        default: ""
       test-repository:
         description: "E2E tests Git repository"
         type: string
-        default: "epam/ai-dial-chat"
+        default: "tataranovich/ai-dial-chat"
       test-branch:
         description: "E2E tests Git branch"
         type: string
         default: "development"
-      tms-url:
-        description: "TMS URL"
-        type: string
-        default: ""
     outputs:
       chat-status:
         description: "Status of Chat E2E test"
@@ -122,6 +73,12 @@ jobs:
           repository: ${{ inputs.test-repository }}
           ref: ${{ inputs.test-branch }}
           lfs: true
+      - uses: falti/dotenv-action@a33be0b8cf6a6e6f1b82cc9f3782061ab1022be5 # v1.1.4
+        with:
+          path: ${{ inputs.dotenv-file }}
+          log-variables: true
+          export-variables: true
+          keys-case: bypass
       - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: ${{ inputs.node-version }}
@@ -164,28 +121,12 @@ jobs:
           npx nx run chat-e2e:e2e:chat --configuration=production --output-style=stream --skipInstall
         shell: bash
         env:
-          PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
-          PLAYWRIGHT_ACTION_TIMEOUT: 60000
-          PLAYWRIGHT_EXPECT_TIMEOUT: 60000
-          TMS_URL: ${{ inputs.tms-url }}
-          ISSUE_URL: ${{ inputs.issue-url }}
           E2E_HOST: ${{ inputs.e2e-host }}
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          E2E_WORKERS: ${{ inputs.e2e-workers }}
-          E2E_OVERLAY_WORKERS: ${{ inputs.e2e-overlay-workers }}
           NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
-          AUTH_PROVIDER: ${{ inputs.auth-provider }}
-          ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS: ${{ inputs.entity-arithmetic-request-for-api-tests }}
-          ENTITY_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.entity-plus-addons-for-api-tests }}
-          ENTITY_SIMPLE_REQUEST_FOR_API_TESTS: ${{ inputs.entity-simple-request-for-api-tests }}
-          ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS: ${{ inputs.entity-plus-attachment-for-api-tests }}
-          ASSISTANT_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.assistant-plus-addons-for-api-tests }}
-          MODELS_LIST_FOR_TESTS: ${{ inputs.models-list-for-tests }}
-          ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
-          SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
       - name: Generate Allure Report
         if: ${{ !cancelled() }}
         run: |
@@ -254,28 +195,12 @@ jobs:
           npx nx run chat-e2e:e2e:overlay --configuration=production --output-style=stream --skipInstall
         shell: bash
         env:
-          PLAYWRIGHT_NAVIGATION_TIMEOUT: 60000
-          PLAYWRIGHT_ACTION_TIMEOUT: 60000
-          PLAYWRIGHT_EXPECT_TIMEOUT: 60000
-          TMS_URL: ${{ inputs.tms-url }}
-          ISSUE_URL: ${{ inputs.issue-url }}
           E2E_HOST: ${{ inputs.e2e-host }}
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          E2E_WORKERS: ${{ inputs.e2e-workers }}
-          E2E_OVERLAY_WORKERS: ${{ inputs.e2e-overlay-workers }}
           NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
-          AUTH_PROVIDER: ${{ inputs.auth-provider }}
-          ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS: ${{ inputs.entity-arithmetic-request-for-api-tests }}
-          ENTITY_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.entity-plus-addons-for-api-tests }}
-          ENTITY_SIMPLE_REQUEST_FOR_API_TESTS: ${{ inputs.entity-simple-request-for-api-tests }}
-          ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS: ${{ inputs.entity-plus-attachment-for-api-tests }}
-          ASSISTANT_PLUS_ADDONS_FOR_API_TESTS: ${{ inputs.assistant-plus-addons-for-api-tests }}
-          MODELS_LIST_FOR_TESTS: ${{ inputs.models-list-for-tests }}
-          ADDONS_LIST_FOR_TESTS: ${{ inputs.addons-list-for-tests }}
-          SIMPLE_REQUEST_MODEL: ${{ inputs.simple-request-model }}
       - name: Generate Allure Report for overlay
         if: ${{ !cancelled() }}
         run: |
