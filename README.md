@@ -17,6 +17,7 @@
     - [Deploy review environment](#deploy-review-environment)
     - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
     - [Dependency Review (Java (gradle))](#dependency-review-java-gradle)
+    - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
     - [Trivy additional configuration](#trivy-additional-configuration)
   - [Contributing](#contributing)
 
@@ -31,6 +32,8 @@ Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub 
 These workflows could be imported to any repository under EPAM GitHub organization as standard `.github/workflows` files. See examples below (replace `@main` with specific version tag).
 
 ### PR Workflow (NodeJS (npm), Docker)
+
+`pr.yml`
 
 ```yml
 name: PR Workflow
@@ -51,6 +54,8 @@ jobs:
 
 ### Release Workflow (NodeJS (npm), Docker)
 
+`release.yml`
+
 ```yml
 name: Release Workflow
 
@@ -69,6 +74,8 @@ jobs:
 ```
 
 ### PR Workflow (Java (gradle), Docker)
+
+`pr.yml`
 
 ```yml
 name: PR Workflow
@@ -89,6 +96,8 @@ jobs:
 
 ### Release Workflow (Java (gradle), Docker)
 
+`release.yml`
+
 ```yml
 name: Release Workflow
 
@@ -107,6 +116,8 @@ jobs:
 ```
 
 ### PR Workflow (Python (poetry), Docker)
+
+`pr.yml`
 
 ```yml
 name: PR Workflow
@@ -127,6 +138,8 @@ jobs:
 
 ### Release Workflow (Python (poetry), Docker)
 
+`release.yml`
+
 ```yml
 name: Release Workflow
 
@@ -145,6 +158,8 @@ jobs:
 ```
 
 ### PR Workflow (Python (poetry), package)
+
+`pr.yml`
 
 ```yml
 name: PR Workflow
@@ -165,6 +180,8 @@ jobs:
 
 ### Release Workflow (Python (poetry), package)
 
+`release.yml`
+
 ```yml
 name: Release Workflow
 
@@ -183,6 +200,8 @@ jobs:
 ```
 
 ### PR Workflow (Generic, Docker)
+
+`pr.yml`
 
 ```yml
 name: PR Workflow
@@ -203,6 +222,8 @@ jobs:
 
 ### Release Workflow (Generic, Docker)
 
+`release.yml`
+
 ```yml
 name: Release Workflow
 
@@ -221,6 +242,8 @@ jobs:
 ```
 
 ### Validate PR title
+
+`pr-title-check.yml`
 
 ```yml
 name: "Validate PR title"
@@ -244,6 +267,8 @@ jobs:
 ```
 
 ### Deploy review environment
+
+`slash-command-dispatch.yml`
 
 ```yml
 name: Slash Command Dispatch
@@ -276,6 +301,8 @@ jobs:
 
 ### Cleanup for untagged images in GHCR
 
+`cleanup-untagged-images.yml`
+
 ```yml
 name: Cleanup untagged images
 
@@ -299,6 +326,8 @@ jobs:
 
 To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository. You'll start getting review comments on PRs.
 
+`dependency-review.yml`
+
 ```yml
 name: Dependency Review
 
@@ -319,9 +348,83 @@ jobs:
       ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
+### Trigger deployment of development environment in GitLab
+
+A common case is to trigger development environment(s) update from GitHub to GitLab, e.g. each time a `development` branch produces a new artifact. Also, it could be not single, but several environments, representing different configuration presets of a single app. To use the example below:
+
+1. add a new [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets) with name `DEPLOY_HOST` and value of the gitlab host, e.g. `gitlab.example.com`
+1. create a new [environment](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment#creating-an-environment), e.g. `development`
+1. for the environment, add [environment secrets](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment#environment-secrets) with names `DEPLOY_ACCESS_TOKEN` and `DEPLOY_TRIGGER_TOKEN` and values of the gitlab access token and trigger token respectively.
+1. use the example workflow file below
+
+`deploy-development.yml`
+
+```yml
+name: Deploy development
+
+on:
+  workflow_dispatch:
+  registry_package:
+
+jobs:
+  gitlab-dev-deploy:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.registry_package.package_version.container_metadata.tag.name == 'development'
+    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@main
+    with:
+      gitlab-project-id: "1487"
+    secrets:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_ACCESS_TOKEN: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
+      DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
+```
+
+In case of multiple environments, continue creating multiple GitHub environments named after e.g. feature sets, each with its own secrets, then use matrix approach as shown below.
+
+`deploy-development.yml`
+
+```yml
+name: Deploy development
+
+on:
+  workflow_dispatch:
+  registry_package:
+
+jobs:
+  trigger:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.registry_package.package_version.container_metadata.tag.name == 'development'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment-name: "development"
+            gitlab-project-id: "1487"
+          - environment-name: "feature-1"
+            gitlab-project-id: "1489"
+          - environment-name: "feature-2"
+            gitlab-project-id: "1984"
+          - environment-name: "feature-3"
+            gitlab-project-id: "1337"
+
+    name: Deploy to ${{ matrix.environment-name }}
+    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@main
+    with:
+      gitlab-project-id: ${{ matrix.gitlab-project-id }}
+      environment-name: ${{ matrix.environment-name }}
+    secrets:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_ACCESS_TOKEN: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
+      DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
+```
+
 ### Trivy additional configuration
 
 To change predefined Trivy parameters or set up additional configuration options, create `trivy.yaml` file in root of your repository. Use example below to add fallback repositories for vulnerabilities and checks DB and thus mitigate rate limit issues.
+
+`trivy.yaml`
 
 ```yaml
 # Trivy configuration file
