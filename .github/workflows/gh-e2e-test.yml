@@ -121,12 +121,12 @@ jobs:
           npx nx run chat-e2e:e2e:chat --configuration=production --output-style=stream --skipInstall
         shell: bash
         env:
+          TEST_TYPE: chat
           E2E_HOST: ${{ inputs.e2e-host }}
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
       - name: Generate Allure Report
         if: ${{ !cancelled() }}
         run: |
@@ -195,12 +195,14 @@ jobs:
           npx nx run chat-e2e:e2e:overlay --configuration=production --output-style=stream --skipInstall
         shell: bash
         env:
+          TEST_TYPE: overlay
           E2E_HOST: ${{ inputs.e2e-host }}
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
+          NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
       - name: Generate Allure Report for overlay
         if: ${{ !cancelled() }}
         run: |

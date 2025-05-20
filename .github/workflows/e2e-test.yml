@@ -48,6 +48,7 @@ jobs:
       E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
       E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
       E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
 
   destroy-env:
     runs-on: ubuntu-latest
