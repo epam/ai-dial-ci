@@ -60,6 +60,8 @@ on:
         required: true
       E2E_PASSWORD:
         required: true
+      NEXT_PUBLIC_OVERLAY_USER_BUCKET:
+        required: true
 
 jobs:
   chat:
