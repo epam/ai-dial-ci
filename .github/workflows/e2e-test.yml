@@ -42,7 +42,6 @@ jobs:
     with:
       e2e-host: "https://chat-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
       next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
-      dotenv-file: 'apps/chat-e2e/.env.ci.e2e-test'
     secrets:
       E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
       E2E_USERNAME: ${{ secrets.E2E_USERNAME }}

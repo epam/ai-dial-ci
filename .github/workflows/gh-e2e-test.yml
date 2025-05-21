@@ -10,6 +10,7 @@ on:
       dotenv-file:
         description: "Path to dotenv file with E2E test variables"
         type: string
+        default: "apps/chat-e2e/.env.ci"
       e2e-host:
         required: true
         description: "The host URL for end-to-end testing"
