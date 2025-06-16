@@ -38,7 +38,7 @@ on:
       test-repository:
         description: "E2E tests Git repository"
         type: string
-        default: "epam/ai-dial-chat"
+        default: "tataranovich/ai-dial-chat"
       test-branch:
         description: "E2E tests Git branch"
         type: string
