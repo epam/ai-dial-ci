@@ -108,8 +108,8 @@ jobs:
           echo "Expected environment URL ${E2E_HOST}, waiting to be available..."
           ENV_HOSTNAME=$(echo "$E2E_HOST" | awk -F/ '{print $3}')
           ENV_OVERLAY_HOSTNAME=$(echo "$NEXT_PUBLIC_OVERLAY_HOST" | awk -F/ '{print $3}')
-          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_HOSTNAME}"
-          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_OVERLAY_HOSTNAME}"
+          #curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_HOSTNAME}"
+          #curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_OVERLAY_HOSTNAME}"
           curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${E2E_HOST}"/api/health
           curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${NEXT_PUBLIC_OVERLAY_HOST}"/api/health
         shell: bash
@@ -183,8 +183,8 @@ jobs:
           echo "Expected environment URL ${E2E_HOST}, waiting to be available..."
           ENV_HOSTNAME=$(echo "$E2E_HOST" | awk -F/ '{print $3}')
           ENV_OVERLAY_HOSTNAME=$(echo "$NEXT_PUBLIC_OVERLAY_HOST" | awk -F/ '{print $3}')
-          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_HOSTNAME}"
-          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_OVERLAY_HOSTNAME}"
+          #curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_HOSTNAME}"
+          #curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET https://networkcalc.com/api/dns/lookup/"${ENV_OVERLAY_HOSTNAME}"
           curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${E2E_HOST}"/api/health
           curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${NEXT_PUBLIC_OVERLAY_HOST}"/api/health
         shell: bash
