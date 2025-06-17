@@ -40,7 +40,6 @@ jobs:
     needs:
       - deploy-env
     with:
-      test-branch: 'feat/e2e-github-fixes'
       e2e-host: "https://chat-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
       next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
     secrets:
