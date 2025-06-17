@@ -1,4 +1,4 @@
-name: Deploy App to dev env
+name: Deploy App to Environment
 
 on:
   workflow_call:
@@ -11,6 +11,10 @@ on:
         default: 'master'
         description: 'The branch or tag to run the pipeline on.'
         type: string
+      environment-name:
+        default: 'development'
+        description: 'The GitHub environment name to use for the deployment.'
+        type: string
     secrets:
       DEPLOY_HOST:
         required: true
@@ -22,9 +26,9 @@ on:
 jobs:
   trigger-pipeline:
     runs-on: ubuntu-latest
-    concurrency: development
+    concurrency: ${{ inputs.environment-name }}
     environment:
-      name: development
+      name: ${{ inputs.environment-name }}
     steps:
       - name: Deploy environment
         id: deploy

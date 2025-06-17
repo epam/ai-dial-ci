@@ -51,6 +51,11 @@ on:
         type: boolean
         default: false
         description: Maximize build space by removing unwanted software
+      runs-on:
+        type: string
+        description: "Overrides jobs runs-on settings (json-encoded list)"
+        default: '["ubuntu-24.04"]'
+        required: false
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -65,19 +70,20 @@ jobs:
       ort-enabled: ${{ inputs.ort-enabled }}
       ort-bypassed: ${{ inputs.ort-bypassed }}
       ort-version: ${{ inputs.ort-version }}
+      runs-on: ${{ inputs.runs-on }}
 
   calculate_version:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
       next-version: ${{ steps.semantic_versioning.outputs.next-version }}
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@2.0.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@2.2.0
         id: semantic_versioning
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
       packages: write
@@ -93,15 +99,18 @@ jobs:
           remove-android: "true"
           remove-dotnet: "true"
           remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
+          remove-cached-tools: "true"
           remove-large-packages: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@2.0.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@2.2.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/build_docker@2.0.1
+      - uses: epam/ai-dial-ci/actions/build_docker@2.2.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -121,7 +130,7 @@ jobs:
             ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@2.0.1
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@2.2.0
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
