@@ -27,7 +27,7 @@ jobs:
           trigger_token: ${{ secrets.E2E_DEPLOY_TRIGGER_TOKEN }}
           access_token: ${{ secrets.E2E_DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
-          ref: ${{ github.event.client_payload.gitlab-project-ref || secrets.E2E_DEPLOY_REF }}
+          ref: ${{ github.event.client_payload.gitlab-project-ref || env.E2E_DEPLOY_REF }}
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ github.event.client_payload.github-app }}",

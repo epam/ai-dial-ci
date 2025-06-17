@@ -53,7 +53,7 @@ jobs:
           trigger_token: ${{ secrets.REVIEW_DEPLOY_TRIGGER_TOKEN }}
           access_token: ${{ secrets.REVIEW_DEPLOY_ACCESS_TOKEN }}
           id: ${{ secrets.REVIEW_DEPLOY_PROJECT_ID }}
-          ref: ${{ secrets.REVIEW_DEPLOY_REF }}
+          ref: ${{ env.REVIEW_DEPLOY_REF }}
           variables: >
             {
               "GITHUB_APP":"${{ github.event.client_payload.slash_command.args.named.application }}",
