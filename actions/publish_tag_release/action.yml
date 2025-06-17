@@ -1,14 +1,14 @@
 name: "Publish git tag and release"
 description: "Commit changes back to git, apply tag and create release"
 inputs:
-  extra_commit_command:
+  extra-commit-command:
     description: 'Extra command to commit changes, e.g. `git add version.txt ; git commit -m "[skip ci] Update version" || true`'
     required: false
     default: ""
-  tag_version:
+  tag-version:
     description: "Tag version"
     required: true
-  changelog_file:
+  changelog-file:
     description: "Changelog file"
     required: true
   artifacts:
@@ -26,25 +26,25 @@ runs:
         git config --global user.name "ai-dial-actions"
         git config --global user.email "149404362+ai-dial-actions@users.noreply.github.com"
 
-        ${{ inputs.extra_commit_command }}
+        ${{ inputs.extra-commit-command }}
 
         CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
         CURRENT_BRANCH=${CURRENT_BRANCH##refs/heads/}
         CURRENT_BRANCH=${CURRENT_BRANCH:-HEAD}
         if [[ "$CURRENT_BRANCH" =~ "release-" ]]; then
-          git tag -a "${{ inputs.tag_version }}" -m "$(cat ${{ inputs.changelog_file }})"
+          git tag -a "${{ inputs.tag-version }}" -m "$(cat ${{ inputs.changelog-file }})"
         fi
 
         git push
         git push --tags
 
-    - uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5 # v1.14.0
+    - uses: ncipollo/release-action@440c8c1cb0ed28b9f43e4d1d670870f059653174 # v1.16.0
       if: github.ref != 'refs/heads/development'
       with:
         artifacts: ${{ inputs.artifacts }}
-        bodyFile: ${{ inputs.changelog_file }}
+        bodyFile: ${{ inputs.changelog-file }}
         allowUpdates: true
         updateOnlyUnreleased: true
         makeLatest: true
         draft: true
-        tag: ${{ inputs.tag_version }}
+        tag: ${{ inputs.tag-version }}
