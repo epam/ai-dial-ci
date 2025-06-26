@@ -1,48 +1,73 @@
 name: Run e2e-tests
 
 on:
-  workflow_call:
-    inputs:
-      gitlab-project-id:
-        required: true
-        description: "The ID or path of the project owned by the authenticated user."
-        type: string
-      gitlab-project-ref:
-        default: "master"
-        description: "The branch or tag to run the pipeline on."
-        type: string
-    secrets:
-      DEPLOY_HOST:
-        required: true
-      DEPLOY_TRIGGER_TOKEN:
-        required: true
-      DEPLOY_ACCESS_TOKEN:
-        required: true
+  repository_dispatch:
+    types: [e2e-tests-workflow]
 
 jobs:
-  trigger-pipeline:
+  deploy-env:
     runs-on: ubuntu-latest
-    concurrency: e2e-test
-    environment:
-      name: e2e-test
+    outputs:
+      github-app: ${{ github.event.client_payload.github-app }}
+      github-sha: ${{ steps.sha.outputs.SHA }}
     steps:
       - name: Obtain short sha
         id: sha
         shell: bash
+        env:
+          TRIGGER_GITHUB_SHA: ${{ github.event.client_payload.github-sha}}
         run: |
           # shorten the commit SHA to the first 7 characters
-          echo "SHA=${GITHUB_SHA:0:7}" >>$GITHUB_OUTPUT
+          echo "SHA=${TRIGGER_GITHUB_SHA:0:7}" >>$GITHUB_OUTPUT
       - name: Deploy environment
         id: deploy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
-          trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
-          access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
-          id: ${{ inputs.gitlab-project-id }}
-          ref: ${{ inputs.gitlab-project-ref }}
+          trigger_token: ${{ secrets.E2E_DEPLOY_TRIGGER_TOKEN }}
+          access_token: ${{ secrets.E2E_DEPLOY_ACCESS_TOKEN }}
+          id: ${{ github.event.client_payload.gitlab-project-id }}
+          ref: ${{ github.event.client_payload.gitlab-project-ref || vars.E2E_DEPLOY_REF }}
           variables: >
             {
-              "TRIGGER_GITHUB_APP":"${{ github.event.repository.name }}",
-              "TRIGGER_GITHUB_SHA": "${{ steps.sha.outputs.SHA }}"
+              "TRIGGER_GITHUB_APP":"${{ github.event.client_payload.github-app }}",
+              "TRIGGER_GITHUB_SHA": "${{ steps.sha.outputs.SHA }}",
+              "GITHUB_STAGE": "deploy"
+            }
+
+  e2e-test:
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.3.0
+    needs:
+      - deploy-env
+    with:
+      e2e-host: "https://chat-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
+      next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
+    secrets:
+      E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
+
+  destroy-env:
+    runs-on: ubuntu-latest
+    needs:
+      - deploy-env
+      - e2e-test
+    if: always()
+    steps:
+      - name: Destroy environment
+        id: destroy
+        uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          trigger_token: ${{ secrets.E2E_DEPLOY_TRIGGER_TOKEN }}
+          access_token: ${{ secrets.E2E_DEPLOY_ACCESS_TOKEN }}
+          id: ${{ github.event.client_payload.gitlab-project-id }}
+          ref: ${{ github.event.client_payload.gitlab-project-ref || 'github-e2e' }} # TODO: replace with 'master' before merge
+          variables: >
+            {
+              "TRIGGER_GITHUB_APP":"${{ needs.deploy-env.outputs.github-app }}",
+              "TRIGGER_GITHUB_SHA": "${{ needs.deploy-env.outputs.github-sha }}",
+              "GITHUB_STAGE": "destroy"
             }

@@ -290,6 +290,7 @@ jobs:
             [
               {
                 "command": "deploy-review",
+                "permission": "write",
                 "issue_type": "pull-request",
                 "repository": "epam/ai-dial-ci",
                 "static_args": [
