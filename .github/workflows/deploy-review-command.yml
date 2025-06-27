@@ -139,7 +139,7 @@ jobs:
   e2e-status:
     runs-on: ubuntu-latest
     needs: e2e-test
-    if: success() || failure()
+    if: always()
     steps:
       - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
