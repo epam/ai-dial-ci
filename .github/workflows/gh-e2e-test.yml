@@ -72,6 +72,10 @@ on:
       NEXT_PUBLIC_OVERLAY_USER_BUCKET:
         required: true
 
+concurrency:
+  group: ${{ inputs.e2e-host }}
+  cancel-in-progress: true
+
 jobs:
   chat:
     runs-on: ubuntu-latest
