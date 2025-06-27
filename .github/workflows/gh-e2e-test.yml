@@ -43,6 +43,10 @@ on:
         description: "E2E tests Git branch"
         type: string
         default: "development"
+      timeout-minutes:
+        description: "The maximum number of minutes to let a job run before GitHub automatically cancels it."
+        type: number
+        default: 60
     outputs:
       chat-status:
         description: "Status of Chat E2E test"
@@ -71,6 +75,7 @@ on:
 jobs:
   chat:
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
     outputs:
       status: ${{ steps.e2e-test-chat.outcome }}
       job-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -152,6 +157,7 @@ jobs:
           retention-days: 30
   overlay:
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
     outputs:
       status: ${{ steps.e2e-test-overlay.outcome }}
       job-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
