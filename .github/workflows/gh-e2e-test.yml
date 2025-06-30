@@ -7,6 +7,10 @@ on:
         description: "Allure Report version"
         type: string
         default: "2.24.0"
+      allure-report-prefix:
+        description: "Allure report name prefix"
+        type: string
+        default: "allure-report"
       dotenv-file:
         description: "Path to dotenv file with E2E test variables"
         type: string
@@ -155,7 +159,7 @@ jobs:
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         if: ${{ !cancelled() }}
         with:
-          name: allure-report-chat
+          name: "${{ inputs.allure-report-prefix }}-${{ github.run_id }}-chat"
           path: |
             apps/chat-e2e/allure-chat-report
           retention-days: 30
@@ -231,7 +235,7 @@ jobs:
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         if: ${{ !cancelled() }}
         with:
-          name: allure-report-overlay
+          name: "${{ inputs.allure-report-prefix }}-${{ github.run_id }}-overlay"
           path: |
             apps/chat-e2e/allure-overlay-report
           retention-days: 30
