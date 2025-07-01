@@ -107,6 +107,7 @@ jobs:
 
   set-test-branch:
     runs-on: ubuntu-latest
+    if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
     outputs:
       test_branch: ${{ steps.set-branch.outputs.test_branch }}
     steps:
@@ -122,6 +123,7 @@ jobs:
 
   e2e-test:
     uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.3.1
+    if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
     needs:
       - deploy-review
       - set-test-branch
@@ -140,7 +142,7 @@ jobs:
   e2e-status:
     runs-on: ubuntu-latest
     needs: e2e-test
-    if: always()
+    if: ${{ always() && !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
     steps:
       - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
