@@ -302,8 +302,8 @@ jobs:
 
 If you need to disable E2E tests execution:
 
-- **whole repository**: add `skip-e2e` argument to `static_args` list
-- **specific PR**: assign `skip-e2e` label to PR
+- for the **whole repository**: add `skip-e2e` argument to `static_args` list
+- for the **specific PR**: assign `skip-e2e` label to PR
 - **once**: use `/deploy-review skip-e2e` command in PR comment
 
 ### Cleanup for untagged images in GHCR
