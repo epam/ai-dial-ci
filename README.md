@@ -300,6 +300,18 @@ jobs:
             ]
 ```
 
+If you need to disable E2E tests execution:
+
+- for the **whole repository**: add `skip-e2e` argument to `static_args` list
+  ```yml
+                "static_args": [
+                  "application=${{ github.event.repository.name }}",
+                  "skip-e2e"
+                ]
+  ```
+- for the **specific PR**: assign `skip-e2e` label to PR
+- **once**: use `/deploy-review skip-e2e` command in PR comment
+
 ### Cleanup for untagged images in GHCR
 
 `cleanup-untagged-images.yml`
