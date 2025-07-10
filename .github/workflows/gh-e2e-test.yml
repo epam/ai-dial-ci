@@ -38,7 +38,7 @@ on:
       playwright-version:
         description: "Playwright version"
         type: string
-        default: "1.53.1"
+        default: "latest"
       test-repository:
         description: "E2E tests Git repository"
         type: string
