@@ -114,7 +114,10 @@ jobs:
         env:
           ALLURE_VERSION: ${{ inputs.allure-version }}
       - name: Install playwright
-        run: npm install -D @playwright/test@${{ inputs.playwright-version }}
+        run: |
+          npm install -D @playwright/test@${{ inputs.playwright-version }}
+          npx playwright install
+          npx playwright --version
         shell: bash
       - name: Wait for environment
         run: |
@@ -190,7 +193,10 @@ jobs:
         env:
           ALLURE_VERSION: ${{ inputs.allure-version }}
       - name: Install playwright
-        run: npm install -D @playwright/test@${{ inputs.playwright-version }}
+        run: |
+          npm install -D @playwright/test@${{ inputs.playwright-version }}
+          npx playwright install
+          npx playwright --version
         shell: bash
       - name: Wait for environment
         run: |
