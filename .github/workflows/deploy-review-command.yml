@@ -122,7 +122,7 @@ jobs:
           fi
 
   e2e-test:
-    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.3.2
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.4.0
     if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
     needs:
       - deploy-review

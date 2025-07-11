@@ -50,6 +50,8 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@main
     secrets: inherit
+    # with:
+    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### Release Workflow (NodeJS (npm), Docker)
@@ -71,6 +73,8 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/node_release.yml@main
     secrets: inherit
+    # with:
+    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### PR Workflow (Java (gradle), Docker)
@@ -92,6 +96,8 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/java_pr.yml@main
     secrets: inherit
+    # with:
+    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### Release Workflow (Java (gradle), Docker)
@@ -113,6 +119,8 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/java_release.yml@main
     secrets: inherit
+    # with:
+    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### PR Workflow (Python (poetry), Docker)
@@ -134,6 +142,8 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
     secrets: inherit
+    # with:
+    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### Release Workflow (Python (poetry), Docker)
@@ -155,6 +165,8 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_release.yml@main
     secrets: inherit
+    # with:
+    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### PR Workflow (Python (poetry), package)
@@ -218,6 +230,8 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/generic_docker_pr.yml@main
     secrets: inherit
+    # with:
+    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### Release Workflow (Generic, Docker)
@@ -239,6 +253,8 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/generic_docker_release.yml@main
     secrets: inherit
+    # with:
+    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### Validate PR title
