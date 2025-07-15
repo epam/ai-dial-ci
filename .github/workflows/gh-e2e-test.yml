@@ -136,11 +136,6 @@ jobs:
                   return 1
               fi
 
-              if ! echo $DOMAIN | grep -Eq '^.+\.nightly-test\.deltixhub\.io'; then
-                  echo "Incorrect domain specified: $DOMAIN" >&2
-                  return 1
-              fi
-
               NS_SERVERS=$(dig +short @8.8.8.8 ns nightly-test.deltixhub.io)
               echo "Detected nameservers for $DOMAIN:"
               echo "$NS_SERVERS"
@@ -257,11 +252,6 @@ jobs:
 
               if [ -z "$DOMAIN" ]; then
                   echo "Specify domain name as first argument" >&2
-                  return 1
-              fi
-
-              if ! echo $DOMAIN | grep -Eq '^.+\.nightly-test\.deltixhub\.io'; then
-                  echo "Incorrect domain specified: $DOMAIN" >&2
                   return 1
               fi
 
