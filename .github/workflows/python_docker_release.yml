@@ -105,7 +105,7 @@ jobs:
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@2.4.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@2.4.1
         id: semantic_versioning
 
   release:
@@ -129,7 +129,7 @@ jobs:
           remove-docker-images: "true"
           remove-cached-tools: "true"
           remove-large-packages: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@2.4.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@2.4.1
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -140,7 +140,7 @@ jobs:
         shell: bash
         run: |
           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-without-hyphens }}\"/g" pyproject.toml
-      - uses: epam/ai-dial-ci/actions/build_docker@2.4.0
+      - uses: epam/ai-dial-ci/actions/build_docker@2.4.1
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -161,7 +161,7 @@ jobs:
             ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@2.4.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@2.4.1
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
