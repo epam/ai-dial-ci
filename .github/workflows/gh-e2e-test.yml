@@ -116,7 +116,7 @@ jobs:
       - name: Install playwright
         run: |
           npm install -D @playwright/test@${{ inputs.playwright-version }}
-          npx playwright install
+          npx playwright install --with-deps
           npx playwright --version
         shell: bash
       - name: Wait for environment
@@ -136,9 +136,16 @@ jobs:
                   return 1
               fi
 
-              NS_SERVERS=$(dig +short @8.8.8.8 ns nightly-test.deltixhub.io)
-              echo "Detected nameservers for $DOMAIN:"
-              echo "$NS_SERVERS"
+              BASE_DOMAIN=$(echo "$DOMAIN" | sed -E 's/[^.]+\.(.+)/\1/')
+              echo "Query Google public DNS for $BASE_DOMAIN nameservers"
+              NS_SERVERS=$(dig +short @8.8.8.8 ns $BASE_DOMAIN)
+              if [ -n "$NS_SERVERS" ]; then
+                  echo "Detected nameservers for $BASE_DOMAIN:"
+                  echo "$NS_SERVERS"
+              else
+                  echo "Unable to detect nameservers for $BASE_DOMAIN" >&2
+                  return 1
+              fi
 
               for NS in $NS_SERVERS
               do
@@ -235,7 +242,7 @@ jobs:
       - name: Install playwright
         run: |
           npm install -D @playwright/test@${{ inputs.playwright-version }}
-          npx playwright install
+          npx playwright install --with-deps
           npx playwright --version
         shell: bash
       - name: Wait for environment
@@ -255,9 +262,16 @@ jobs:
                   return 1
               fi
 
-              NS_SERVERS=$(dig +short @8.8.8.8 ns nightly-test.deltixhub.io)
-              echo "Detected nameservers for $DOMAIN:"
-              echo "$NS_SERVERS"
+              BASE_DOMAIN=$(echo "$DOMAIN" | sed -E 's/[^.]+\.(.+)/\1/')
+              echo "Query Google public DNS for $BASE_DOMAIN nameservers"
+              NS_SERVERS=$(dig +short @8.8.8.8 ns $BASE_DOMAIN)
+              if [ -n "$NS_SERVERS" ]; then
+                  echo "Detected nameservers for $BASE_DOMAIN:"
+                  echo "$NS_SERVERS"
+              else
+                  echo "Unable to detect nameservers for $BASE_DOMAIN" >&2
+                  return 1
+              fi
 
               for NS in $NS_SERVERS
               do
