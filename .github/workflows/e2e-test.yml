@@ -55,7 +55,7 @@ jobs:
     needs:
       - deploy-env
       - e2e-test
-    if: always()
+    if: ${{ !cancelled() }}
     steps:
       - name: Destroy environment
         id: destroy
