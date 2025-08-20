@@ -138,7 +138,7 @@ runs:
     - name: Upload Trivy scan results to GitHub Security tab
       # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
       if: ${{ !cancelled() && fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b #v3.28.17
+      uses: github/codeql-action/upload-sarif@96f518a34f7a870018057716cc4d7a5c014bd61c #v3.29.10
       with:
         sarif_file: "trivy-results.sarif"
         category: trivy
