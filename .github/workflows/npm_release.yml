@@ -1,0 +1,185 @@
+name: NodeJS Release workflow
+
+on:
+  workflow_call:
+    inputs:
+      bypass-checks:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if checks failed
+      format-checks-enabled:
+        type: boolean
+        default: true
+        description: Enable format_checks
+      format-checks-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if format_checks failed
+      style-checks-enabled:
+        type: boolean
+        default: true
+        description: Enable style_checks
+      style-checks-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if style_checks failed
+      code-checks-enabled:
+        type: boolean
+        default: true
+        description: Enable code_checks
+      code-checks-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if code_checks failed
+      ort-enabled:
+        type: boolean
+        default: true
+        description: Enable ORT scanning
+      ort-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if ORT scan failed
+      ort-version:
+        type: string
+        default: "latest"
+        description: ORT version to use
+      trivy-enabled:
+        type: boolean
+        default: true
+        description: Enable Trivy scanning
+      trivy-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if Trivy failed
+      trivy-severity:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: Severities of vulnerabilities to fail the build
+      trivy-severity-for-sarif:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: "Severities of vulnerabilities in SARIF report"
+      trivy-limit-severities-for-sarif:
+        type: boolean
+        default: true
+        description: Limit severities for SARIF format
+      publish-enabled:
+        type: boolean
+        default: true
+        description: Enable publish to npmjs
+      node-version:
+        type: string
+        default: "22"
+        description: NodeJS version to use
+      maximize-build-space:
+        type: boolean
+        default: false
+        description: Maximize build space by removing unwanted software
+      runs-on:
+        type: string
+        description: "Overrides jobs runs-on settings (json-encoded list)"
+        default: '["ubuntu-24.04"]'
+        required: false
+      platforms:
+        type: string
+        description: "Docker build platforms (default linux/amd64)"
+        default: "linux/amd64"
+        required: false
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    uses: ./.github/workflows/node_test.yml
+    with:
+      bypass-checks: ${{ inputs.bypass-checks }}
+      format-checks-enabled: ${{ inputs.format-checks-enabled }}
+      format-checks-bypassed: ${{ inputs.format-checks-bypassed }}
+      style-checks-enabled: ${{ inputs.style-checks-enabled }}
+      style-checks-bypassed: ${{ inputs.style-checks-bypassed }}
+      code-checks-enabled: ${{ inputs.code-checks-enabled }}
+      code-checks-bypassed: ${{ inputs.code-checks-bypassed }}
+      ort-enabled: ${{ inputs.ort-enabled }}
+      ort-bypassed: ${{ inputs.ort-bypassed }}
+      ort-version: ${{ inputs.ort-version }}
+      node-version: ${{ inputs.node-version }}
+      runs-on: ${{ inputs.runs-on }}
+
+  calculate_version:
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    outputs:
+      next-version: ${{ steps.semantic_versioning.outputs.next-version }}
+      is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
+      latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
+    steps:
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@2.4.1
+        id: semantic_versioning
+
+  release:
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
+    needs:
+      - calculate_version
+      - test
+    steps:
+      - name: Maximize build space
+        uses: AdityaGarg8/remove-unwanted-software@90e01b21170618765a73370fcc3abbd1684a7793 # v5
+        if: ${{ inputs.maximize-build-space }}
+        with:
+          remove-android: "true"
+          remove-dotnet: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
+          remove-cached-tools: "true"
+          remove-large-packages: "true"
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@2.4.1
+        with:
+          latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          lfs: true
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+      - uses: epam/ai-dial-ci/actions/node_prepare@2.4.1
+        with:
+          node-version: ${{ inputs.node-version }}
+          clean-install: true
+          registry-url: "https://registry.npmjs.org"
+      - name: Set version
+        shell: bash
+        run: |
+          npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version || true # upstream branch may already be updated
+      - name: Publish packages to npmjs
+        if: ${{ inputs.publish-enabled }}
+        shell: bash
+        run: |
+          #!/bin/bash
+          npm run build
+          PUBLISH_COMMAND="npm run publish"
+          ARGS=""
+          if [ "$IS_DEVELOPMENT_BRANCH" == "true" ]; then
+            ARGS+=" --development"
+          fi
+          if [ "$IS_RELEASE_BRANCH" == "true" ] && [ "$IS_LATEST" == "true" ]; then
+            ARGS+=" --tag latest"
+          fi
+          if [ -n "$ARGS" ]; then
+            PUBLISH_COMMAND+=" --"$ARGS
+          fi
+          $PUBLISH_COMMAND
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
+          IS_DEVELOPMENT_BRANCH: ${{ github.ref == 'refs/heads/development' }}
+          IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release-') }}
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@2.4.1
+        with:
+          tag-version: ${{ needs.calculate_version.outputs.next-version }}
+          changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
+          extra-commit-command: |
+            git add package.json package-lock.json
+            git commit -m '[skip ci] Update version' || true # upstream branch may already be updated
