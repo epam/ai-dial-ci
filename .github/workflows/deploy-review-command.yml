@@ -6,6 +6,15 @@ jobs:
   deploy-review:
     runs-on: ubuntu-latest
     steps:
+      - name: Workflow run URL
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          body: |
+            >GitHub actions run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
       - name: Check repository owner
         id: owner
         run: |
@@ -23,6 +32,7 @@ jobs:
             exit 1
           fi
           echo "All checks passed."
+
       - name: Checks and transformations
         id: vars
         run: |
