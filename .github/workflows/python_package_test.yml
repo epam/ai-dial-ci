@@ -160,7 +160,7 @@ jobs:
         id: trivy-sarif
         # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
         if: ${{ !github.event.repository.private }}
-        uses: aquasecurity/trivy-action@7aca5acc9500b463826cc47a47a65ad7d404b045 # TODO: v0.31.0+
+        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808 # TODO: v0.31.0+
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -183,7 +183,7 @@ jobs:
           category: trivy
         continue-on-error: ${{ inputs.trivy-bypassed }}
       - name: Run Trivy vulnerability scanner (stdout, table view, may fail)
-        uses: aquasecurity/trivy-action@7aca5acc9500b463826cc47a47a65ad7d404b045 # TODO: v0.31.0+
+        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808 # TODO: v0.31.0+
         with:
           scan-type: "fs"
           scan-ref: "."
