@@ -122,7 +122,7 @@ runs:
       id: trivy-sarif
       # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
       if: ${{ fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/trivy-action@7aca5acc9500b463826cc47a47a65ad7d404b045 # TODO: v0.31.0+
+      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # TODO: v0.31.0+
       with:
         image-ref: "${{ inputs.image-name }}:${{ inputs.image-tag }}"
         format: "sarif"
@@ -147,7 +147,7 @@ runs:
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Run Trivy vulnerability scanner (stdout, table view, may fail)
       if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/trivy-action@7aca5acc9500b463826cc47a47a65ad7d404b045 # TODO: v0.31.0+
+      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # TODO: v0.31.0+
       with:
         image-ref: "${{ inputs.image-name }}:${{ inputs.image-tag }}"
         format: "table"
