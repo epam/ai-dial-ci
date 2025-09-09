@@ -392,14 +392,19 @@ A common case is to trigger development environment(s) update from GitHub to Git
 name: Deploy development
 
 on:
-  workflow_dispatch:
-  registry_package:
+  workflow_dispatch: # manual run
+  registry_package: # on new package version (main path)
+  workflow_run: # HACK: redundant trigger to mitigate GitHub's huge delays in registry_package event processing
+    workflows: ["Release Workflow"]
+    types:
+      - completed
 
 jobs:
   gitlab-dev-deploy:
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.registry_package.package_version.container_metadata.tag.name == 'development'
+      github.event.registry_package.package_version.container_metadata.tag.name == 'development' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
     uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@main
     with:
       gitlab-project-id: "1487"
@@ -417,14 +422,19 @@ In case of multiple environments, continue creating multiple GitHub environments
 name: Deploy development
 
 on:
-  workflow_dispatch:
-  registry_package:
+  workflow_dispatch: # manual run
+  registry_package: # on new package version (main path)
+  workflow_run: # HACK: redundant trigger to mitigate GitHub's huge delays in registry_package event processing
+    workflows: ["Release Workflow"]
+    types:
+      - completed
 
 jobs:
   trigger:
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.registry_package.package_version.container_metadata.tag.name == 'development'
+      github.event.registry_package.package_version.container_metadata.tag.name == 'development' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
     strategy:
       fail-fast: false
       matrix:
