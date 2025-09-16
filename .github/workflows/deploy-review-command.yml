@@ -5,6 +5,8 @@ on:
 jobs:
   deploy-review:
     runs-on: ubuntu-latest
+    environment:
+      name: review
     steps:
       - name: Workflow run URL
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
@@ -60,10 +62,10 @@ jobs:
         uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
-          trigger_token: ${{ secrets.REVIEW_DEPLOY_TRIGGER_TOKEN }}
-          access_token: ${{ secrets.REVIEW_DEPLOY_ACCESS_TOKEN }}
-          id: ${{ vars.REVIEW_DEPLOY_PROJECT_ID }}
-          ref: ${{ vars.REVIEW_DEPLOY_REF }}
+          trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
+          access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
+          id: ${{ vars.DEPLOY_PROJECT_ID }}
+          ref: ${{ vars.DEPLOY_REF }}
           variables: >
             {
               "GITHUB_APP":"${{ github.event.client_payload.slash_command.args.named.application }}",
@@ -103,7 +105,7 @@ jobs:
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           body: |
-            >Environment URL: [review-environment](https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.nightly-test.deltixhub.io) | [pipeline](${{ steps.deploy.outputs.web_url }})
+            >Environment URL: [review-environment](https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.E2E_BASE_DOMAIN }}) | [pipeline](${{ steps.deploy.outputs.web_url }})
 
       - name: Return status
         if: success() || failure()
@@ -132,16 +134,17 @@ jobs:
           fi
 
   e2e-test:
-    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.4.1
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.5.0
     if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
     needs:
       - deploy-review
       - set-test-branch
     with:
       allure-report-prefix: "${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}"
-      e2e-host: "https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.nightly-test.deltixhub.io"
-      next-public-overlay-host: "https://overlay-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.nightly-test.deltixhub.io"
+      e2e-host: "https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.E2E_BASE_DOMAIN }}"
+      next-public-overlay-host: "https://overlay-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.E2E_BASE_DOMAIN }}"
       test-branch: ${{ needs.set-test-branch.outputs.test_branch }}
+      environment-name: review
     secrets:
       E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
       E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
