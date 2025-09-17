@@ -46,7 +46,7 @@ jobs:
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: epam/ai-dial-ci/actions/java_prepare@2.4.1
+      - uses: epam/ai-dial-ci/actions/java_prepare@2.5.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
