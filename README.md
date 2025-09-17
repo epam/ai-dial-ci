@@ -3,22 +3,27 @@
 - [AI DIAL workflows](#ai-dial-workflows)
   - [Overview](#overview)
   - [Usage](#usage)
-    - [PR Workflow (NodeJS (npm), Docker)](#pr-workflow-nodejs-npm-docker)
-    - [Release Workflow (NodeJS (npm), Docker)](#release-workflow-nodejs-npm-docker)
-    - [PR Workflow (Java (gradle), Docker)](#pr-workflow-java-gradle-docker)
-    - [Release Workflow (Java (gradle), Docker)](#release-workflow-java-gradle-docker)
-    - [PR Workflow (Python (poetry), Docker)](#pr-workflow-python-poetry-docker)
-    - [Release Workflow (Python (poetry), Docker)](#release-workflow-python-poetry-docker)
-    - [PR Workflow (Python (poetry), package)](#pr-workflow-python-poetry-package)
-    - [Release Workflow (Python (poetry), package)](#release-workflow-python-poetry-package)
-    - [PR Workflow (Generic, Docker)](#pr-workflow-generic-docker)
-    - [Release Workflow (Generic, Docker)](#release-workflow-generic-docker)
-    - [Validate PR title](#validate-pr-title)
-    - [Deploy review environment](#deploy-review-environment)
-    - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
-    - [Dependency Review (Java (gradle))](#dependency-review-java-gradle)
-    - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
-    - [Trivy additional configuration](#trivy-additional-configuration)
+    - [NodeJS (npm)](#nodejs-npm)
+      - [PR Workflow](#pr-workflow)
+      - [Release Workflow](#release-workflow)
+    - [Java (gradle)](#java-gradle)
+      - [PR Workflow (Docker)](#pr-workflow-docker)
+      - [Release Workflow (Docker)](#release-workflow-docker)
+      - [Dependency Review](#dependency-review)
+    - [Python (poetry)](#python-poetry)
+      - [PR Workflow (Docker)](#pr-workflow-docker-1)
+      - [Release Workflow (Docker)](#release-workflow-docker-1)
+      - [PR Workflow (package)](#pr-workflow-package)
+      - [Release Workflow (package)](#release-workflow-package)
+    - [Generic Docker](#generic-docker)
+      - [PR Workflow](#pr-workflow-1)
+      - [Release Workflow](#release-workflow-1)
+    - [Others](#others)
+      - [Validate PR title](#validate-pr-title)
+      - [Deploy review environment](#deploy-review-environment)
+      - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
+      - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
+      - [Trivy additional configuration](#trivy-additional-configuration)
   - [Contributing](#contributing)
 
 ## Overview
@@ -31,7 +36,9 @@ Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub 
 
 These workflows could be imported to any repository under EPAM GitHub organization as standard `.github/workflows` files. See examples below (replace `@main` with specific version tag).
 
-### PR Workflow (NodeJS (npm), Docker)
+### NodeJS (npm)
+
+#### PR Workflow
 
 `pr.yml`
 
@@ -54,7 +61,7 @@ jobs:
     #   platforms: "linux/amd64,linux/arm64"
 ```
 
-### Release Workflow (NodeJS (npm), Docker)
+#### Release Workflow
 
 `release.yml`
 
@@ -77,7 +84,9 @@ jobs:
     #   platforms: "linux/amd64,linux/arm64"
 ```
 
-### PR Workflow (Java (gradle), Docker)
+### Java (gradle)
+
+#### PR Workflow (Docker)
 
 `pr.yml`
 
@@ -100,7 +109,7 @@ jobs:
     #   platforms: "linux/amd64,linux/arm64"
 ```
 
-### Release Workflow (Java (gradle), Docker)
+#### Release Workflow (Docker)
 
 `release.yml`
 
@@ -123,7 +132,35 @@ jobs:
     #   platforms: "linux/amd64,linux/arm64"
 ```
 
-### PR Workflow (Python (poetry), Docker)
+#### Dependency Review
+
+To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository. You'll start getting review comments on PRs.
+
+`dependency-review.yml`
+
+```yml
+name: Dependency Review
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-review:
+    uses: epam/ai-dial-ci/.github/workflows/java_dependency_review.yml@main
+    secrets:
+      ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
+```
+
+### Python (poetry)
+
+#### PR Workflow (Docker)
 
 `pr.yml`
 
@@ -146,7 +183,7 @@ jobs:
     #   platforms: "linux/amd64,linux/arm64"
 ```
 
-### Release Workflow (Python (poetry), Docker)
+#### Release Workflow (Docker)
 
 `release.yml`
 
@@ -169,7 +206,7 @@ jobs:
     #   platforms: "linux/amd64,linux/arm64"
 ```
 
-### PR Workflow (Python (poetry), package)
+#### PR Workflow (package)
 
 `pr.yml`
 
@@ -190,7 +227,7 @@ jobs:
     secrets: inherit
 ```
 
-### Release Workflow (Python (poetry), package)
+#### Release Workflow (package)
 
 `release.yml`
 
@@ -211,7 +248,9 @@ jobs:
     secrets: inherit
 ```
 
-### PR Workflow (Generic, Docker)
+### Generic Docker
+
+#### PR Workflow
 
 `pr.yml`
 
@@ -234,7 +273,7 @@ jobs:
     #   platforms: "linux/amd64,linux/arm64"
 ```
 
-### Release Workflow (Generic, Docker)
+#### Release Workflow
 
 `release.yml`
 
@@ -257,7 +296,9 @@ jobs:
     #   platforms: "linux/amd64,linux/arm64"
 ```
 
-### Validate PR title
+### Others
+
+#### Validate PR title
 
 `pr-title-check.yml`
 
@@ -282,7 +323,7 @@ jobs:
       ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
-### Deploy review environment
+#### Deploy review environment
 
 `slash-command-dispatch.yml`
 
@@ -319,16 +360,18 @@ jobs:
 If you need to disable E2E tests execution:
 
 - for the **whole repository**: add `skip-e2e` argument to `static_args` list
+
   ```yml
                 "static_args": [
                   "application=${{ github.event.repository.name }}",
                   "skip-e2e"
                 ]
   ```
+
 - for the **specific PR**: assign `skip-e2e` label to PR
 - **once**: use `/deploy-review skip-e2e` command in PR comment
 
-### Cleanup for untagged images in GHCR
+#### Cleanup for untagged images in GHCR
 
 `cleanup-untagged-images.yml`
 
@@ -351,33 +394,7 @@ jobs:
           delete-untagged: true
 ```
 
-### Dependency Review (Java (gradle))
-
-To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository. You'll start getting review comments on PRs.
-
-`dependency-review.yml`
-
-```yml
-name: Dependency Review
-
-on:
-  pull_request_target:
-    types:
-      - opened
-      - synchronize
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
-jobs:
-  dependency-review:
-    uses: epam/ai-dial-ci/.github/workflows/java_dependency_review.yml@main
-    secrets:
-      ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
-```
-
-### Trigger deployment of development environment in GitLab
+#### Trigger deployment of development environment in GitLab
 
 A common case is to trigger development environment(s) update from GitHub to GitLab, e.g. each time a `development` branch produces a new artifact. Also, it could be not single, but several environments, representing different configuration presets of a single app. To use the example below:
 
@@ -459,7 +476,7 @@ jobs:
       DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
 ```
 
-### Trivy additional configuration
+#### Trivy additional configuration
 
 To change predefined Trivy parameters or set up additional configuration options, create `trivy.yaml` file in root of your repository. Use example below to add fallback repositories for vulnerabilities and checks DB and thus mitigate rate limit issues.
 
