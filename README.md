@@ -23,7 +23,7 @@
 
 ## Overview
 
-Continuous Integration instrumentation for [AI DIAL](https://epam-rail.com) components.
+Continuous Integration instrumentation for [AI DIAL](https://dialx.ai) components.
 
 Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub organization.
 
