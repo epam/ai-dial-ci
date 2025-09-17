@@ -43,6 +43,10 @@ on:
         type: string
         default: "latest"
         description: ORT version to use
+      docker-build-enabled:
+        type: boolean
+        default: true
+        description: "Enable Docker build"
       trivy-enabled:
         type: boolean
         default: true
@@ -85,6 +89,10 @@ on:
         description: "Docker build platforms (default linux/amd64)"
         default: "linux/amd64"
         required: false
+      dockerfile-path:
+        type: string
+        default: "Dockerfile"
+        description: "Path to the Dockerfile (default: ./Dockerfile)"
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -153,7 +161,9 @@ jobs:
         shell: bash
         run: |
           npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version || true # upstream branch may already be updated
-      - uses: epam/ai-dial-ci/actions/build_docker@2.5.0
+      # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
+      - if: ${{ inputs.docker-build-enabled && (hashFiles(inputs.dockerfile-path) != '') }}
+        uses: epam/ai-dial-ci/actions/build_docker@2.5.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -168,6 +178,7 @@ jobs:
           trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
           trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
           platforms: ${{ inputs.platforms }}
+          dockerfile-path: ${{ inputs.dockerfile-path }}
           image-extra-aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next-version }}
             ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}

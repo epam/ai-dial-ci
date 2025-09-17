@@ -38,6 +38,9 @@ These workflows could be imported to any repository under EPAM GitHub organizati
 
 ### NodeJS (npm)
 
+> [!tip]
+> Workflows allow independent choices of output artifacts: container image, npm package, or both (default) via `docker-build-enabled` and `publish-enabled` inputs respectively. Set variables values to match your needs.
+
 #### PR Workflow
 
 `pr.yml`
@@ -57,8 +60,6 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@main
     secrets: inherit
-    # with:
-    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 #### Release Workflow
@@ -80,8 +81,6 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/node_release.yml@main
     secrets: inherit
-    # with:
-    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### Java (gradle)
@@ -105,8 +104,6 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/java_pr.yml@main
     secrets: inherit
-    # with:
-    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 #### Release Workflow (Docker)
@@ -128,8 +125,6 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/java_release.yml@main
     secrets: inherit
-    # with:
-    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 #### Dependency Review
@@ -179,8 +174,6 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
     secrets: inherit
-    # with:
-    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 #### Release Workflow (Docker)
@@ -202,8 +195,6 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_release.yml@main
     secrets: inherit
-    # with:
-    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 #### PR Workflow (package)
@@ -269,8 +260,6 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/generic_docker_pr.yml@main
     secrets: inherit
-    # with:
-    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 #### Release Workflow
@@ -292,8 +281,6 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/generic_docker_release.yml@main
     secrets: inherit
-    # with:
-    #   platforms: "linux/amd64,linux/arm64"
 ```
 
 ### Others
