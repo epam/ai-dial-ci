@@ -39,7 +39,7 @@ These workflows could be imported to any repository under EPAM GitHub organizati
 ### NodeJS (npm)
 
 > [!tip]
-> Workflows allow independent choices of output artifacts: container image, npm package, or both (default) via `docker-build-enabled` and `publish-enabled` inputs respectively. Set variables values to match your needs.
+> Workflows allow independent choices of output artifacts: container image, npm package, or both (default) via `docker-build-enabled` and `publish-enabled` inputs respectively. Set variable values to match your needs.
 
 #### PR Workflow
 
