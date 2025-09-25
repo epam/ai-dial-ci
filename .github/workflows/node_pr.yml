@@ -43,6 +43,10 @@ on:
         type: string
         default: "latest"
         description: ORT version to use
+      docker-build-enabled:
+        type: boolean
+        default: true
+        description: "Enable Docker build"
       trivy-enabled:
         type: boolean
         default: true
@@ -81,6 +85,10 @@ on:
         description: "Docker build platforms (default linux/amd64)"
         default: "linux/amd64"
         required: false
+      dockerfile-path:
+        type: string
+        default: "Dockerfile"
+        description: "Path to the Dockerfile (default: ./Dockerfile)"
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -103,6 +111,7 @@ jobs:
       runs-on: ${{ inputs.runs-on }}
 
   docker_build:
+    if: ${{ inputs.docker-build-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - name: Maximize build space
@@ -116,10 +125,14 @@ jobs:
           remove-docker-images: "true"
           remove-cached-tools: "true"
           remove-large-packages: "true"
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
+      - if: ${{ hashFiles(inputs.dockerfile-path) != '' }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@2.4.1
+      # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
+      - if: ${{ (hashFiles(inputs.dockerfile-path) != '') }}
+        uses: epam/ai-dial-ci/actions/build_docker@2.6.0
         with:
           image-name: ghcr.io/${{ env.IMAGE_NAME }}
           image-tag: test
@@ -129,3 +142,4 @@ jobs:
           trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
           trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
           platforms: ${{ inputs.platforms }}
+          dockerfile-path: ${{ inputs.dockerfile-path }}

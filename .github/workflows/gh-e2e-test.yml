@@ -51,6 +51,10 @@ on:
         description: "The maximum number of minutes to let a job run before GitHub automatically cancels it."
         type: number
         default: 60
+      environment-name:
+        default: "e2e-test"
+        description: 'The GitHub environment name to use for the test.'
+        type: string
     outputs:
       chat-status:
         description: "Status of Chat E2E test"
@@ -83,6 +87,8 @@ concurrency:
 jobs:
   chat:
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment-name }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     outputs:
       status: ${{ steps.e2e-test-chat.outcome }}
@@ -215,6 +221,8 @@ jobs:
           retention-days: 30
   overlay:
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment-name }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     outputs:
       status: ${{ steps.e2e-test-overlay.outcome }}
