@@ -70,6 +70,10 @@ inputs:
     required: false
     description: "Docker build platforms (default linux/amd64)"
     default: "linux/amd64"
+  dockerfile-path:
+    required: false
+    description: "Path to the Dockerfile (default: ./Dockerfile)"
+    default: "Dockerfile"
 
 runs:
   using: "composite"
@@ -96,6 +100,7 @@ runs:
       uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
       with:
         context: .
+        file: ${{ inputs.dockerfile-path }}
         load: true
         platforms: linux/amd64
         cache-from: type=gha
@@ -167,6 +172,7 @@ runs:
       uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
       with:
         context: .
+        file: ${{ inputs.dockerfile-path }}
         push: true
         platforms: ${{ inputs.platforms }}
         cache-from: type=gha

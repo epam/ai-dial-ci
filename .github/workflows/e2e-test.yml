@@ -7,6 +7,8 @@ on:
 jobs:
   deploy-env:
     runs-on: ubuntu-latest
+    environment:
+      name: e2e-test
     outputs:
       github-app: ${{ github.event.client_payload.github-app }}
       github-sha: ${{ steps.sha.outputs.SHA }}
@@ -24,10 +26,10 @@ jobs:
         uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
-          trigger_token: ${{ secrets.E2E_DEPLOY_TRIGGER_TOKEN }}
-          access_token: ${{ secrets.E2E_DEPLOY_ACCESS_TOKEN }}
+          trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
+          access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
-          ref: ${{ github.event.client_payload.gitlab-project-ref || vars.E2E_DEPLOY_REF }}
+          ref: ${{ github.event.client_payload.gitlab-project-ref || vars.DEPLOY_REF }}
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ github.event.client_payload.github-app }}",
@@ -36,13 +38,14 @@ jobs:
             }
 
   e2e-test:
-    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.4.1
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.6.0
     needs:
       - deploy-env
     with:
       allure-report-prefix: "${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}"
-      e2e-host: "https://chat-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
-      next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.nightly-test.deltixhub.io"
+      e2e-host: "https://chat-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.${{ vars.E2E_BASE_DOMAIN }}"
+      next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.${{ vars.E2E_BASE_DOMAIN }}"
+      environment-name: e2e-test
     secrets:
       E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
       E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
@@ -52,20 +55,22 @@ jobs:
 
   destroy-env:
     runs-on: ubuntu-latest
+    environment:
+      name: e2e-test
     needs:
       - deploy-env
       - e2e-test
-    if: always()
+    if: ${{ !cancelled() }}
     steps:
       - name: Destroy environment
         id: destroy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
-          trigger_token: ${{ secrets.E2E_DEPLOY_TRIGGER_TOKEN }}
-          access_token: ${{ secrets.E2E_DEPLOY_ACCESS_TOKEN }}
+          trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
+          access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
-          ref: ${{ github.event.client_payload.gitlab-project-ref || vars.E2E_DEPLOY_REF }}
+          ref: ${{ github.event.client_payload.gitlab-project-ref || vars.DEPLOY_REF }}
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ needs.deploy-env.outputs.github-app }}",
