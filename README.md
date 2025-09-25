@@ -3,27 +3,32 @@
 - [AI DIAL workflows](#ai-dial-workflows)
   - [Overview](#overview)
   - [Usage](#usage)
-    - [PR Workflow (NodeJS (npm), Docker)](#pr-workflow-nodejs-npm-docker)
-    - [Release Workflow (NodeJS (npm), Docker)](#release-workflow-nodejs-npm-docker)
-    - [PR Workflow (Java (gradle), Docker)](#pr-workflow-java-gradle-docker)
-    - [Release Workflow (Java (gradle), Docker)](#release-workflow-java-gradle-docker)
-    - [PR Workflow (Python (poetry), Docker)](#pr-workflow-python-poetry-docker)
-    - [Release Workflow (Python (poetry), Docker)](#release-workflow-python-poetry-docker)
-    - [PR Workflow (Python (poetry), package)](#pr-workflow-python-poetry-package)
-    - [Release Workflow (Python (poetry), package)](#release-workflow-python-poetry-package)
-    - [PR Workflow (Generic, Docker)](#pr-workflow-generic-docker)
-    - [Release Workflow (Generic, Docker)](#release-workflow-generic-docker)
-    - [Validate PR title](#validate-pr-title)
-    - [Deploy review environment](#deploy-review-environment)
-    - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
-    - [Dependency Review (Java (gradle))](#dependency-review-java-gradle)
-    - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
-    - [Trivy additional configuration](#trivy-additional-configuration)
+    - [NodeJS (npm)](#nodejs-npm)
+      - [PR Workflow](#pr-workflow)
+      - [Release Workflow](#release-workflow)
+    - [Java (gradle)](#java-gradle)
+      - [PR Workflow (Docker)](#pr-workflow-docker)
+      - [Release Workflow (Docker)](#release-workflow-docker)
+      - [Dependency Review](#dependency-review)
+    - [Python (poetry)](#python-poetry)
+      - [PR Workflow (Docker)](#pr-workflow-docker-1)
+      - [Release Workflow (Docker)](#release-workflow-docker-1)
+      - [PR Workflow (package)](#pr-workflow-package)
+      - [Release Workflow (package)](#release-workflow-package)
+    - [Generic Docker](#generic-docker)
+      - [PR Workflow](#pr-workflow-1)
+      - [Release Workflow](#release-workflow-1)
+    - [Others](#others)
+      - [Validate PR title](#validate-pr-title)
+      - [Deploy review environment](#deploy-review-environment)
+      - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
+      - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
+      - [Trivy additional configuration](#trivy-additional-configuration)
   - [Contributing](#contributing)
 
 ## Overview
 
-Continuous Integration instrumentation for [AI DIAL](https://epam-rail.com) components.
+Continuous Integration instrumentation for [AI DIAL](https://dialx.ai) components.
 
 Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub organization.
 
@@ -31,7 +36,12 @@ Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub 
 
 These workflows could be imported to any repository under EPAM GitHub organization as standard `.github/workflows` files. See examples below (replace `@main` with specific version tag).
 
-### PR Workflow (NodeJS (npm), Docker)
+### NodeJS (npm)
+
+> [!tip]
+> Workflows allow independent choices of output artifacts: container image, npm package, or both (default) via `docker-build-enabled` and `publish-enabled` inputs respectively. Set variable values to match your needs.
+
+#### PR Workflow
 
 `pr.yml`
 
@@ -52,7 +62,7 @@ jobs:
     secrets: inherit
 ```
 
-### Release Workflow (NodeJS (npm), Docker)
+#### Release Workflow
 
 `release.yml`
 
@@ -73,7 +83,9 @@ jobs:
     secrets: inherit
 ```
 
-### PR Workflow (Java (gradle), Docker)
+### Java (gradle)
+
+#### PR Workflow (Docker)
 
 `pr.yml`
 
@@ -94,7 +106,7 @@ jobs:
     secrets: inherit
 ```
 
-### Release Workflow (Java (gradle), Docker)
+#### Release Workflow (Docker)
 
 `release.yml`
 
@@ -115,214 +127,7 @@ jobs:
     secrets: inherit
 ```
 
-### PR Workflow (Python (poetry), Docker)
-
-`pr.yml`
-
-```yml
-name: PR Workflow
-
-on:
-  pull_request:
-    branches: [development, release-*]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
-jobs:
-  run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
-    secrets: inherit
-```
-
-### Release Workflow (Python (poetry), Docker)
-
-`release.yml`
-
-```yml
-name: Release Workflow
-
-on:
-  push:
-    branches: [development, release-*]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  release:
-    uses: epam/ai-dial-ci/.github/workflows/python_docker_release.yml@main
-    secrets: inherit
-```
-
-### PR Workflow (Python (poetry), package)
-
-`pr.yml`
-
-```yml
-name: PR Workflow
-
-on:
-  pull_request:
-    branches: [development, release-*]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
-jobs:
-  run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/python_package_pr.yml@main
-    secrets: inherit
-```
-
-### Release Workflow (Python (poetry), package)
-
-`release.yml`
-
-```yml
-name: Release Workflow
-
-on:
-  push:
-    branches: [development, release-*]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  release:
-    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@main
-    secrets: inherit
-```
-
-### PR Workflow (Generic, Docker)
-
-`pr.yml`
-
-```yml
-name: PR Workflow
-
-on:
-  pull_request:
-    branches: [development, release-*]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
-jobs:
-  run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/generic_docker_pr.yml@main
-    secrets: inherit
-```
-
-### Release Workflow (Generic, Docker)
-
-`release.yml`
-
-```yml
-name: Release Workflow
-
-on:
-  push:
-    branches: [development, release-*]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  release:
-    uses: epam/ai-dial-ci/.github/workflows/generic_docker_release.yml@main
-    secrets: inherit
-```
-
-### Validate PR title
-
-`pr-title-check.yml`
-
-```yml
-name: "Validate PR title"
-
-on:
-  pull_request_target:
-    types:
-      - opened
-      - edited
-      - reopened
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
-jobs:
-  pr-title-check:
-    uses: epam/ai-dial-ci/.github/workflows/pr-title-check.yml@main
-    secrets:
-      ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
-```
-
-### Deploy review environment
-
-`slash-command-dispatch.yml`
-
-```yml
-name: Slash Command Dispatch
-on:
-  issue_comment:
-    types: [created]
-jobs:
-  slashCommandDispatch:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.issue.pull_request }}
-    steps:
-      - name: Slash Command Dispatch
-        id: scd
-        uses: peter-evans/slash-command-dispatch@13bc09769d122a64f75aa5037256f6f2d78be8c4 # v4.0.0
-        with:
-          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-          reaction-token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-          config: >
-            [
-              {
-                "command": "deploy-review",
-                "issue_type": "pull-request",
-                "repository": "epam/ai-dial-ci",
-                "static_args": [
-                  "application=${{ github.event.repository.name }}"
-                ]
-              }
-            ]
-```
-
-### Cleanup for untagged images in GHCR
-
-`cleanup-untagged-images.yml`
-
-```yml
-name: Cleanup untagged images
-
-on:
-  schedule:
-    - cron: "0 0 * * *"
-
-jobs:
-  clean:
-    name: Delete untagged images
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-    steps:
-      - uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1.0.16
-        with:
-          delete-untagged: true
-```
-
-### Dependency Review (Java (gradle))
+#### Dependency Review
 
 To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository. You'll start getting review comments on PRs.
 
@@ -348,7 +153,235 @@ jobs:
       ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
-### Trigger deployment of development environment in GitLab
+### Python (poetry)
+
+#### PR Workflow (Docker)
+
+`pr.yml`
+
+```yml
+name: PR Workflow
+
+on:
+  pull_request:
+    branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
+    secrets: inherit
+```
+
+#### Release Workflow (Docker)
+
+`release.yml`
+
+```yml
+name: Release Workflow
+
+on:
+  push:
+    branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/python_docker_release.yml@main
+    secrets: inherit
+```
+
+#### PR Workflow (package)
+
+`pr.yml`
+
+```yml
+name: PR Workflow
+
+on:
+  pull_request:
+    branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/python_package_pr.yml@main
+    secrets: inherit
+```
+
+#### Release Workflow (package)
+
+`release.yml`
+
+```yml
+name: Release Workflow
+
+on:
+  push:
+    branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@main
+    secrets: inherit
+```
+
+### Generic Docker
+
+#### PR Workflow
+
+`pr.yml`
+
+```yml
+name: PR Workflow
+
+on:
+  pull_request:
+    branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/generic_docker_pr.yml@main
+    secrets: inherit
+```
+
+#### Release Workflow
+
+`release.yml`
+
+```yml
+name: Release Workflow
+
+on:
+  push:
+    branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/generic_docker_release.yml@main
+    secrets: inherit
+```
+
+### Others
+
+#### Validate PR title
+
+`pr-title-check.yml`
+
+```yml
+name: "Validate PR title"
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title-check:
+    uses: epam/ai-dial-ci/.github/workflows/pr-title-check.yml@main
+    secrets:
+      ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
+```
+
+#### Deploy review environment
+
+`slash-command-dispatch.yml`
+
+```yml
+name: Slash Command Dispatch
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  slashCommandDispatch:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request }}
+    steps:
+      - name: Slash Command Dispatch
+        id: scd
+        uses: peter-evans/slash-command-dispatch@13bc09769d122a64f75aa5037256f6f2d78be8c4 # v4.0.0
+        with:
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          reaction-token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          config: >
+            [
+              {
+                "command": "deploy-review",
+                "permission": "write",
+                "issue_type": "pull-request",
+                "repository": "epam/ai-dial-ci",
+                "static_args": [
+                  "application=${{ github.event.repository.name }}"
+                ]
+              }
+            ]
+```
+
+If you need to disable E2E tests execution:
+
+- for the **whole repository**: add `skip-e2e` argument to `static_args` list
+
+  ```yml
+                "static_args": [
+                  "application=${{ github.event.repository.name }}",
+                  "skip-e2e"
+                ]
+  ```
+
+- for the **specific PR**: assign `skip-e2e` label to PR
+- **once**: use `/deploy-review skip-e2e` command in PR comment
+
+#### Cleanup for untagged images in GHCR
+
+`cleanup-untagged-images.yml`
+
+```yml
+name: Cleanup untagged images
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  clean:
+    name: Delete untagged images
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1.0.16
+        with:
+          delete-untagged: true
+```
+
+#### Trigger deployment of development environment in GitLab
 
 A common case is to trigger development environment(s) update from GitHub to GitLab, e.g. each time a `development` branch produces a new artifact. Also, it could be not single, but several environments, representing different configuration presets of a single app. To use the example below:
 
@@ -363,14 +396,19 @@ A common case is to trigger development environment(s) update from GitHub to Git
 name: Deploy development
 
 on:
-  workflow_dispatch:
-  registry_package:
+  workflow_dispatch: # manual run
+  registry_package: # on new package version (main path)
+  workflow_run: # HACK: redundant trigger to mitigate GitHub's huge delays in registry_package event processing
+    workflows: ["Release Workflow"]
+    types:
+      - completed
 
 jobs:
   gitlab-dev-deploy:
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.registry_package.package_version.container_metadata.tag.name == 'development'
+      github.event.registry_package.package_version.container_metadata.tag.name == 'development' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
     uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@main
     with:
       gitlab-project-id: "1487"
@@ -388,14 +426,19 @@ In case of multiple environments, continue creating multiple GitHub environments
 name: Deploy development
 
 on:
-  workflow_dispatch:
-  registry_package:
+  workflow_dispatch: # manual run
+  registry_package: # on new package version (main path)
+  workflow_run: # HACK: redundant trigger to mitigate GitHub's huge delays in registry_package event processing
+    workflows: ["Release Workflow"]
+    types:
+      - completed
 
 jobs:
   trigger:
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.registry_package.package_version.container_metadata.tag.name == 'development'
+      github.event.registry_package.package_version.container_metadata.tag.name == 'development' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
     strategy:
       fail-fast: false
       matrix:
@@ -420,7 +463,7 @@ jobs:
       DEPLOY_TRIGGER_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
 ```
 
-### Trivy additional configuration
+#### Trivy additional configuration
 
 To change predefined Trivy parameters or set up additional configuration options, create `trivy.yaml` file in root of your repository. Use example below to add fallback repositories for vulnerabilities and checks DB and thus mitigate rate limit issues.
 

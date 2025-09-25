@@ -5,7 +5,18 @@ on:
 jobs:
   deploy-review:
     runs-on: ubuntu-latest
+    environment:
+      name: review
     steps:
+      - name: Workflow run URL
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          body: |
+            >GitHub actions run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
       - name: Check repository owner
         id: owner
         run: |
@@ -23,6 +34,7 @@ jobs:
             exit 1
           fi
           echo "All checks passed."
+
       - name: Checks and transformations
         id: vars
         run: |
@@ -52,8 +64,8 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
-          id: ${{ secrets.DEPLOY_PROJECT_ID }}
-          ref: ${{ secrets.DEPLOY_REF }}
+          id: ${{ vars.DEPLOY_PROJECT_ID }}
+          ref: ${{ vars.DEPLOY_REF }}
           variables: >
             {
               "GITHUB_APP":"${{ github.event.client_payload.slash_command.args.named.application }}",
@@ -85,6 +97,16 @@ jobs:
           fi
           echo -e "message=$MESSAGE" >> $GITHUB_OUTPUT
 
+      - name: Environment URL
+        if: success()
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          body: |
+            >Environment URL: [review-environment](https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}) | [pipeline](${{ steps.deploy.outputs.web_url }})
+
       - name: Return status
         if: success() || failure()
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
@@ -94,3 +116,52 @@ jobs:
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           body: |
             ${{ steps.status.outputs.message }}
+
+  set-test-branch:
+    runs-on: ubuntu-latest
+    if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
+    outputs:
+      test_branch: ${{ steps.set-branch.outputs.test_branch }}
+    steps:
+      - name: Set test branch
+        id: set-branch
+        run: |
+          # For ai-dial-chat repo QA team want to run tests from PR branch
+          if [ ${{ github.event.client_payload.github.payload.repository.name }} == "ai-dial-chat" ]; then
+            echo "test_branch=${{ github.event.client_payload.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "test_branch=development" >> $GITHUB_OUTPUT
+          fi
+
+  e2e-test:
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.6.0
+    if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
+    needs:
+      - deploy-review
+      - set-test-branch
+    with:
+      allure-report-prefix: "${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}"
+      e2e-host: "https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
+      next-public-overlay-host: "https://overlay-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
+      test-branch: ${{ needs.set-test-branch.outputs.test_branch }}
+      environment-name: review
+    secrets:
+      E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
+
+  e2e-status:
+    runs-on: ubuntu-latest
+    needs: e2e-test
+    if: ${{ always() && !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
+    steps:
+      - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          body: |
+            >Chat E2E tests status: [${{ needs.e2e-test.outputs.chat-status }}](${{ needs.e2e-test.outputs.chat-job-url }})
+            >Overlay E2E tests status: [${{ needs.e2e-test.outputs.overlay-status }}](${{ needs.e2e-test.outputs.overlay-job-url }})

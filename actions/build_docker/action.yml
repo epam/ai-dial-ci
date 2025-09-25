@@ -66,10 +66,20 @@ inputs:
     required: false
     description: "GitHub Package Registry password/token (for pulling packages from image being built)"
     default: ""
+  platforms:
+    required: false
+    description: "Docker build platforms (default linux/amd64)"
+    default: "linux/amd64"
+  dockerfile-path:
+    required: false
+    description: "Path to the Dockerfile (default: ./Dockerfile)"
+    default: "Dockerfile"
 
 runs:
   using: "composite"
   steps:
+    - name: Setup Docker Qemu
+      uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
     - name: Setup Docker buildx
       uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
     - name: Login to GitHub Container Registry
@@ -90,7 +100,11 @@ runs:
       uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
       with:
         context: .
+        file: ${{ inputs.dockerfile-path }}
         load: true
+        platforms: linux/amd64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
         tags: |
           ${{ inputs.image-name }}:${{ inputs.image-tag }}
           ${{ inputs.image-extra-aliases }}
@@ -158,7 +172,10 @@ runs:
       uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
       with:
         context: .
+        file: ${{ inputs.dockerfile-path }}
         push: true
+        platforms: ${{ inputs.platforms }}
+        cache-from: type=gha
         tags: |
           ${{ inputs.image-name }}:${{ inputs.image-tag }}
           ${{ inputs.image-extra-aliases }}
