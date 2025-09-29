@@ -125,9 +125,7 @@ jobs:
           remove-docker-images: "true"
           remove-cached-tools: "true"
           remove-large-packages: "true"
-      # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
-      - if: ${{ hashFiles(inputs.dockerfile-path) != '' }}
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
