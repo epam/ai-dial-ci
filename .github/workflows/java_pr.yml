@@ -107,6 +107,7 @@ jobs:
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
+          build-scan-publish: true
       - run: ./gradlew build -x test
         env:
           GPR_USERNAME: ${{ github.actor }}
