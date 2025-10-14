@@ -36,11 +36,12 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.deps.dev:443
-            api.github.com:443
             api.securityscorecards.dev:443
+            api.github.com:443
             github.com:443
             *.githubusercontent.com:443
             *.gradle.org:443
+            *.gradle.com:443
             repo.maven.apache.org:443
             maven.pkg.github.com:443
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -58,6 +59,8 @@ jobs:
         env:
           GITHUB_DEPENDENCY_GRAPH_REF: "refs/heads/${{ github.event.pull_request.head.ref }}"
           GITHUB_DEPENDENCY_GRAPH_SHA: ${{ github.event.pull_request.head.sha }}
+          GPR_USERNAME: ${{ github.actor }}
+          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       - id: dependency-review
         uses: actions/dependency-review-action@38ecb5b593bf0eb19e335c03f97670f792489a8b # v4.7.0
         with:
