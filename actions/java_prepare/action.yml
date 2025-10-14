@@ -8,6 +8,9 @@ inputs:
   java-distribution:
     description: "Java distribution to use"
     default: "temurin"
+  build-scan-publish:
+    description: "Whether to publish build scans to public Develocity instance (https://scans.gradle.com)"
+    default: "false"
 
 runs:
   using: "composite"
@@ -22,4 +25,7 @@ runs:
     - name: Set up Gradle
       uses: gradle/actions/setup-gradle@06832c7b30a0129d7fb559bcc6e43d26f6374244 # v4.3.1
       with:
-        add-job-summary: "on-failure"
+        build-scan-publish: ${{ fromJSON(inputs.build-scan-publish) }}
+        build-scan-terms-of-use-url: "https://gradle.com/help/legal-terms-of-use"
+        build-scan-terms-of-use-agree: "yes"
+        add-job-summary: ${{ fromJSON(inputs.build-scan-publish) && 'always' || 'on-failure' }}
