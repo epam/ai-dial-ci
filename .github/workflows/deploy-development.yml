@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Deploy environment
         id: deploy
-        uses: digital-blueprint/gitlab-pipeline-trigger-action@7fef6b4967aef68a1671ccf42a6e45f7a27487d8 # v1.2.0
+        uses: digital-blueprint/gitlab-pipeline-trigger-action@20e77989b24af658ba138a0aa5291bdc657f1505 # v1.3.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
