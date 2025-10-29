@@ -121,9 +121,10 @@ jobs:
           ALLURE_VERSION: ${{ inputs.allure-version }}
       - name: Install playwright
         run: |
-          npm i
           npm install -D @playwright/test@${{ inputs.playwright-version }}
           npx playwright install --with-deps
+          # FIXME: Force allure-playwright installation since playwright is removing it
+          npm install -D allure-playwright
           npx playwright --version
         shell: bash
       - name: Wait for environment
@@ -250,9 +251,10 @@ jobs:
           ALLURE_VERSION: ${{ inputs.allure-version }}
       - name: Install playwright
         run: |
-          npm i
           npm install -D @playwright/test@${{ inputs.playwright-version }}
           npx playwright install --with-deps
+          # FIXME: Force allure-playwright installation since playwright is removing it
+          npm install -D allure-playwright
           npx playwright --version
         shell: bash
       - name: Wait for environment
