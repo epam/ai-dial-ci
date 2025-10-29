@@ -121,6 +121,7 @@ jobs:
           ALLURE_VERSION: ${{ inputs.allure-version }}
       - name: Install playwright
         run: |
+          npm i
           npm install -D @playwright/test@${{ inputs.playwright-version }}
           npx playwright install --with-deps
           npx playwright --version
@@ -194,7 +195,6 @@ jobs:
           echo "Config for attachment request e2e api tests ${ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS}"
           echo "Config for attachment response e2e api tests ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
           echo "Simple requests model for e2e tests ${SIMPLE_REQUEST_MODEL}"
-          npm i
           npx nx run chat-e2e:e2e:chat --configuration=production --output-style=stream --skipInstall
         shell: bash
         env:
@@ -250,6 +250,7 @@ jobs:
           ALLURE_VERSION: ${{ inputs.allure-version }}
       - name: Install playwright
         run: |
+          npm i
           npm install -D @playwright/test@${{ inputs.playwright-version }}
           npx playwright install --with-deps
           npx playwright --version
@@ -323,7 +324,6 @@ jobs:
           echo "Config for attachment request e2e api tests ${ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS}"
           echo "Config for attachment response e2e api tests ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
           echo "Simple requests model for e2e tests ${SIMPLE_REQUEST_MODEL}"
-          npm i
           npx nx run chat-e2e:e2e:overlay --configuration=production --output-style=stream --skipInstall
         shell: bash
         env:
