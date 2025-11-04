@@ -106,6 +106,7 @@ jobs:
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           body: |
             >Environment URL: [review-environment](https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}) | [pipeline](${{ steps.deploy.outputs.web_url }})
+            >Environment URL: [review-environment](https://admin-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}) | [pipeline](${{ steps.deploy.outputs.web_url }})
 
       - name: Return status
         if: success() || failure()
