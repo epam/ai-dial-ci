@@ -115,22 +115,37 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - name: Maximize build space
-        uses: AdityaGarg8/remove-unwanted-software@90e01b21170618765a73370fcc3abbd1684a7793 # v5
+        uses: nepalevov/maximize-build-space@a1a975ceb44dddb1023067778f5c0111825ade6c # v1.0.1
         if: ${{ inputs.maximize-build-space }}
         with:
-          remove-android: "true"
           remove-dotnet: "true"
+          remove-android: "true"
           remove-haskell: "true"
           remove-codeql: "true"
-          remove-docker-images: "true"
-          remove-cached-tools: "true"
+          docker-cleanup: "true"
           remove-large-packages: "true"
+          remove-cached-tools: "true"
+          remove-swapfile: "true"
+          remove-java: "true"
+          remove-swift: "true"
+          remove-julia: "true"
+          remove-browsers: "true"
+          remove-cloud-tools: "true"
+          remove-kubernetes-tools: "true"
+          remove-powershell: "true"
+          remove-container-tools: "true"
+          remove-rust: "true"
+          remove-python: "true"
+          remove-node: "true"
+          remove-go: "true"
+          remove-ruby: "true"
+          set-tmpdir: "true"
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           lfs: true
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@2.7.2
+        uses: epam/ai-dial-ci/actions/build_docker@2.7.3
         with:
           image-name: ghcr.io/${{ env.IMAGE_NAME }}
           image-tag: test
