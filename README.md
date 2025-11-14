@@ -24,6 +24,8 @@
       - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
       - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
       - [Trivy additional configuration](#trivy-additional-configuration)
+      - [Dependabot](#dependabot)
+        - [Dependabot Pull Requests Automation](#dependabot-pull-requests-automation)
   - [Contributing](#contributing)
 
 ## Overview
@@ -484,6 +486,93 @@ db:
     - ghcr.io/aquasecurity/trivy-java-db:1
 misconfiguration:
   checks-bundle-repository: mirror.gcr.io/aquasec/trivy-checks:1
+```
+
+#### Dependabot
+
+It's strongly recommended to enable at least [Dependabot security updates](https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/about-dependabot-security-updates) for your repositories to stay protected from known vulnerabilities in dependencies. To do that, create `.github/dependabot.yml` file in your repository.
+
+> [!note]
+> The example for `java` with `gradle` as a package manager given. Adjust repo's **primary** [package-ecosystem](https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#package-ecosystem) accordingly. Keep `github-actions` ecosystem as is
+
+`dependabot.yml`
+
+```yml
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+    # Disable version updates, keep security updates only
+    open-pull-requests-limit: 0
+    commit-message:
+      # Prefix all commit messages with "chore: "
+      prefix: "chore"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+    commit-message:
+      # Prefix all commit messages with "chore: "
+      prefix: "chore"
+    groups:
+      ai-dial-ci:
+        applies-to: version-updates
+        patterns:
+          - "epam/ai-dial-ci/*"
+      github-actions:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "epam/ai-dial-ci/*"
+    open-pull-requests-limit: 10
+```
+
+##### Dependabot Pull Requests Automation
+
+Repository maintainers may want to automate approval/merging of Dependabot PRs to reduce manual effort. The example below will automatically approve all Dependabot PRs, and merge those that belong to `ai-dial-ci` group and are **not major** version updates.
+
+> [!tip]
+> Remove `steps.metadata.outputs.dependency-group == 'ai-dial-ci'` condition to enable auto-merging for all Dependabot PRs except major version updates
+
+`dependabot-automation.yml`
+
+```yml
+name: Dependabot Automation
+
+on: pull_request_target
+
+permissions: {}
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.repository_owner == 'epam'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@08eff52bf64351f401fb50d4972fa95b9f2c2d1b # v2.4.0
+      - name: Approve PR
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
+      - name: Merge PR
+        if: |
+          steps.metadata.outputs.dependency-group == 'ai-dial-ci' &&
+          steps.metadata.outputs.update-type != 'version-update:semver-major'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
 ## Contributing
