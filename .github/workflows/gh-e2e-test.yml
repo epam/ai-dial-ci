@@ -53,21 +53,8 @@ on:
         default: 60
       environment-name:
         default: "e2e-test"
-        description: 'The GitHub environment name to use for the test.'
+        description: "The GitHub environment name to use for the test."
         type: string
-    outputs:
-      chat-status:
-        description: "Status of Chat E2E test"
-        value: ${{ jobs.chat.outputs.status }}
-      chat-job-url:
-        description: "URL to Chat E2E test job"
-        value: ${{ jobs.chat.outputs.job-url }}
-      overlay-status:
-        description: "Status of Overlay E2E test"
-        value: ${{ jobs.overlay.outputs.status }}
-      overlay-job-url:
-          description: "URL to Chat E2E test job"
-          value: ${{ jobs.overlay.outputs.job-url }}
     secrets:
       E2E_ADMIN:
         required: true
