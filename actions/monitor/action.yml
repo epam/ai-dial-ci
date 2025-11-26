@@ -1,0 +1,38 @@
+name: "Monitor"
+description: "Periodically updates PR comment with workflow status"
+inputs:
+  comment-id:
+    description: "The ID of the comment to update"
+    required: true
+  comment-owner:
+    description: "Owner of the repository hosting the comment"
+    required: true
+  comment-repo:
+    description: "Repository name hosting the comment"
+    required: true
+  environment-url:
+    description: "Environment URL to display once available"
+    required: false
+  github-token:
+    description: "GitHub token used to authenticate API calls"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const script = require('${{ github.action_path }}/monitor.js');
+          await script({
+            github,
+            context,
+            core,
+            inputs: {
+              commentId: '${{ inputs.comment-id }}',
+              commentOwner: '${{ inputs.comment-owner }}',
+              commentRepo: '${{ inputs.comment-repo }}',
+              environmentUrl: '${{ inputs.environment-url }}'
+            }
+          });
