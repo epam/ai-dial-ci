@@ -1,3 +1,24 @@
+# Handles slash command to deploy pull request code to short-lived "review" environment, run
+# ai-dial-chat E2E tests against it, and report results back to the PR comment
+# ref: https://github.com/peter-evans/slash-command-dispatch
+#
+# Expected variables to be set on e.g. repository level:
+# - (optional) DISPATCH_WHITELIST: JSON array of repository names (wild) allowed to dispatch this
+# - DEPLOY_PROJECT_ID: ID of the GitLab project to trigger deployment in
+# - DEPLOY_REF: Git ref to use for deployment (e.g. main)
+# - REVIEW_BASE_DOMAIN: Base domain for review environments (e.g. example.com)
+#
+# Expected secrets to be set on e.g. repository level:
+# - ACTIONS_BOT_TOKEN: GitHub token with permissions to create/update comments
+# - DEPLOY_HOST: GitLab instance hostname (e.g. gitlab.com)
+# - DEPLOY_ACCESS_TOKEN: GitLab access token with API access to the deployment project
+# - DEPLOY_TRIGGER_TOKEN: GitLab trigger token for the deployment project
+# - E2E_ADMIN: A name of an application user with admin privileges
+# - E2E_USERNAME: Name(s) of application user(s) for ai-dial-chat tests
+# - E2E_OVERLAY_USERNAME: Name(s) of application user(s) for ai-dial-chat (overlay) tests
+# - E2E_PASSWORD: Password for the application users
+# - NEXT_PUBLIC_OVERLAY_USER_BUCKET: A blob storage prefix for specific application user
+
 name: deploy-review-command
 on:
   repository_dispatch:
@@ -8,16 +29,7 @@ jobs:
     environment:
       name: review
     steps:
-      - name: Workflow run URL
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
-        with:
-          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
-          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
-          body: |
-            >GitHub actions run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-      - name: Check repository owner
+      - name: Check dispatch repository ownership
         id: owner
         run: |
           DISPATCHED_REPO_NAME=${{ github.event.client_payload.github.payload.repository.name }}
@@ -26,8 +38,16 @@ jobs:
           if [[ "$DISPATCHED_REPO_OWNER" != "$GITHUB_REPOSITORY_OWNER" ]]; then
           ERROR_MESSAGE="The event was not dispatched by a repository within the same owner."
           fi
-          if [[ "$DISPATCHED_REPO_NAME" != ai-dial* ]]; then
-          ERROR_MESSAGE+=" The repository name does not start with 'ai-dial'."
+          WHITELIST='${{ vars.DISPATCH_WHITELIST || '["ai-dial*"]' }}'
+          MATCHED=false
+          for pattern in $(echo "$WHITELIST" | jq -r '.[]'); do
+            if [[ "$DISPATCHED_REPO_NAME" == $pattern ]]; then
+              MATCHED=true
+              break
+            fi
+          done
+          if [[ "$MATCHED" != "true" ]]; then
+            ERROR_MESSAGE+=" The event was dispatched by an unauthorized repository."
           fi
           if [[ -n "$ERROR_MESSAGE" ]]; then
             echo "status=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
@@ -35,7 +55,7 @@ jobs:
           fi
           echo "All checks passed."
 
-      - name: Checks and transformations
+      - name: Check all required values are present in the dispatch payload
         id: vars
         run: |
           ERROR_MESSAGE=""
@@ -75,75 +95,18 @@ jobs:
               "GITHUB_TRIGGER": "${{ github.event.client_payload.github.payload.comment.html_url }}"
             }
 
-      - name: Check status
-        id: status
-        if: success() || failure()
-        run: |
-          GITHUB_WORKFLOW_URL=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
-          GITLAB_PIPELINE_URL=${{ steps.deploy.outputs.web_url }}
-
-          MESSAGE=""
-          if [[ -n "${{ steps.owner.outputs.status }}" ]]; then
-            MESSAGE+=">- **Owner check failed**: ${{ steps.owner.outputs.status }}\n"
-          fi
-          if [[ -n "${{ steps.vars.outputs.status }}" ]]; then
-            MESSAGE+=">- **Vars check failed**: ${{ steps.vars.outputs.status }}\n"
-          fi
-          if [[ -n "${{ steps.deploy.outputs.status }}" && "${{ steps.deploy.outputs.status }}" != "success" ]]; then
-            MESSAGE+=">- **Deployment failed**: [${{ steps.deploy.outputs.status }}](${GITLAB_PIPELINE_URL})\n"
-          fi
-          if [[ -z "${{ steps.owner.outputs.status }}" && -z "${{ steps.vars.outputs.status }}" && -z "${{ steps.deploy.outputs.status }}" ]]; then
-            MESSAGE+=">Something went wrong, check [GitHub Workflow run output](${GITHUB_WORKFLOW_URL})\n"
-          fi
-          echo -e "message=$MESSAGE" >> $GITHUB_OUTPUT
-
-      - name: Environment URL
-        if: success()
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
-        with:
-          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
-          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
-          body: |
-            >Environment URL: [review-environment](https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}) | [pipeline](${{ steps.deploy.outputs.web_url }})
-
-      - name: Return status
-        if: success() || failure()
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
-        with:
-          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
-          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
-          body: |
-            ${{ steps.status.outputs.message }}
-
-  set-test-branch:
-    runs-on: ubuntu-latest
-    if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
-    outputs:
-      test_branch: ${{ steps.set-branch.outputs.test_branch }}
-    steps:
-      - name: Set test branch
-        id: set-branch
-        run: |
-          # For ai-dial-chat repo QA team want to run tests from PR branch
-          if [ ${{ github.event.client_payload.github.payload.repository.name }} == "ai-dial-chat" ]; then
-            echo "test_branch=${{ github.event.client_payload.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-          else
-            echo "test_branch=development" >> $GITHUB_OUTPUT
-          fi
-
   e2e-test:
-    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.7.3
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@2.8.0
     if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
     needs:
       - deploy-review
-      - set-test-branch
     with:
       allure-report-prefix: "${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}"
       e2e-host: "https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
       next-public-overlay-host: "https://overlay-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
-      test-branch: ${{ needs.set-test-branch.outputs.test_branch }}
+      # For ai-dial-chat repo, use PR-related branch, for other repos - default
+      # This is requested by QA team to verify changes in tests before rolling them out for everyone
+      test-branch: ${{ github.event.client_payload.github.payload.repository.name == 'ai-dial-chat' && github.event.client_payload.pull_request.head.ref || github.event.client_payload.github.payload.repository.default_branch }}
       environment-name: review
     secrets:
       E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
@@ -152,16 +115,17 @@ jobs:
       E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
       NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
 
-  e2e-status:
+  monitor:
     runs-on: ubuntu-latest
-    needs: e2e-test
-    if: ${{ always() && !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
+    if: always()
     steps:
-      - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
-          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          persist-credentials: false
+      - uses: ./actions/monitor
+        with:
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
-          body: |
-            >Chat E2E tests status: [${{ needs.e2e-test.outputs.chat-status }}](${{ needs.e2e-test.outputs.chat-job-url }})
-            >Overlay E2E tests status: [${{ needs.e2e-test.outputs.overlay-status }}](${{ needs.e2e-test.outputs.overlay-job-url }})
+          comment-owner: ${{ github.event.client_payload.github.payload.repository.owner.login }}
+          comment-repo: ${{ github.event.client_payload.github.payload.repository.name }}
+          environment-url: "https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
+          github-token: ${{ secrets.ACTIONS_BOT_TOKEN }}
