@@ -205,7 +205,11 @@ jobs:
         shell: bash
         run: |
           #!/bin/bash
-          npm run build
+          if node -e "process.exit(require('./package.json').scripts?.['build:publishable'] ? 0 : 1)"; then
+            npm run build:publishable
+          else
+            npm run build
+          fi
           PUBLISH_COMMAND="npm run publish"
           ARGS=""
           if [ "$IS_DEVELOPMENT_BRANCH" == "true" ]; then
