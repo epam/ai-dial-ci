@@ -3,42 +3,14 @@ name: Run e2e-tests on GitHub
 on:
   workflow_call:
     inputs:
-      allure-version:
-        description: "Allure Report version"
-        type: string
-        default: "2.24.0"
-      allure-report-prefix:
-        description: "Allure report name prefix"
-        type: string
-        default: "allure-report"
-      dotenv-file:
-        description: "Path to dotenv file with E2E test variables"
-        type: string
-        default: "apps/chat-e2e/.env.ci"
       e2e-host:
         required: true
-        description: "The host URL for end-to-end testing"
+        description: "The environment URL for end-to-end testing, e.g., https://my-app.example.com"
         type: string
-      java-distribution:
-        description: "Java distribution"
-        type: string
-        default: "temurin"
-      java-version:
-        description: "Java version"
-        type: string
-        default: "17"
       next-public-overlay-host:
         required: true
-        description: "Overlay domain host"
+        description: "An ai-dial-chat (overlay) URL"
         type: string
-      node-version:
-        description: "NodeJS version"
-        type: string
-        default: "lts/*"
-      playwright-version:
-        description: "Playwright version"
-        type: string
-        default: "latest"
       test-repository:
         description: "E2E tests Git repository"
         type: string
@@ -47,13 +19,41 @@ on:
         description: "E2E tests Git branch"
         type: string
         default: "development"
+      dotenv-file:
+        description: "Path to dotenv file with E2E test variables"
+        type: string
+        default: "apps/chat-e2e/.env.ci"
+      java-distribution:
+        description: "Java distribution"
+        type: string
+        default: "temurin"
+      java-version:
+        description: "Java version"
+        type: string
+        default: "17"
+      node-version:
+        description: "NodeJS version"
+        type: string
+        default: "lts/*"
+      playwright-version:
+        description: "Playwright version"
+        type: string
+        default: "latest"
+      allure-version:
+        description: "Allure Report version"
+        type: string
+        default: "2.24.0"
+      report-prefix:
+        description: "Test report name prefix"
+        type: string
+        default: "test-report"
       timeout-minutes:
         description: "The maximum number of minutes to let a job run before GitHub automatically cancels it."
         type: number
         default: 60
       environment-name:
         default: "e2e-test"
-        description: "The GitHub environment name to use for the test."
+        description: "The GitHub environment name to use for the tests. An abstraction to conveniently store secrets and variables"
         type: string
     secrets:
       E2E_ADMIN:
@@ -205,7 +205,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: ${{ !cancelled() }}
         with:
-          name: "${{ inputs.allure-report-prefix }}-${{ github.run_id }}-${{ matrix.target }}"
+          name: "${{ inputs.report-prefix }}-${{ github.run_id }}-${{ matrix.target }}"
           path: |
             apps/chat-e2e/allure-${{ matrix.target }}-report
           retention-days: 30
