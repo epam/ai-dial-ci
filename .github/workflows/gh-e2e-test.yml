@@ -102,20 +102,19 @@ jobs:
         with:
           distribution: ${{ inputs.java-distribution }}
           java-version: ${{ inputs.java-version }}
-      - name: Install Allure
+      - name: Install Allure CLI
         run: |
-          curl -fsSL https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz | tar -xzf -
-          ./allure-${ALLURE_VERSION}/bin/allure --version
+          curl -fsSL --retry 5 --retry-delay 2 https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure_${ALLURE_VERSION}-1_all.deb -o /tmp/allure.deb
+          sudo dpkg -i /tmp/allure.deb
+          echo "Allure CLI version: $(allure --version)"
         shell: bash
         env:
           ALLURE_VERSION: ${{ inputs.allure-version }}
-      - name: Install playwright
+      - name: Install Playwright
         run: |
-          npm install -D @playwright/test@${{ inputs.playwright-version }}
+          npm install -D @playwright/test@${{ inputs.playwright-version }} allure-playwright
           npx playwright install --with-deps
-          # FIXME: Force allure-playwright installation since playwright is removing it
-          npm install -D allure-playwright
-          npx playwright --version
+          echo "Playwright version: $(npx playwright --version)"
         shell: bash
       - name: Wait for environment
         run: |
@@ -201,10 +200,8 @@ jobs:
       - name: Generate Allure Report
         if: ${{ !cancelled() }}
         run: |
-          ./allure-${ALLURE_VERSION}/bin/allure generate ./apps/chat-e2e/allure-${{ matrix.target }}-results -o ./apps/chat-e2e/allure-${{ matrix.target }}-report --clean
+          allure generate ./apps/chat-e2e/allure-${{ matrix.target }}-results -o ./apps/chat-e2e/allure-${{ matrix.target }}-report --clean
         shell: bash
-        env:
-          ALLURE_VERSION: ${{ inputs.allure-version }}
       - name: Upload Allure Report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: ${{ !cancelled() }}
