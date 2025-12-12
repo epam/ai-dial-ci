@@ -101,7 +101,7 @@ jobs:
     needs:
       - deploy-review
     with:
-      allure-report-prefix: "${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}"
+      report-prefix: "${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}"
       e2e-host: "https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
       next-public-overlay-host: "https://overlay-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
       # For ai-dial-chat repo, use PR-related branch, for other repos - default

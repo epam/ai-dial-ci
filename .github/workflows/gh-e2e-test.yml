@@ -46,7 +46,7 @@ on:
       report-prefix:
         description: "Test report name prefix"
         type: string
-        default: "test-report"
+        default: ${{ github.run_id }}
       timeout-minutes:
         description: "The maximum number of minutes to let a job run before GitHub automatically cancels it."
         type: number
@@ -181,8 +181,8 @@ jobs:
           NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
       - name: Run tests
         run: |
-          echo "Host to run e2e tests against:                ${E2E_HOST}"
-          echo "Host to run overlay e2e tests against:        ${NEXT_PUBLIC_OVERLAY_HOST}"
+          echo "URL to run e2e tests against:                 ${E2E_HOST}"
+          echo "URL to run overlay e2e tests against:         ${NEXT_PUBLIC_OVERLAY_HOST}"
           echo "Config for arithmetic e2e api tests:          ${ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS}"
           echo "Config for attachment request e2e api tests:  ${ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS}"
           echo "Config for attachment response e2e api tests: ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
@@ -206,7 +206,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: ${{ !cancelled() }}
         with:
-          name: "${{ inputs.report-prefix }}-${{ github.run_id }}-${{ matrix.target }}"
+          name: "${{ inputs.report-prefix }}-${{ matrix.target }}"
           path: |
             apps/chat-e2e/allure-${{ matrix.target }}-report
           retention-days: 30

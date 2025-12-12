@@ -42,7 +42,7 @@ jobs:
     needs:
       - deploy-env
     with:
-      allure-report-prefix: "${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}"
+      report-prefix: "${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}"
       e2e-host: "https://chat-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.${{ vars.E2E_BASE_DOMAIN }}"
       next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.${{ vars.E2E_BASE_DOMAIN }}"
       environment-name: e2e-test
