@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: review
+    timeout-minutes: 30
     steps:
       - name: Check dispatch repository ownership
         id: owner
@@ -100,6 +101,7 @@ jobs:
     if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
     needs:
       - deploy-review
+    timeout-minutes: 60
     with:
       report-prefix: "${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}"
       e2e-host: "https://chat-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
