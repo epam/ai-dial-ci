@@ -8,7 +8,7 @@ module.exports = async ({ github, context, core, inputs }) => {
 
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const startTime = Date.now();
-  const TIMEOUT = 60 * 60 * 1000; // 60 minutes
+  const TIMEOUT = 120 * 60 * 1000; // 120 minutes
   const timeoutSeconds = Math.floor(TIMEOUT / 1000);
   const CYCLE_INTERVAL = 30 * 1000; // 30 seconds
   const currentJobName = process.env.GITHUB_JOB;
