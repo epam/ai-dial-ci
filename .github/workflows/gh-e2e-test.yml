@@ -88,6 +88,7 @@ jobs:
           repository: ${{ inputs.test-repository }}
           ref: ${{ inputs.test-branch }}
           lfs: true
+          persist-credentials: false
       - uses: falti/dotenv-action@f4656c46de6bc223dda660f6724d52537bc0642a # v1.1.5
         with:
           path: ${{ inputs.dotenv-file }}
