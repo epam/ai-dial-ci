@@ -121,7 +121,7 @@ jobs:
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@2.8.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.0.0
         id: semantic_versioning
 
   release:
@@ -160,14 +160,14 @@ jobs:
           remove-go: "true"
           remove-ruby: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@2.8.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.0.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@2.8.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@3.0.0
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -178,7 +178,7 @@ jobs:
           npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version || true # upstream branch may already be updated
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ inputs.docker-build-enabled && (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@2.8.1
+        uses: epam/ai-dial-ci/actions/build_docker@3.0.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -227,7 +227,7 @@ jobs:
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           IS_DEVELOPMENT_BRANCH: ${{ github.ref == 'refs/heads/development' }}
           IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release-') }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@2.8.1
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.0.0
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
