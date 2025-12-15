@@ -83,22 +83,21 @@ jobs:
         target: [chat, overlay]
       fail-fast: false
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: ${{ inputs.test-repository }}
           ref: ${{ inputs.test-branch }}
           lfs: true
-          persist-credentials: false
-      - uses: falti/dotenv-action@a33be0b8cf6a6e6f1b82cc9f3782061ab1022be5 # v1.1.4
+      - uses: falti/dotenv-action@f4656c46de6bc223dda660f6724d52537bc0642a # v1.1.5
         with:
           path: ${{ inputs.dotenv-file }}
           log-variables: true
           export-variables: true
           keys-case: bypass
-      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version: ${{ inputs.node-version }}
-      - uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b # v4.6.0
+      - uses: actions/setup-java@f2beeb24e141e01a676f977032f5a29d81c9e27e # v5.1.0
         with:
           distribution: ${{ inputs.java-distribution }}
           java-version: ${{ inputs.java-version }}
@@ -203,7 +202,7 @@ jobs:
           allure generate ./apps/chat-e2e/allure-${{ matrix.target }}-results -o ./apps/chat-e2e/allure-${{ matrix.target }}-report --clean
         shell: bash
       - name: Upload Allure Report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         if: ${{ !cancelled() }}
         with:
           name: "${{ inputs.report-prefix }}-${{ matrix.target }}"

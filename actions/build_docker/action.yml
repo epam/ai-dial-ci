@@ -80,7 +80,7 @@ runs:
   steps:
     - name: Setup Docker Qemu
       if: ${{ inputs.platforms != 'linux/amd64' }}
-      uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+      uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
     - name: Setup Docker buildx
       uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
     - name: Login to GitHub Container Registry
@@ -126,7 +126,7 @@ runs:
       id: trivy-sarif
       # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
       if: ${{ fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
+      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
       with:
         image-ref: "${{ inputs.image-name }}:${{ inputs.image-tag }}"
         format: "sarif"
@@ -142,7 +142,7 @@ runs:
     - name: Upload Trivy scan results to GitHub Security tab
       # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
       if: ${{ !cancelled() && fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b #v3.28.17
+      uses: github/codeql-action/upload-sarif@1b168cd39490f61582a9beae412bb7057a6b2c4e #v4.31.8
       with:
         sarif_file: "trivy-results.sarif"
         category: trivy
@@ -151,7 +151,7 @@ runs:
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Run Trivy vulnerability scanner (stdout, table view, may fail)
       if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
+      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
       with:
         image-ref: "${{ inputs.image-name }}:${{ inputs.image-tag }}"
         format: "table"
