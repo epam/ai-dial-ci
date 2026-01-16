@@ -10,7 +10,7 @@
       - [PR Workflow (Docker)](#pr-workflow-docker)
       - [Release Workflow (Docker)](#release-workflow-docker)
       - [Dependency Review](#dependency-review)
-    - [Python (poetry)](#python-poetry)
+    - [Python (Poetry)](#python-poetry)
       - [PR Workflow (Docker)](#pr-workflow-docker-1)
       - [Release Workflow (Docker)](#release-workflow-docker-1)
       - [PR Workflow (package)](#pr-workflow-package)
@@ -158,7 +158,7 @@ jobs:
       ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
-### Python (poetry)
+### Python (Poetry)
 
 #### PR Workflow (Docker)
 
