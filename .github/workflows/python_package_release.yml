@@ -120,7 +120,7 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/python_prepare@fix-python
+      - uses: epam/ai-dial-ci/actions/python_prepare@fix-python-tests
         with:
           python-version: ${{ inputs.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -135,7 +135,7 @@ jobs:
           make publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@fix-python
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@fix-python-tests
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version-without-hyphens }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
