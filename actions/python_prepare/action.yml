@@ -1,32 +1,52 @@
 name: "Prepare Python"
-description: "Checkout project, set up python"
+description: "Install Python and (optionally) install Poetry with (optional) cache support"
 
 inputs:
   python-version:
     description: "Python version to use"
     default: "3.x"
-  cache:
-    description: "Cache type. Supported values: pip, pipenv, poetry"
-    default: "poetry"
   poetry-install:
-    description: "Install poetry"
+    description: "Install Poetry"
     default: "true"
   poetry-version:
     description: "Poetry version to use"
     default: "latest"
+  cache:
+    description: "Cache Poetry dependencies (venv) and Poetry installation"
+    default: "true"
 
 runs:
   using: "composite"
   steps:
+    - name: Set up Python
+      id: setup-python
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Load cached Poetry installation
+      id: cached-poetry
+      if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }} # workaround for composite jobs not being able to pass boolean inputs
+      uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+      with:
+        path: ~/.local
+        key: poetry-${{ runner.os }}-${{ inputs.poetry-version }}
     - name: Install Poetry
-      if: ${{ fromJSON(inputs.poetry-install) }} # workaround for composite jobs not being able to pass boolean inputs
+      if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry.outputs.cache-hit != 'true' }}
       uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
       with:
         virtualenvs-create: true
         virtualenvs-in-project: true
         version: ${{ inputs.poetry-version }}
-    - name: Set up Python
-      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+    - name: Configure Poetry
+      if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry.outputs.cache-hit == 'true' }} # re-apply configuration only if Poetry installation is restored from cache
+      run: |
+        poetry config virtualenvs.create true
+        poetry config virtualenvs.in-project true
+      shell: bash
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }}
+      uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
       with:
-        python-version: ${{ inputs.python-version }}
-        cache: ${{ inputs.cache }}
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
