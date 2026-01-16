@@ -19,6 +19,8 @@ module.exports = async ({ github, context, core, inputs }) => {
 
   let lastBody = null;
   let preservedContent = '';
+  let isCommentDeleted = false;
+
   try {
     const { data: existingComment } = await github.rest.issues.getComment({
       owner: commentOwner,
@@ -34,6 +36,9 @@ module.exports = async ({ github, context, core, inputs }) => {
     }
   } catch (error) {
     console.warn('Unable to load existing comment data to append to, will overwrite', error);
+    if (error.status === 404) {
+      isCommentDeleted = true;
+    }
   }
 
   const formatStatus = (job) => {
@@ -120,14 +125,23 @@ module.exports = async ({ github, context, core, inputs }) => {
       body += `>GitHub actions run: [${runId}](${run.html_url})\n\n`;
       body += buildTable(run, jobs);
 
-      if (body !== lastBody) {
-        await github.rest.issues.updateComment({
-          owner: commentOwner,
-          repo: commentRepo,
-          comment_id: commentId,
-          body,
-        });
-        lastBody = body;
+      if (!isCommentDeleted && body !== lastBody) {
+        try {
+          await github.rest.issues.updateComment({
+            owner: commentOwner,
+            repo: commentRepo,
+            comment_id: commentId,
+            body,
+          });
+          lastBody = body;
+        } catch (updateError) {
+          if (updateError.status === 404) {
+            console.warn('Comment is not found, skipping further updates');
+            isCommentDeleted = true;
+          } else {
+            throw updateError;
+          }
+        }
       }
 
       const otherJobs = jobs.filter((job) => job.name !== currentJobName); // Exclude current (monitor) job, designed to die last
