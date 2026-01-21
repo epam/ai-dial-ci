@@ -103,7 +103,7 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.0.2
+      - uses: epam/ai-dial-ci/actions/java_prepare@3.1.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -145,7 +145,7 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@3.0.2
+      - uses: epam/ai-dial-ci/actions/build_docker@3.1.0
         with:
           image-name: ghcr.io/${{ env.IMAGE_NAME }}
           image-tag: test
