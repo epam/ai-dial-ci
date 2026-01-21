@@ -5,43 +5,43 @@ on:
     inputs:
       bypass-checks:
         type: boolean
-        default: false
         description: Do not fail pipeline if checks failed
+        default: false
       style-checks-enabled:
         type: boolean
-        default: true
         description: Enable style_checks
+        default: true
       style-checks-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if style_checks failed
+        default: false
       code-checks-enabled:
         type: boolean
-        default: true
         description: Enable code_checks
+        default: true
       code-checks-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if code_checks failed
+        default: false
       ort-enabled:
         type: boolean
-        default: true
         description: Enable ORT scanning
+        default: true
       ort-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if ORT scan failed
+        default: false
       ort-version:
         type: string
-        default: "latest"
         description: ORT version to use
+        default: "latest"
       python-version:
         type: string
-        default: "3.11"
         description: Python version to use
+        default: "3.11"
       poetry-version:
         type: string
-        description: "Poetry version to use"
+        description: Poetry version to use
         default: "latest"
       runs-on:
         type: string
