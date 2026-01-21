@@ -611,8 +611,11 @@ updates:
 
 Repository maintainers may want to automate approval/merging of Dependabot PRs to reduce manual effort. The example below will automatically approve all Dependabot PRs, and merge those that belong to `ai-dial-ci` group and are **not major** version updates.
 
+> [!warning]
+> The workflow requires [auto-merge](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-auto-merge-for-pull-requests-in-your-repository#managing-auto-merge) option in repository settings enabled
+
 > [!tip]
-> Remove `steps.metadata.outputs.dependency-group == 'ai-dial-ci'` condition to enable auto-merging for all Dependabot PRs except major version updates
+> You can modify the conditions to fit your needs, e.g remove `steps.metadata.outputs.dependency-group == 'ai-dial-ci'` condition to enable auto-merging for **all** Dependabot PRs except major version updates
 
 `dependabot-automation.yml`
 
