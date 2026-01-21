@@ -61,7 +61,7 @@ on:
         description: Python version to use
       poetry-version:
         type: string
-        description: "Poetry version to use"
+        description: Poetry version to use
         default: "1.8.5"
       maximize-build-space:
         type: boolean
@@ -96,6 +96,7 @@ jobs:
       python-version: ${{ inputs.python-version }}
       poetry-version: ${{ inputs.poetry-version }}
       runs-on: ${{ inputs.runs-on }}
+      maximize-build-space: ${{ inputs.maximize-build-space }}
 
   docker_build:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
