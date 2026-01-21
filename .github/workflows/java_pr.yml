@@ -117,7 +117,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - name: Maximize build space
-        uses: nepalevov/maximize-build-space@a1a975ceb44dddb1023067778f5c0111825ade6c # v1.0.1
+        uses: nepalevov/maximize-build-space@046c48361370e2f3fa758bd2f10c6ce29109ef62 # v1.1.0
         if: ${{ inputs.maximize-build-space }}
         with:
           remove-dotnet: "true"
