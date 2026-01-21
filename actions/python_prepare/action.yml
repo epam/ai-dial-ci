@@ -26,7 +26,7 @@ runs:
     - name: Load cached Poetry installation
       id: cached-poetry
       if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
       with:
         path: ~/.local
         key: poetry-${{ runner.os }}-${{ inputs.poetry-version }}
@@ -46,7 +46,7 @@ runs:
     - name: Load cached venv
       id: cached-poetry-dependencies
       if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }}
-      uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
