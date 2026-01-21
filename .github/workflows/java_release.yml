@@ -107,7 +107,7 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.0.2
+      - uses: epam/ai-dial-ci/actions/java_prepare@3.1.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -122,7 +122,7 @@ jobs:
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.0.2
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.0
         id: semantic_versioning
 
   release:
@@ -136,14 +136,13 @@ jobs:
       - test
     steps:
       - name: Maximize build space
-        uses: nepalevov/maximize-build-space@a1a975ceb44dddb1023067778f5c0111825ade6c # v1.0.1
+        uses: nepalevov/maximize-build-space@046c48361370e2f3fa758bd2f10c6ce29109ef62 # v1.1.0
         if: ${{ inputs.maximize-build-space }}
         with:
           remove-dotnet: "true"
           remove-android: "true"
           remove-haskell: "true"
           remove-codeql: "true"
-          docker-cleanup: "true"
           remove-large-packages: "true"
           remove-cached-tools: "true"
           remove-swapfile: "true"
@@ -160,15 +159,16 @@ jobs:
           remove-node: "true"
           remove-go: "true"
           remove-ruby: "true"
+          docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.0.2
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.1.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.0.2
+      - uses: epam/ai-dial-ci/actions/java_prepare@3.1.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -176,7 +176,7 @@ jobs:
         shell: bash
         run: |
           sed -i -E "s/^([ \t]*version[ \t]*=[ \t]*)[\"'].*[\"']/\1\"${{ needs.calculate_version.outputs.next-version }}\"/g" build.gradle
-      - uses: epam/ai-dial-ci/actions/build_docker@3.0.2
+      - uses: epam/ai-dial-ci/actions/build_docker@3.1.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -199,7 +199,7 @@ jobs:
             ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.0.2
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.0
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify

@@ -61,7 +61,7 @@ on:
         description: Python version to use
       poetry-version:
         type: string
-        description: "Poetry version to use"
+        description: Poetry version to use
         default: "1.8.5"
       maximize-build-space:
         type: boolean
@@ -96,19 +96,19 @@ jobs:
       python-version: ${{ inputs.python-version }}
       poetry-version: ${{ inputs.poetry-version }}
       runs-on: ${{ inputs.runs-on }}
+      maximize-build-space: ${{ inputs.maximize-build-space }}
 
   docker_build:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - name: Maximize build space
-        uses: nepalevov/maximize-build-space@a1a975ceb44dddb1023067778f5c0111825ade6c # v1.0.1
+        uses: nepalevov/maximize-build-space@046c48361370e2f3fa758bd2f10c6ce29109ef62 # v1.1.0
         if: ${{ inputs.maximize-build-space }}
         with:
           remove-dotnet: "true"
           remove-android: "true"
           remove-haskell: "true"
           remove-codeql: "true"
-          docker-cleanup: "true"
           remove-large-packages: "true"
           remove-cached-tools: "true"
           remove-swapfile: "true"
@@ -125,11 +125,12 @@ jobs:
           remove-node: "true"
           remove-go: "true"
           remove-ruby: "true"
+          docker-cleanup: "true"
           set-tmpdir: "true"
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@3.0.2
+      - uses: epam/ai-dial-ci/actions/build_docker@3.1.0
         with:
           image-name: ghcr.io/${{ env.IMAGE_NAME }}
           image-tag: test
