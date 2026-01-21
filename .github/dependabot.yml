@@ -14,3 +14,5 @@ updates:
     ignore:
       - dependency-name: "epam/ai-dial-ci"
     open-pull-requests-limit: 100
+    cooldown:
+      default-days: 7
