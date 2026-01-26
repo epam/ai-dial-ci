@@ -59,3 +59,7 @@ runs:
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-poetry-${{ hashFiles('**/poetry.lock') }} # inspired by setup-python action
+    - name: Install dependencies
+      if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry-dependencies.outputs.cache-hit != 'true' }}
+      run: poetry install --no-interaction --no-root
+      shell: bash
