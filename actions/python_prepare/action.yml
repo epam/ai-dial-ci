@@ -25,7 +25,7 @@ runs:
         python-version: ${{ inputs.python-version }}
     - name: Load cached Poetry installation
       id: cached-poetry
-      if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }} # workaround for composite jobs not being able to pass boolean inputs
+      if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) && inputs.poetry-version != 'latest' }}
       uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
       with:
         path: ~/.local
