@@ -95,6 +95,7 @@ jobs:
       trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
       trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
       python-version: ${{ inputs.python-version }}
+      poetry-version: ${{ inputs.poetry-version }}
       runs-on: ${{ inputs.runs-on }}
 
   build:
