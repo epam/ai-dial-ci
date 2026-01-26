@@ -25,11 +25,26 @@ runs:
         python-version: ${{ inputs.python-version }}
     - name: Load cached Poetry installation
       id: cached-poetry
-      if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }} # workaround for composite jobs not being able to pass boolean inputs
+      if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) && inputs.poetry-version != 'latest' }}
       uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
       with:
         path: ~/.local
-        key: poetry-${{ runner.os }}-${{ runner.arch }}-${{ inputs.poetry-version }}
+        key: poetry-${{ inputs.poetry-version }}-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}
+    - name: Configure cached Poetry installation
+      if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry.outputs.cache-hit == 'true' }}
+      # When the cache is hit, and Poetry is restored, installation will run with default settings.
+      # To make things work the same as when Poetry is installed by snok/install-poetry action, this step is needed.
+      run: |
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+        export PATH="$HOME/.local/bin:$PATH"
+        poetry config virtualenvs.create true
+        poetry config virtualenvs.in-project true
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          echo "VENV=.venv/scripts/activate" >> "$GITHUB_ENV"
+        else
+          echo "VENV=.venv/bin/activate" >> "$GITHUB_ENV"
+        fi
+      shell: bash
     - name: Install Poetry
       if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry.outputs.cache-hit != 'true' }}
       uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
@@ -37,12 +52,6 @@ runs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         version: ${{ inputs.poetry-version }}
-    - name: Configure Poetry
-      if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry.outputs.cache-hit == 'true' }} # re-apply configuration only if Poetry installation is restored from cache
-      run: |
-        poetry config virtualenvs.create true
-        poetry config virtualenvs.in-project true
-      shell: bash
     - name: Load cached venv
       id: cached-poetry-dependencies
       if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }}
@@ -50,3 +59,7 @@ runs:
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-poetry-${{ hashFiles('**/poetry.lock') }} # inspired by setup-python action
+    - name: Install dependencies
+      if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry-dependencies.outputs.cache-hit != 'true' }}
+      run: poetry install --no-interaction --no-root
+      shell: bash

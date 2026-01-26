@@ -84,7 +84,7 @@ jobs:
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.1
         id: semantic_versioning
 
   release:
@@ -123,14 +123,14 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.1.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.1.1
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/build_docker@3.1.0
+      - uses: epam/ai-dial-ci/actions/build_docker@3.1.1
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -151,7 +151,7 @@ jobs:
             ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.1
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
