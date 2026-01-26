@@ -119,19 +119,11 @@ jobs:
         run: |
           # Workflow explanation:
           # 1. Use venv from python_prepare action and build the package(s)
-          # 2. Create a separate venv for twine, install and check the package(s)
-          # 3. Switch back to the original venv and run tests
+          # 2. Check package(s) long description renders correctly with twine
+          # 3. Run tests (with specific Python version)
           source $VENV
           make build
-          deactivate
-
-          python -m venv .venv-twine
-          source .venv-twine/bin/activate
-          pip install "twine~=6.0"
-          twine check dist/*
-          deactivate
-
-          source $VENV
+          pipx run "twine~=6.0" check dist/*
           make test PYTHON=${{ matrix.python-version }}
 
   ort:
