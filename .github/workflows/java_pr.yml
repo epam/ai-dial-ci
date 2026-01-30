@@ -145,7 +145,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@3.1.1
+      - uses: epam/ai-dial-ci/actions/build_docker@83ba1825b2f07d5842e8d7645c16c1d50e047aa4
         with:
           image-name: ghcr.io/${{ env.IMAGE_NAME }}
           image-tag: test
