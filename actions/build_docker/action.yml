@@ -159,11 +159,11 @@ runs:
         ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
         vuln-type: ${{ inputs.trivy-vuln-type }}
         severity: ${{ inputs.trivy-severity }}
-        skip-setup-trivy: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
+#        skip-setup-trivy: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
       env:
         CONTINUE_ON_ERROR: ${{ inputs.bypass-checks }} # Hack to use the input below as a boolean
-        TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
-        TRIVY_SKIP_JAVA_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
+#        TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
+#        TRIVY_SKIP_JAVA_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
         TRIVY_DISABLE_VEX_NOTICE: true
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Build and push
