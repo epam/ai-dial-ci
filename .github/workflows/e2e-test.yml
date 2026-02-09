@@ -38,7 +38,7 @@ jobs:
             }
 
   e2e-test:
-    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@3.1.1
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@fix-trivy
     needs:
       - deploy-env
     with:
