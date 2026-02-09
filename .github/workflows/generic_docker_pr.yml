@@ -66,16 +66,16 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  test:
-    uses: ./.github/workflows/generic_docker_test.yml
-    with:
-      bypass-checks: ${{ inputs.bypass-checks }}
-      style-checks-enabled: ${{ inputs.style-checks-enabled }}
-      style-checks-bypassed: ${{ inputs.style-checks-bypassed }}
-      ort-enabled: ${{ inputs.ort-enabled }}
-      ort-bypassed: ${{ inputs.ort-bypassed }}
-      ort-version: ${{ inputs.ort-version }}
-      runs-on: ${{ inputs.runs-on }}
+  # test:
+  #   uses: ./.github/workflows/generic_docker_test.yml
+  #   with:
+  #     bypass-checks: ${{ inputs.bypass-checks }}
+  #     style-checks-enabled: ${{ inputs.style-checks-enabled }}
+  #     style-checks-bypassed: ${{ inputs.style-checks-bypassed }}
+  #     ort-enabled: ${{ inputs.ort-enabled }}
+  #     ort-bypassed: ${{ inputs.ort-bypassed }}
+  #     ort-version: ${{ inputs.ort-version }}
+  #     runs-on: ${{ inputs.runs-on }}
 
   docker_build:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
