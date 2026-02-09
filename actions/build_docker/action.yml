@@ -133,6 +133,9 @@ runs:
         TRIVY_DISABLE_VEX_NOTICE: true
       run: |
         TRIVY_OPTS="--pkg-types ${{ inputs.trivy-vuln-type }} --format json --output trivy-results.json --exit-code 0 --exit-on-eol 0"
+        if [ "${{ inputs.trivy-ignore-unfixed }}" == "true" ]; then
+          TRIVY_OPTS="$TRIVY_OPTS --ignore-unfixed"
+        fi
         trivy image $TRIVY_OPTS "${{ inputs.image-name }}:${{ inputs.image-tag }}"
       shell: bash
     - name: Prepare Trivy SARIF report
@@ -143,9 +146,6 @@ runs:
           TRIVY_OPTS="$TRIVY_OPTS --severity ${{ inputs.trivy-severity-for-sarif }}"
         else
           TRIVY_OPTS="$TRIVY_OPTS --severity ${{ inputs.trivy-severity }}"
-        fi
-        if [ "${{ inputs.trivy-ignore-unfixed }}" == "true" ]; then
-          TRIVY_OPTS="$TRIVY_OPTS --ignore-unfixed"
         fi
         trivy convert $TRIVY_OPTS trivy-results.json
       shell: bash
@@ -165,9 +165,6 @@ runs:
       if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
       run: |
         TRIVY_OPTS="--format table --severity ${{ inputs.trivy-severity }}"
-        if [ "${{ inputs.trivy-ignore-unfixed }}" == "true" ]; then
-          TRIVY_OPTS="$TRIVY_OPTS --ignore-unfixed"
-        fi
         trivy convert $TRIVY_OPTS trivy-results.json
       shell: bash
       env:
