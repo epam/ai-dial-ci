@@ -122,22 +122,19 @@ runs:
           GPR_PASSWORD=${{ inputs.gpr-password }}
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
-    - name: Setup Trivy vulnerability scanner
+    - name: Run Trivy vulnerability scanner (JSON, no fail)
       if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.5
+      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
       with:
-        cache: true
-    - name: Run Trivy vulnerability scan
-      if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
+        image-ref: "${{ inputs.image-name }}:${{ inputs.image-tag }}"
+        format: "json"
+        exit-code: "0"
+        output: "trivy-results.json"
+        ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
+        vuln-type: ${{ inputs.trivy-vuln-type }}
       env:
         TRIVY_DISABLE_VEX_NOTICE: true
-      run: |
-        TRIVY_OPTS="--pkg-types ${{ inputs.trivy-vuln-type }} --format json --output trivy-results.json --exit-code 0 --exit-on-eol 0"
-        if [ "${{ inputs.trivy-ignore-unfixed }}" == "true" ]; then
-          TRIVY_OPTS="$TRIVY_OPTS --ignore-unfixed"
-        fi
-        trivy image $TRIVY_OPTS "${{ inputs.image-name }}:${{ inputs.image-tag }}"
-      shell: bash
+      continue-on-error: true # HACK: Alongside with `exit-code: 0`, ensure not failing the workflow
     - name: Prepare Trivy SARIF report
       if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
       run: |
@@ -164,7 +161,7 @@ runs:
     - name: Print Trivy vulnerability scanner report (stdout, table view, may fail)
       if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
       run: |
-        TRIVY_OPTS="--format table --severity ${{ inputs.trivy-severity }}"
+        TRIVY_OPTS="--format table --severity ${{ inputs.trivy-severity }} --exit-code 1 --exit-on-eol 0"
         trivy convert $TRIVY_OPTS trivy-results.json
       shell: bash
       env:
