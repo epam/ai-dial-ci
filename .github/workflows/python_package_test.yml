@@ -161,13 +161,14 @@ jobs:
           output: "trivy-results.json"
           ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
           vuln-type: ${{ inputs.trivy-vuln-type }}
+          scanners: "vuln,secret"
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
         continue-on-error: true # HACK: Alongside with `exit-code: 0`, ensure not failing the workflow
       - name: Prepare Trivy SARIF report
         if: ${{ inputs.trivy-enabled && !github.event.repository.private }}
         run: |
-          TRIVY_OPTS="--format sarif --output trivy-results.sarif --exit-code 0 --exit-on-eol 0"
+          TRIVY_OPTS="--format sarif --output trivy-results.sarif --scanners vuln,secret --exit-code 0 --exit-on-eol 0"
           if [ "${{ inputs.trivy-limit-severities-for-sarif }}" == "true" ]; then
             TRIVY_OPTS="$TRIVY_OPTS --severity ${{ inputs.trivy-severity-for-sarif }}"
           else
@@ -188,7 +189,7 @@ jobs:
       - name: Print Trivy vulnerability scanner report (stdout, table view, may fail)
         if: ${{ inputs.trivy-enabled }}
         run: |
-          TRIVY_OPTS="--format table --severity ${{ inputs.trivy-severity }} --exit-code 1 --exit-on-eol 0"
+          TRIVY_OPTS="--format table --severity ${{ inputs.trivy-severity }} --scanners vuln,secret --exit-code 1 --exit-on-eol 0"
           trivy convert $TRIVY_OPTS trivy-results.json
         shell: bash
         env:
