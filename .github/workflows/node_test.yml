@@ -61,7 +61,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@fix-trivy
+      - uses: epam/ai-dial-ci/actions/node_prepare@3.1.2
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -78,7 +78,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@fix-trivy
+      - uses: epam/ai-dial-ci/actions/node_prepare@3.1.2
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -95,7 +95,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@fix-trivy
+      - uses: epam/ai-dial-ci/actions/node_prepare@3.1.2
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
