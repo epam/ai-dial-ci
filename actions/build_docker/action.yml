@@ -137,7 +137,8 @@ runs:
         TRIVY_DISABLE_VEX_NOTICE: true
       continue-on-error: true # HACK: Alongside with `exit-code: 0`, ensure not failing the workflow
     - name: Prepare Trivy SARIF report
-      if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
+      # Do not generate SARIF reports on private repos - GitHub Advanced Security is not enabled
+      if: ${{ fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
       run: |
         TRIVY_OPTS="--format sarif --output trivy-results.sarif --scanners vuln,secret --exit-code 0 --exit-on-eol 0"
         if [ "${{ inputs.trivy-limit-severities-for-sarif }}" == "true" ]; then

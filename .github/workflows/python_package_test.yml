@@ -181,11 +181,11 @@ jobs:
       - name: Upload Trivy scan results to GitHub Security tab
         # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
         if: ${{ !cancelled() && inputs.trivy-enabled && !github.event.repository.private }}
-        uses: github/codeql-action/upload-sarif@cdefb33c0f6224e58673d9004f47f7cb3e328b89 #v4.31.10
+        uses: github/codeql-action/upload-sarif@cdefb33c0f6224e58673d9004f47f7cb3e328b89 # v4.31.10
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy
-        continue-on-error: ${{ inputs.bypass-checks }}
+        continue-on-error: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}
       - name: Print Trivy vulnerability scanner report (stdout, table view, may fail)
         if: ${{ inputs.trivy-enabled }}
         run: |
@@ -194,4 +194,4 @@ jobs:
         shell: bash
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
-        continue-on-error: ${{ inputs.bypass-checks }}
+        continue-on-error: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}
