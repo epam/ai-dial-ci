@@ -151,7 +151,7 @@ jobs:
         with:
           lfs: true
       - name: Run Trivy vulnerability scanner (JSON, no fail)
-        if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
+        if: ${{ inputs.trivy-enabled }}
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         with:
           scan-type: "fs"
@@ -165,7 +165,7 @@ jobs:
           TRIVY_DISABLE_VEX_NOTICE: true
         continue-on-error: true # HACK: Alongside with `exit-code: 0`, ensure not failing the workflow
       - name: Prepare Trivy SARIF report
-        if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
+        if: ${{ inputs.trivy-enabled && !github.event.repository.private }}
         run: |
           TRIVY_OPTS="--format sarif --output trivy-results.sarif --exit-code 0 --exit-on-eol 0"
           if [ "${{ inputs.trivy-limit-severities-for-sarif }}" == "true" ]; then
@@ -179,21 +179,18 @@ jobs:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Upload Trivy scan results to GitHub Security tab
         # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
-        if: ${{ !cancelled() && fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
+        if: ${{ !cancelled() && inputs.trivy-enabled && !github.event.repository.private }}
         uses: github/codeql-action/upload-sarif@cdefb33c0f6224e58673d9004f47f7cb3e328b89 #v4.31.10
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy
-        env:
-          CONTINUE_ON_ERROR: ${{ inputs.bypass-checks }} # Hack to use the input below as a boolean
-        continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
+        continue-on-error: ${{ inputs.bypass-checks }}
       - name: Print Trivy vulnerability scanner report (stdout, table view, may fail)
-        if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
+        if: ${{ inputs.trivy-enabled }}
         run: |
           TRIVY_OPTS="--format table --severity ${{ inputs.trivy-severity }} --exit-code 1 --exit-on-eol 0"
           trivy convert $TRIVY_OPTS trivy-results.json
         shell: bash
         env:
-          CONTINUE_ON_ERROR: ${{ inputs.bypass-checks }} # Hack to use the input below as a boolean
           TRIVY_DISABLE_VEX_NOTICE: true
-        continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
+        continue-on-error: ${{ inputs.bypass-checks }}
