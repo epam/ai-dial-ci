@@ -121,7 +121,7 @@ jobs:
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.2
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@fix-trivy
         id: semantic_versioning
 
   release:
@@ -160,14 +160,14 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.1.2
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@fix-trivy
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@3.1.2
+      - uses: epam/ai-dial-ci/actions/node_prepare@fix-trivy
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -178,7 +178,7 @@ jobs:
           npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version || true # upstream branch may already be updated
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ inputs.docker-build-enabled && (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@3.1.2
+        uses: epam/ai-dial-ci/actions/build_docker@fix-trivy
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -227,7 +227,7 @@ jobs:
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           IS_DEVELOPMENT_BRANCH: ${{ github.ref == 'refs/heads/development' }}
           IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release-') }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.2
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@fix-trivy
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
