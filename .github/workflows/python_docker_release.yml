@@ -54,7 +54,7 @@ on:
       trivy-limit-severities-for-sarif:
         type: boolean
         default: true
-        description: Limit severities for SARIF format
+        description: By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter
       python-version:
         type: string
         default: "3.11"

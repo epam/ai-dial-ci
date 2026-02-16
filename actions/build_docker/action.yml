@@ -21,13 +21,17 @@ inputs:
     required: false
     default: "CRITICAL,HIGH"
   trivy-limit-severities-for-sarif:
-    description: "Limit severities for SARIF format"
+    description: "By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter"
     required: false
     default: "true"
   trivy-vuln-type:
     description: "Type of vulnerabilities to scan"
     required: false
     default: "os,library"
+  trivy-scanners:
+    description: "Comma-separated list of what security issues to detect"
+    required: false
+    default: "vuln,secret"
   trivy-ignore-unfixed:
     description: "Ignore unpatched/unfixed vulnerabilities"
     required: false
@@ -81,7 +85,7 @@ runs:
     - name: Setup Docker Qemu
       if: ${{ inputs.platforms != 'linux/amd64' }}
       uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
-    - name: Setup Docker buildx
+    - name: Setup Docker Buildx
       uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
     - name: Login to GitHub Container Registry
       if: ${{ fromJSON(inputs.push-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
@@ -122,52 +126,54 @@ runs:
           GPR_PASSWORD=${{ inputs.gpr-password }}
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
-    - name: Run Trivy vulnerability scanner (JSON, no fail)
+    - name: Run Trivy scanner (JSON output, no fail)
+      id: trivy
       if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
       uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
       with:
         image-ref: "${{ inputs.image-name }}:${{ inputs.image-tag }}"
         format: "json"
-        exit-code: "0"
+        exit-code: "0" # Do not fail on findings here, should be handled in the latest "trivy convert" step
         output: "trivy-results.json"
         ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
         vuln-type: ${{ inputs.trivy-vuln-type }}
-        scanners: "vuln,secret"
+        scanners: ${{ inputs.trivy-scanners }}
       env:
+        CONTINUE_ON_ERROR: ${{ inputs.bypass-checks }} # Hack to use the input below as a boolean
         TRIVY_DISABLE_VEX_NOTICE: true
-      continue-on-error: true # HACK: Alongside with `exit-code: 0`, ensure not failing the workflow
-    - name: Prepare Trivy SARIF report
+      continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
+    - name: Generate Trivy report (SARIF)
+      id: trivy-generate-sarif
       # Do not generate SARIF reports on private repos - GitHub Advanced Security is not enabled
-      if: ${{ fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
+      # Do not generate SARIF reports for pull requests from forks
+      if: ${{ steps.trivy.outcome == 'success' && !github.event.repository.private && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) }}
       run: |
-        TRIVY_OPTS="--format sarif --output trivy-results.sarif --scanners vuln,secret --exit-code 0 --exit-on-eol 0"
-        if [ "${{ inputs.trivy-limit-severities-for-sarif }}" == "true" ]; then
-          TRIVY_OPTS="$TRIVY_OPTS --severity ${{ inputs.trivy-severity-for-sarif }}"
-        else
-          TRIVY_OPTS="$TRIVY_OPTS --severity ${{ inputs.trivy-severity }}"
-        fi
-        trivy convert $TRIVY_OPTS trivy-results.json
+        trivy convert --format sarif --output trivy-results.sarif --exit-code 0 trivy-results.json
       shell: bash
       env:
+        CONTINUE_ON_ERROR: ${{ inputs.bypass-checks }} # Hack to use the input below as a boolean
+        TRIVY_SCANNERS: ${{ inputs.trivy-scanners }}
+        TRIVY_SEVERITY: ${{ fromJson(inputs.trivy-limit-severities-for-sarif) && inputs.trivy-severity-for-sarif || '' }}
         TRIVY_DISABLE_VEX_NOTICE: true
-    - name: Upload Trivy scan results to GitHub Security tab
-      # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
-      if: ${{ !cancelled() && fromJSON(inputs.trivy-enabled) && !github.event.repository.private }} # workaround for composite jobs not being able to pass boolean inputs
-      uses: github/codeql-action/upload-sarif@cdefb33c0f6224e58673d9004f47f7cb3e328b89 #v4.31.10
+      continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
+    - name: Upload Trivy report (SARIF)
+      if: ${{ steps.trivy-generate-sarif.outcome == 'success' }}
+      uses: github/codeql-action/upload-sarif@cdefb33c0f6224e58673d9004f47f7cb3e328b89 # v4.31.10
       with:
         sarif_file: "trivy-results.sarif"
         category: trivy
       env:
         CONTINUE_ON_ERROR: ${{ inputs.bypass-checks }} # Hack to use the input below as a boolean
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
-    - name: Print Trivy vulnerability scanner report (stdout, table view, may fail)
-      if: ${{ fromJSON(inputs.trivy-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
+    - name: Generate Trivy report (Table, must fail on findings)
+      if: ${{ steps.trivy.outcome == 'success' }}
       run: |
-        TRIVY_OPTS="--format table --severity ${{ inputs.trivy-severity }} --scanners vuln,secret --exit-code 1 --exit-on-eol 0"
-        trivy convert $TRIVY_OPTS trivy-results.json
+        trivy convert --format table --exit-code 1 trivy-results.json
       shell: bash
       env:
         CONTINUE_ON_ERROR: ${{ inputs.bypass-checks }} # Hack to use the input below as a boolean
+        TRIVY_SCANNERS: ${{ inputs.trivy-scanners }}
+        TRIVY_SEVERITY: ${{ inputs.trivy-severity }}
         TRIVY_DISABLE_VEX_NOTICE: true
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Build and push
