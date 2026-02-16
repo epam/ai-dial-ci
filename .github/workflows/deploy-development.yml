@@ -4,17 +4,17 @@ on:
   workflow_call:
     inputs:
       gitlab-project-id:
+        type: string
+        description: The ID or path of the project owned by the authenticated user
         required: true
-        description: 'The ID or path of the project owned by the authenticated user.'
-        type: string
       gitlab-project-ref:
-        default: 'master'
-        description: 'The branch or tag to run the pipeline on.'
         type: string
+        description: The branch or tag to run the pipeline on
+        default: "master"
       environment-name:
-        default: 'development'
-        description: 'The GitHub environment name to use for the deployment.'
         type: string
+        description: The GitHub environment name to use for the deployment
+        default: "development"
     secrets:
       DEPLOY_HOST:
         required: true
@@ -39,4 +39,3 @@ jobs:
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ inputs.gitlab-project-id }}
           ref: ${{ inputs.gitlab-project-ref }}
-          variables: '{}'

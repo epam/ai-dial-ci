@@ -6,12 +6,12 @@ on:
     inputs:
       java-version:
         type: string
-        default: "17"
         description: Java version to use
+        default: "17"
       java-distribution:
         type: string
-        default: "temurin"
         description: Java distribution to use
+        default: "temurin"
     secrets:
       ACTIONS_BOT_TOKEN:
         required: true

@@ -1,20 +1,20 @@
-name: "Monitor"
-description: "Periodically updates PR comment with workflow status"
+name: Monitor
+description: Periodically updates PR comment with workflow status
 inputs:
   comment-id:
-    description: "The ID of the comment to update"
+    description: The ID of the comment to update
     required: true
   comment-owner:
-    description: "Owner of the repository hosting the comment"
+    description: Owner of the repository hosting the comment
     required: true
   comment-repo:
-    description: "Repository name hosting the comment"
+    description: Repository name hosting the comment
     required: true
   environment-url:
-    description: "Environment URL to display once available"
+    description: Environment URL to display once available
     required: false
   github-token:
-    description: "GitHub token used to authenticate API calls"
+    description: GitHub token used to authenticate API calls
     required: true
 
 runs:

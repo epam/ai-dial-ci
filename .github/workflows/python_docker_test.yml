@@ -45,7 +45,7 @@ on:
         default: "latest"
       runs-on:
         type: string
-        description: "Overrides jobs runs-on settings (json-encoded list)"
+        description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
       maximize-build-space:
         type: boolean

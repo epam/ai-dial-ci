@@ -1,21 +1,21 @@
-name: "Calculate version"
-description: "Calculate version based on semantic versioning @ conventional commits"
+name: Calculate version
+description: Calculate version based on semantic versioning @ conventional commits
 
 outputs:
   current-version:
-    description: "Current version"
+    description: Current version
     value: ${{ steps.semantic.outputs.current-version }}
   next-version:
-    description: "Next version"
+    description: Next version
     value: ${{ steps.semantic.outputs.next-version }}
   next-version-without-hyphens:
-    description: "Next version without hyphens. Useful for python packages"
+    description: Next version without hyphens. Useful for python packages
     value: ${{ steps.semantic.outputs.next-version-without-hyphens }}
   is-latest:
-    description: "Is a version semantically latest compared to the latest git tag?"
+    description: Is a version semantically latest compared to the latest git tag?
     value: ${{ steps.semantic.outputs.is-latest }}
   latest-tag:
-    description: "Semantically latest git tag in the repository"
+    description: Semantically latest git tag in the repository
     value: ${{ steps.semantic.outputs.latest-tag }}
 
 runs:

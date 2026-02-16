@@ -56,8 +56,8 @@ on:
         description: Comma-separated list of what security issues to detect
         default: "vuln,secret"
       trivy-ignore-unfixed:
-        description: Ignore unpatched/unfixed vulnerabilities
         type: boolean
+        description: Ignore unpatched/unfixed vulnerabilities
         default: true
       ort-enabled:
         type: boolean
@@ -81,7 +81,7 @@ on:
         default: "latest"
       runs-on:
         type: string
-        description: "Overrides jobs runs-on settings (json-encoded list)"
+        description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
 
 jobs:

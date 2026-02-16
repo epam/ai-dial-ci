@@ -22,7 +22,7 @@
 #     - REVIEW_BASE_DOMAIN:                   Base domain for review environments (e.g. example.com)
 #     - (optional) DISPATCH_WHITELIST:        JSON array of repository names (wildcard supported) allowed to dispatch slash command events
 #                                             Default: ["ai-dial*"]
-#   - Secrets:    
+#   - Secrets:
 #     - ACTIONS_BOT_TOKEN:                    GitHub token with permissions to create/update comments
 #     - DEPLOY_HOST:                          GitLab instance hostname (e.g. gitlab.com)
 #     - E2E_ADMIN:                            A name of an application user with admin privileges
