@@ -26,7 +26,7 @@ runs:
     - name: Load cached Poetry installation
       id: cached-poetry
       if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) && inputs.poetry-version != 'latest' }}
-      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ~/.local
         key: poetry-${{ inputs.poetry-version }}-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}
@@ -55,7 +55,7 @@ runs:
     - name: Load cached venv
       id: cached-poetry-dependencies
       if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }}
-      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-poetry-${{ hashFiles('**/poetry.lock') }} # inspired by setup-python action
