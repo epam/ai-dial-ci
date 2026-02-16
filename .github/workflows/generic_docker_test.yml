@@ -5,33 +5,32 @@ on:
     inputs:
       bypass-checks:
         type: boolean
-        default: false
         description: Do not fail pipeline if checks failed
+        default: false
       style-checks-enabled:
         type: boolean
-        default: true
         description: Enable style_checks
+        default: true
       style-checks-bypassed:
         type: boolean
+        description: Do not fail pipeline if style_check failed
         default: false
-        description: Do not fail pipeline if style_checks failed
       ort-enabled:
         type: boolean
-        default: true
         description: Enable ORT scanning
+        default: true
       ort-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if ORT scan failed
+        default: false
       ort-version:
         type: string
-        default: "latest"
         description: ORT version to use
+        default: "latest"
       runs-on:
         type: string
-        description: "Overrides jobs runs-on settings (json-encoded list)"
+        description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
-        required: false
 
 jobs:
   style_checks:

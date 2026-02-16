@@ -1,15 +1,15 @@
-name: "Prepare Java"
-description: "Set up Java with Gradle"
+name: Prepare Java
+description: Set up Java with Gradle
 
 inputs:
   java-version:
-    description: "Java version to use"
+    description: Java version to use
     default: "17"
   java-distribution:
-    description: "Java distribution to use"
+    description: Java distribution to use
     default: "temurin"
   build-scan-publish:
-    description: "Whether to publish build scans to public Develocity instance (https://scans.gradle.com)"
+    description: Whether to publish build scans to public Develocity instance (https://scans.gradle.com)
     default: "false"
 
 runs:

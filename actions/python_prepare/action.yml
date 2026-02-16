@@ -1,18 +1,18 @@
-name: "Prepare Python"
-description: "Install Python and (optionally) install Poetry with (optional) cache support"
+name: Prepare Python
+description: Install Python and (optionally) install Poetry with (optional) cache support
 
 inputs:
   python-version:
-    description: "Python version to use"
+    description: Python version to use
     default: "3.x"
   poetry-install:
-    description: "Install Poetry"
+    description: Install Poetry
     default: "true"
   poetry-version:
-    description: "Poetry version to use"
+    description: Poetry version to use
     default: "latest"
   cache:
-    description: "Cache Poetry dependencies (venv) and Poetry installation"
+    description: Cache Poetry dependencies (venv) and Poetry installation
     default: "true"
 
 runs:

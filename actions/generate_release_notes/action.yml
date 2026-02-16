@@ -1,9 +1,9 @@
-name: "Generate release notes"
-description: "Generate release notes based on conventional commits"
+name: Generate release notes
+description: Generate release notes based on conventional commits
 
 inputs:
   latest-tag:
-    description: "Semantically latest git tag in the repository"
+    description: Semantically latest git tag in the repository
     required: true
 
 runs:
@@ -19,9 +19,6 @@ runs:
         lfs: true
     - name: Generate changelog
       id: generate_changelog
-      shell: bash
-      env:
-        INPUT_LATEST_TAG: ${{ inputs.latest-tag }}
       run: |
         #!/bin/bash
 
@@ -120,3 +117,6 @@ runs:
                 grep -v "Merge branch " /tmp/my_changelog_other # Removing merge commits
             } >>/tmp/my_changelog
         fi
+      env:
+        INPUT_LATEST_TAG: ${{ inputs.latest-tag }}
+      shell: bash

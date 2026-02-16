@@ -1,18 +1,18 @@
-name: "Prepare NodeJS"
-description: "Set up NodeJS, (optionally) perform clean install of NPM dependencies"
+name: Prepare NodeJS
+description: Set up NodeJS, (optionally) perform clean install of NPM dependencies
 
 inputs:
   node-version:
-    description: "NodeJS version to use"
+    description: NodeJS version to use
     default: "22"
   cache:
-    description: "Cache type. Supported values: npm, yarn, pnpm"
+    description: Cache type (npm, yarn, pnpm)
     default: "npm"
   clean-install:
-    description: "Perform a clean install of the dependencies"
+    description: Perform a clean install of the dependencies
     default: "false"
   registry-url:
-    description: "Optional registry to set up for auth. Will set the registry in a project level .npmrc and .yarnrc file, and set up auth to read in from env.NODE_AUTH_TOKEN"
+    description: Optional registry to set up for auth. Will set the registry in a project level .npmrc and .yarnrc file, and set up auth to read in from env.NODE_AUTH_TOKEN
     default: ""
 
 runs:

@@ -50,11 +50,11 @@ on:
       trivy-severity-for-sarif:
         type: string
         default: "CRITICAL,HIGH"
-        description: "Severities of vulnerabilities in SARIF report"
+        description: Severities of vulnerabilities in SARIF report
       trivy-limit-severities-for-sarif:
         type: boolean
         default: true
-        description: Limit severities for SARIF format
+        description: By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter
       java-version:
         type: string
         default: "17"
@@ -69,14 +69,12 @@ on:
         description: Maximize build space by removing unwanted software
       runs-on:
         type: string
-        description: "Overrides jobs runs-on settings (json-encoded list)"
+        description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
-        required: false
       platforms:
         type: string
-        description: "Docker build platforms (default linux/amd64)"
+        description: Docker build platforms
         default: "linux/amd64"
-        required: false
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -103,7 +101,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@3.1.1
+      - uses: epam/ai-dial-ci/actions/java_prepare@3.1.2
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -145,7 +143,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@3.1.1
+      - uses: epam/ai-dial-ci/actions/build_docker@3.1.2
         with:
           image-name: ghcr.io/${{ env.IMAGE_NAME }}
           image-tag: test

@@ -1,26 +1,23 @@
-name: "Publish git tag and release"
-description: "Commit changes back to git, apply tag and create release"
+name: Publish git tag and release
+description: Commit changes back to git, apply tag and create release
 inputs:
   extra-commit-command:
-    description: 'Extra command to commit changes, e.g. `git add version.txt ; git commit -m "[skip ci] Update version" || true`'
-    required: false
+    description: Extra command to commit changes, e.g. `git add version.txt ; git commit -m "[skip ci] Update version" || true`
     default: ""
   tag-version:
-    description: "Tag version"
+    description: Tag version
     required: true
   changelog-file:
-    description: "Changelog file"
+    description: Changelog file
     required: true
   artifacts:
-    description: "Artifacts to upload"
-    required: false
+    description: Artifacts to upload
     default: ""
 
 runs:
   using: "composite"
   steps:
     - name: Commit and push changes
-      shell: bash
       run: |
         set -x
         git config --global user.name "ai-dial-actions"
@@ -37,7 +34,7 @@ runs:
 
         git push
         git push --tags
-
+      shell: bash
     - uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
       if: github.ref != 'refs/heads/development'
       with:

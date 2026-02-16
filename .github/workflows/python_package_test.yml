@@ -45,15 +45,19 @@ on:
         default: "CRITICAL,HIGH"
       trivy-limit-severities-for-sarif:
         type: boolean
-        description: Limit severities for SARIF format
+        description: By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter
         default: true
       trivy-vuln-type:
         type: string
         description: Type of vulnerabilities to scan
         default: "os,library"
+      trivy-scanners:
+        type: string
+        description: Comma-separated list of what security issues to detect
+        default: "vuln,secret"
       trivy-ignore-unfixed:
-        description: Ignore unpatched/unfixed vulnerabilities
         type: boolean
+        description: Ignore unpatched/unfixed vulnerabilities
         default: true
       ort-enabled:
         type: boolean
@@ -77,7 +81,7 @@ on:
         default: "latest"
       runs-on:
         type: string
-        description: "Overrides jobs runs-on settings (json-encoded list)"
+        description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
 
 jobs:
@@ -88,7 +92,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.1
+      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.2
         with:
           python-version: ${{ inputs.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -109,7 +113,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.1
+      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.2
         with:
           python-version: ${{ matrix.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -150,45 +154,48 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - name: Run Trivy vulnerability scanner (SARIF, no fail)
-        id: trivy-sarif
-        # Do not perform SARIF scan on private repos - GitHub Advanced Security is not enabled
-        if: ${{ !github.event.repository.private }}
+      - name: Run Trivy vulnerability scanner (JSON output, no fail)
+        id: trivy
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         with:
           scan-type: "fs"
           scan-ref: "."
-          format: "sarif"
-          output: "trivy-results.sarif"
-          exit-code: "0"
+          format: "json"
+          exit-code: "0" # Do not fail on findings here, should be handled in the latest "trivy convert" step
+          output: "trivy-results.json"
           ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
           vuln-type: ${{ inputs.trivy-vuln-type }}
-          severity: ${{ inputs.trivy-severity-for-sarif }}
-          limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
+          scanners: ${{ inputs.trivy-scanners }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
-        continue-on-error: true # HACK: Alongside with `exit-code: 0`, ensure not failing the workflow
-      - name: Upload Trivy scan results to GitHub Security tab
-        # Do not upload SARIF reports on private repos - GitHub Advanced Security is not enabled
-        if: ${{ !cancelled() && inputs.trivy-enabled && !github.event.repository.private }}
+        continue-on-error: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}
+      - name: Generate Trivy report (SARIF)
+        id: trivy-generate-sarif
+        # Do not generate SARIF reports on private repos - GitHub Advanced Security is not enabled
+        # Do not generate SARIF reports for pull requests from forks
+        if: ${{ steps.trivy.outcome == 'success' && !github.event.repository.private && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) }}
+        run: |
+          trivy convert --format sarif --output trivy-results.sarif --exit-code 0 trivy-results.json
+        shell: bash
+        env:
+          TRIVY_SCANNERS: ${{ inputs.trivy-scanners }}
+          TRIVY_SEVERITY: ${{ inputs.trivy-limit-severities-for-sarif && inputs.trivy-severity-for-sarif || '' }}
+          TRIVY_DISABLE_VEX_NOTICE: true
+        continue-on-error: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}
+      - name: Upload Trivy report (SARIF)
+        if: ${{ steps.trivy-generate-sarif.outcome == 'success' }}
         uses: github/codeql-action/upload-sarif@cdefb33c0f6224e58673d9004f47f7cb3e328b89 # v4.31.10
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy
-        continue-on-error: ${{ inputs.trivy-bypassed }}
-      - name: Run Trivy vulnerability scanner (stdout, table view, may fail)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          format: "table"
-          exit-code: "1"
-          ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
-          vuln-type: ${{ inputs.trivy-vuln-type }}
-          severity: ${{ inputs.trivy-severity }}
-          skip-setup-trivy: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
+        continue-on-error: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}
+      - name: Generate Trivy report (Table, must fail on findings)
+        if: ${{ steps.trivy.outcome == 'success' }}
+        run: |
+          trivy convert --format table --exit-code 1 trivy-results.json
+        shell: bash
         env:
-          TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
-          TRIVY_SKIP_JAVA_DB_UPDATE: ${{ steps.trivy-sarif.conclusion != 'skipped' }}
+          TRIVY_SCANNERS: ${{ inputs.trivy-scanners }}
+          TRIVY_SEVERITY: ${{ inputs.trivy-severity }}
           TRIVY_DISABLE_VEX_NOTICE: true
-        continue-on-error: ${{ inputs.trivy-bypassed }}
+        continue-on-error: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}

@@ -1,4 +1,4 @@
-name: "Validate PR title"
+name: Validate PR title
 
 on:
   workflow_call:

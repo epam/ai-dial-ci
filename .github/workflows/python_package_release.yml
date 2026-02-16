@@ -5,73 +5,72 @@ on:
     inputs:
       bypass-checks:
         type: boolean
-        default: false
         description: Do not fail pipeline if checks failed
+        default: false
       style-checks-enabled:
         type: boolean
-        default: true
         description: Enable style_checks
+        default: true
       style-checks-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if style_checks failed
+        default: false
       code-checks-enabled:
         type: boolean
-        default: true
         description: Enable code_checks
+        default: true
       code-checks-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if code_checks failed
+        default: false
       code-checks-python-versions:
         type: string
         description: Python versions to run tests against
         default: '["3.8", "3.9", "3.10", "3.11"]'
       ort-enabled:
         type: boolean
-        default: true
         description: Enable ORT scanning
+        default: true
       ort-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if ORT scan failed
+        default: false
       ort-version:
         type: string
-        default: "latest"
         description: ORT version to use
+        default: "latest"
       trivy-enabled:
         type: boolean
-        default: true
         description: Enable Trivy scanning
+        default: true
       trivy-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if Trivy failed
+        default: false
       trivy-severity:
         type: string
-        default: "CRITICAL,HIGH"
         description: Severities of vulnerabilities to fail the build
+        default: "CRITICAL,HIGH"
       trivy-severity-for-sarif:
         type: string
+        description: Severities of vulnerabilities in SARIF report
         default: "CRITICAL,HIGH"
-        description: "Severities of vulnerabilities in SARIF report"
       trivy-limit-severities-for-sarif:
         type: boolean
+        description: By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter
         default: true
-        description: Limit severities for SARIF format
       python-version:
         type: string
-        default: "3.11"
         description: Python version to use
+        default: "3.11"
       poetry-version:
         type: string
-        description: "Poetry version to use"
+        description: Poetry version to use
         default: "1.8.5"
       runs-on:
         type: string
-        description: "Overrides jobs runs-on settings (json-encoded list)"
+        description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
-        required: false
 
 jobs:
   test:
@@ -101,7 +100,7 @@ jobs:
       next-version-without-hyphens: ${{ steps.semantic_versioning.outputs.next-version-without-hyphens }}
       latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.2
         id: semantic_versioning
 
   release:
@@ -114,14 +113,14 @@ jobs:
       - calculate_version
       - test
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.1.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.1.2
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.1
+      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.2
         with:
           python-version: ${{ inputs.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -136,7 +135,7 @@ jobs:
           make publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.1
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.2
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version-without-hyphens }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify

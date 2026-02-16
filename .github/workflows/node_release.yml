@@ -5,94 +5,92 @@ on:
     inputs:
       bypass-checks:
         type: boolean
-        default: false
         description: Do not fail pipeline if checks failed
+        default: false
       format-checks-enabled:
         type: boolean
-        default: true
         description: Enable format_checks
+        default: true
       format-checks-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if format_checks failed
+        default: false
       style-checks-enabled:
         type: boolean
-        default: true
         description: Enable style_checks
+        default: true
       style-checks-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if style_checks failed
+        default: false
       code-checks-enabled:
         type: boolean
-        default: true
         description: Enable code_checks
+        default: true
       code-checks-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if code_checks failed
+        default: false
       ort-enabled:
         type: boolean
-        default: true
         description: Enable ORT scanning
+        default: true
       ort-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if ORT scan failed
+        default: false
       ort-version:
         type: string
-        default: "latest"
         description: ORT version to use
+        default: "latest"
       docker-build-enabled:
         type: boolean
-        default: true
         description: "Enable Docker build"
+        default: true
       trivy-enabled:
         type: boolean
-        default: true
         description: Enable Trivy scanning
+        default: true
       trivy-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if Trivy failed
+        default: false
       trivy-severity:
         type: string
-        default: "CRITICAL,HIGH"
         description: Severities of vulnerabilities to fail the build
+        default: "CRITICAL,HIGH"
       trivy-severity-for-sarif:
         type: string
+        description: Severities of vulnerabilities in SARIF report
         default: "CRITICAL,HIGH"
-        description: "Severities of vulnerabilities in SARIF report"
       trivy-limit-severities-for-sarif:
         type: boolean
+        description: By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter
         default: true
-        description: Limit severities for SARIF format
       publish-enabled:
         type: boolean
-        default: true
         description: Enable publish to npmjs
+        default: true
       node-version:
         type: string
-        default: "22"
         description: NodeJS version to use
+        default: "22"
       maximize-build-space:
         type: boolean
-        default: false
         description: Maximize build space by removing unwanted software
+        default: false
       runs-on:
         type: string
-        description: "Overrides jobs runs-on settings (json-encoded list)"
+        description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
-        required: false
       platforms:
         type: string
-        description: "Docker build platforms (default linux/amd64)"
+        description: Docker build platform
         default: "linux/amd64"
-        required: false
       dockerfile-path:
         type: string
+        description: Path to the Dockerfile
         default: "Dockerfile"
-        description: "Path to the Dockerfile (default: ./Dockerfile)"
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -121,7 +119,7 @@ jobs:
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.2
         id: semantic_versioning
 
   release:
@@ -160,14 +158,14 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.1.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.1.2
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@3.1.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@3.1.2
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -178,7 +176,7 @@ jobs:
           npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version || true # upstream branch may already be updated
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ inputs.docker-build-enabled && (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@3.1.1
+        uses: epam/ai-dial-ci/actions/build_docker@3.1.2
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -227,7 +225,7 @@ jobs:
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           IS_DEVELOPMENT_BRANCH: ${{ github.ref == 'refs/heads/development' }}
           IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release-') }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.1
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.2
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
