@@ -156,7 +156,7 @@ jobs:
           lfs: true
       - name: Run Trivy vulnerability scanner (JSON output, no fail)
         id: trivy
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # v0.35.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -166,7 +166,6 @@ jobs:
           ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
           vuln-type: ${{ inputs.trivy-vuln-type }}
           scanners: ${{ inputs.trivy-scanners }}
-          version: "v0.69.2" # The only available Trivy version
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
         continue-on-error: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}
