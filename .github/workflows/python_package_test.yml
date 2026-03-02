@@ -156,7 +156,7 @@ jobs:
           lfs: true
       - name: Run Trivy vulnerability scanner (JSON output, no fail)
         id: trivy
-        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # v0.34.1
+        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # v0.34.1
         with:
           scan-type: "fs"
           scan-ref: "."
