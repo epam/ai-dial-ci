@@ -92,7 +92,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.3
         with:
           python-version: ${{ inputs.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -113,7 +113,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.3
         with:
           python-version: ${{ matrix.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -156,7 +156,7 @@ jobs:
           lfs: true
       - name: Run Trivy vulnerability scanner (JSON output, no fail)
         id: trivy
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # v0.35.0
         with:
           scan-type: "fs"
           scan-ref: "."
