@@ -11,6 +11,7 @@
 #                                             If test repository is omitted, epam/ai-dial-chat will be used
 #                                             Default: chat (with default test repository)
 #                                             Example: chat,admin:epam/ai-dial-admin-tests
+#   - (optional) github-environment           GitHub environment for this run (secrets/variables). Default: review
 # - Unnamed:
 #   - (optional) skip-e2e                     If present, E2E tests will be skipped
 # - PR Labels:
@@ -21,7 +22,7 @@
 #   - Variables:
 #     - REVIEW_BASE_DOMAIN:                   Base domain for review environments (e.g. example.com)
 #     - (optional) DISPATCH_WHITELIST:        JSON array of repository names (wildcard supported) allowed to dispatch slash command events
-#                                             Default: ["ai-dial*"]
+#                                             Default: ["ai-dial*","statgpt*"]
 #   - Secrets:
 #     - ACTIONS_BOT_TOKEN:                    GitHub token with permissions to create/update comments
 #     - DEPLOY_HOST:                          GitLab instance hostname (e.g. gitlab.com)
@@ -30,7 +31,7 @@
 #     - E2E_USERNAME:                         Name(s) of application user(s) for ai-dial-chat tests
 #     - E2E_PASSWORD:                         Password for the application users
 #     - NEXT_PUBLIC_OVERLAY_USER_BUCKET:      A blob storage prefix for specific application user
-# - GitHub environment `review`:
+# - GitHub environment (name from github-environment, default `review`):
 #   - Variables:
 #     - DEPLOY_PROJECT_ID:                    ID of the GitLab project to trigger deployment in
 #     - DEPLOY_REF:                           Git ref to use for deployment (e.g. main)
@@ -52,7 +53,7 @@ jobs:
   deploy-review:
     runs-on: ubuntu-latest
     environment:
-      name: review
+      name: ${{ github.event.client_payload.slash_command.args.named.github-environment || 'review' }}
     timeout-minutes: 30
     outputs:
       test-applications: ${{ steps.test-applications.outputs.json }}
@@ -66,7 +67,7 @@ jobs:
           if [[ "$DISPATCHED_REPO_OWNER" != "$GITHUB_REPOSITORY_OWNER" ]]; then
           ERROR_MESSAGE="The event was not dispatched by a repository within the same owner."
           fi
-          WHITELIST='${{ vars.DISPATCH_WHITELIST || '["ai-dial*"]' }}'
+          WHITELIST='${{ vars.DISPATCH_WHITELIST || '["ai-dial*","statgpt*"]' }}'
           MATCHED=false
           for pattern in $(echo "$WHITELIST" | jq -r '.[]'); do
             if [[ "$DISPATCHED_REPO_NAME" == $pattern ]]; then
@@ -147,7 +148,7 @@ jobs:
       - deploy-review
     timeout-minutes: 60
     environment:
-      name: review
+      name: ${{ github.event.client_payload.slash_command.args.named.github-environment || 'review' }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.deploy-review.outputs.test-applications) }}

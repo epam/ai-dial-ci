@@ -34,8 +34,11 @@ inputs:
   image-tag:
     description: Tag of the image to build
     required: true
-  image-extra-aliases:
-    description: Extra aliases for the image, e.g. to publish to multiple registries
+  image-extra-names:
+    description: Extra image base names without tag (newline-separated), merged with image-name for tagging
+    default: ""
+  image-extra-tag-rules:
+    description: Extra lines for docker/metadata-action tags input (after the primary image-tag rule)
     default: ""
   ghcr-username:
     description: GitHub Container Registry username. This is required for pushing to GitHub Container Registry
@@ -61,6 +64,12 @@ inputs:
   dockerfile-path:
     description: Path to the Dockerfile
     default: "Dockerfile"
+  image-maintainer:
+    description: Value for the maintainer OCI label
+    default: "AI DIAL"
+  image-licenses:
+    description: Value for the org.opencontainers.image.licenses label (SPDX expression)
+    default: "Apache-2.0"
 
 runs:
   using: "composite"
@@ -70,6 +79,20 @@ runs:
       uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
     - name: Setup Docker Buildx
       uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+    - name: Docker metadata
+      id: meta
+      uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+      with:
+        images: ${{ inputs.image-extra-names != '' && format('{0}\n{1}', inputs.image-name, inputs.image-extra-names) || inputs.image-name }}
+        tags: |
+          type=raw,value=${{ inputs.image-tag }}
+          ${{ inputs.image-extra-tag-rules }}
+        labels: |
+          maintainer=${{ inputs.image-maintainer }}
+          org.opencontainers.image.title=${{ inputs.image-name }}
+          org.opencontainers.image.description=${{ inputs.image-name }}
+          org.opencontainers.image.created=${{ github.event.repository.pushed_at }}
+          org.opencontainers.image.licenses=${{ inputs.image-licenses }}
     - name: Login to GitHub Container Registry
       if: ${{ fromJSON(inputs.push-enabled) }} # workaround for composite jobs not being able to pass boolean inputs
       uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
@@ -91,19 +114,8 @@ runs:
         file: ${{ inputs.dockerfile-path }}
         load: true
         platforms: linux/amd64
-        tags: |
-          ${{ inputs.image-name }}:${{ inputs.image-tag }}
-          ${{ inputs.image-extra-aliases }}
-        labels: |
-          maintainer=AI DIAL
-          org.opencontainers.image.title=${{ inputs.image-name }}
-          org.opencontainers.image.version=${{ inputs.image-tag }}
-          org.opencontainers.image.description=${{ inputs.image-name }}
-          org.opencontainers.image.created=${{ github.event.repository.pushed_at }}
-          org.opencontainers.image.licenses=Apache-2.0
-          org.opencontainers.image.revision=${{ github.sha }}
-          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
         secrets: |
           GPR_USERNAME=${{ inputs.gpr-username }}
           GPR_PASSWORD=${{ inputs.gpr-password }}
@@ -167,19 +179,8 @@ runs:
         file: ${{ inputs.dockerfile-path }}
         push: true
         platforms: ${{ inputs.platforms }}
-        tags: |
-          ${{ inputs.image-name }}:${{ inputs.image-tag }}
-          ${{ inputs.image-extra-aliases }}
-        labels: |
-          maintainer=AI DIAL
-          org.opencontainers.image.title=${{ inputs.image-name }}
-          org.opencontainers.image.version=${{ inputs.image-tag }}
-          org.opencontainers.image.description=${{ inputs.image-name }}
-          org.opencontainers.image.created=${{ github.event.repository.pushed_at }}
-          org.opencontainers.image.licenses=Apache-2.0
-          org.opencontainers.image.revision=${{ github.sha }}
-          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
         secrets: |
           GPR_USERNAME=${{ inputs.gpr-username }}
           GPR_PASSWORD=${{ inputs.gpr-password }}
