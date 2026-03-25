@@ -34,8 +34,11 @@ inputs:
   image-tag:
     description: Tag of the image to build
     required: true
-  image-extra-aliases:
-    description: Extra aliases for the image, e.g. to publish to multiple registries
+  docker-metadata-extra-images:
+    description: Extra image base names without tag (newline-separated), merged with image-name for tagging
+    default: ""
+  docker-metadata-extra-tags:
+    description: Extra lines for docker/metadata-action tags input (after the primary image-tag rule)
     default: ""
   ghcr-username:
     description: GitHub Container Registry username. This is required for pushing to GitHub Container Registry
@@ -80,9 +83,10 @@ runs:
       id: meta
       uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
       with:
-        images: ${{ inputs.image-name }}
+        images: ${{ inputs.docker-metadata-extra-images != '' && format('{0}\n{1}', inputs.image-name, inputs.docker-metadata-extra-images) || inputs.image-name }}
         tags: |
           type=raw,value=${{ inputs.image-tag }}
+          ${{ inputs.docker-metadata-extra-tags }}
         labels: |
           maintainer=${{ inputs.image-maintainer }}
           org.opencontainers.image.title=${{ inputs.image-name }}
@@ -110,9 +114,7 @@ runs:
         file: ${{ inputs.dockerfile-path }}
         load: true
         platforms: linux/amd64
-        tags: |
-          ${{ steps.meta.outputs.tags }}
-          ${{ inputs.image-extra-aliases }}
+        tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         secrets: |
           GPR_USERNAME=${{ inputs.gpr-username }}
@@ -177,9 +179,7 @@ runs:
         file: ${{ inputs.dockerfile-path }}
         push: true
         platforms: ${{ inputs.platforms }}
-        tags: |
-          ${{ steps.meta.outputs.tags }}
-          ${{ inputs.image-extra-aliases }}
+        tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         secrets: |
           GPR_USERNAME=${{ inputs.gpr-username }}

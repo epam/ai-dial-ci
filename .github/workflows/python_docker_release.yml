@@ -194,12 +194,10 @@ jobs:
           dockerfile-path: ${{ inputs.dockerfile-path }}
           image-maintainer: ${{ inputs.docker-image-maintainer }}
           image-licenses: ${{ inputs.docker-image-licenses }}
-          image-extra-aliases: |
-            ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next-version }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}
-            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
-            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
-            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
+          docker-metadata-extra-images: ${{ env.IMAGE_NAME }}
+          docker-metadata-extra-tags: |
+            type=raw,value=development,enable=${{ github.ref == 'refs/heads/development' }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
       - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.3
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
