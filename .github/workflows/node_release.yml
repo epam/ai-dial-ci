@@ -91,6 +91,22 @@ on:
         type: string
         description: Path to the Dockerfile
         default: "Dockerfile"
+      docker-image-maintainer:
+        type: string
+        description: Docker image maintainer label (OCI)
+        default: "AI DIAL"
+      docker-image-licenses:
+        type: string
+        description: Docker image org.opencontainers.image.licenses label (SPDX)
+        default: "Apache-2.0"
+      git-commit-user-name:
+        type: string
+        description: Git user.name for version bump commits and release tags
+        default: "ai-dial-actions"
+      git-commit-user-email:
+        type: string
+        description: Git user.email for version bump commits and release tags
+        default: "149404362+ai-dial-actions@users.noreply.github.com"
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -192,6 +208,8 @@ jobs:
           trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
           platforms: ${{ inputs.platforms }}
           dockerfile-path: ${{ inputs.dockerfile-path }}
+          image-maintainer: ${{ inputs.docker-image-maintainer }}
+          image-licenses: ${{ inputs.docker-image-licenses }}
           image-extra-aliases: |
             ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next-version }}
             ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}
@@ -229,6 +247,8 @@ jobs:
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
+          git-user-name: ${{ inputs.git-commit-user-name }}
+          git-user-email: ${{ inputs.git-commit-user-email }}
           extra-commit-command: |
             git add package.json package-lock.json
             git commit -m '[skip ci] Update version' || true # upstream branch may already be updated

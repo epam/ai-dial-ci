@@ -13,6 +13,12 @@ inputs:
   artifacts:
     description: Artifacts to upload
     default: ""
+  git-user-name:
+    description: Git user.name for commits and tags created by this action
+    default: "ai-dial-actions"
+  git-user-email:
+    description: Git user.email for commits and tags created by this action
+    default: "149404362+ai-dial-actions@users.noreply.github.com"
 
 runs:
   using: "composite"
@@ -20,8 +26,8 @@ runs:
     - name: Commit and push changes
       run: |
         set -x
-        git config --global user.name "ai-dial-actions"
-        git config --global user.email "149404362+ai-dial-actions@users.noreply.github.com"
+        git config --global user.name "${{ inputs.git-user-name }}"
+        git config --global user.email "${{ inputs.git-user-email }}"
 
         ${{ inputs.extra-commit-command }}
 

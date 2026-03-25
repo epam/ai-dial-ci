@@ -61,6 +61,12 @@ inputs:
   dockerfile-path:
     description: Path to the Dockerfile
     default: "Dockerfile"
+  image-maintainer:
+    description: Value for the maintainer OCI label
+    default: "AI DIAL"
+  image-licenses:
+    description: Value for the org.opencontainers.image.licenses label (SPDX expression)
+    default: "Apache-2.0"
 
 runs:
   using: "composite"
@@ -95,12 +101,12 @@ runs:
           ${{ inputs.image-name }}:${{ inputs.image-tag }}
           ${{ inputs.image-extra-aliases }}
         labels: |
-          maintainer=AI DIAL
+          maintainer=${{ inputs.image-maintainer }}
           org.opencontainers.image.title=${{ inputs.image-name }}
           org.opencontainers.image.version=${{ inputs.image-tag }}
           org.opencontainers.image.description=${{ inputs.image-name }}
           org.opencontainers.image.created=${{ github.event.repository.pushed_at }}
-          org.opencontainers.image.licenses=Apache-2.0
+          org.opencontainers.image.licenses=${{ inputs.image-licenses }}
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
@@ -171,12 +177,12 @@ runs:
           ${{ inputs.image-name }}:${{ inputs.image-tag }}
           ${{ inputs.image-extra-aliases }}
         labels: |
-          maintainer=AI DIAL
+          maintainer=${{ inputs.image-maintainer }}
           org.opencontainers.image.title=${{ inputs.image-name }}
           org.opencontainers.image.version=${{ inputs.image-tag }}
           org.opencontainers.image.description=${{ inputs.image-name }}
           org.opencontainers.image.created=${{ github.event.repository.pushed_at }}
-          org.opencontainers.image.licenses=Apache-2.0
+          org.opencontainers.image.licenses=${{ inputs.image-licenses }}
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}

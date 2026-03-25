@@ -75,6 +75,14 @@ on:
         type: string
         description: Docker build platforms
         default: "linux/amd64"
+      docker-image-maintainer:
+        type: string
+        description: Docker image maintainer label (OCI)
+        default: "AI DIAL"
+      docker-image-licenses:
+        type: string
+        description: Docker image org.opencontainers.image.licenses label (SPDX)
+        default: "Apache-2.0"
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -138,3 +146,5 @@ jobs:
           trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
           trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
           platforms: ${{ inputs.platforms }}
+          image-maintainer: ${{ inputs.docker-image-maintainer }}
+          image-licenses: ${{ inputs.docker-image-licenses }}
