@@ -210,8 +210,8 @@ jobs:
           dockerfile-path: ${{ inputs.dockerfile-path }}
           image-maintainer: ${{ inputs.docker-image-maintainer }}
           image-licenses: ${{ inputs.docker-image-licenses }}
-          docker-metadata-extra-images: ${{ env.IMAGE_NAME }}
-          docker-metadata-extra-tags: |
+          image-extra-names: ${{ env.IMAGE_NAME }}
+          image-extra-tag-rules: |
             type=raw,value=development,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
       - name: Publish packages to npmjs

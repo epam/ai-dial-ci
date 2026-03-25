@@ -34,10 +34,10 @@ inputs:
   image-tag:
     description: Tag of the image to build
     required: true
-  docker-metadata-extra-images:
+  image-extra-names:
     description: Extra image base names without tag (newline-separated), merged with image-name for tagging
     default: ""
-  docker-metadata-extra-tags:
+  image-extra-tag-rules:
     description: Extra lines for docker/metadata-action tags input (after the primary image-tag rule)
     default: ""
   ghcr-username:
@@ -83,10 +83,10 @@ runs:
       id: meta
       uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
       with:
-        images: ${{ inputs.docker-metadata-extra-images != '' && format('{0}\n{1}', inputs.image-name, inputs.docker-metadata-extra-images) || inputs.image-name }}
+        images: ${{ inputs.image-extra-names != '' && format('{0}\n{1}', inputs.image-name, inputs.image-extra-names) || inputs.image-name }}
         tags: |
           type=raw,value=${{ inputs.image-tag }}
-          ${{ inputs.docker-metadata-extra-tags }}
+          ${{ inputs.image-extra-tag-rules }}
         labels: |
           maintainer=${{ inputs.image-maintainer }}
           org.opencontainers.image.title=${{ inputs.image-name }}
