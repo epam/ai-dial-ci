@@ -1,22 +1,23 @@
-name: Calculate version
-description: Calculate version based on semantic versioning @ conventional commits
+name: Calculate Version
+
+description: Calculate semver-format version based on current branch name and existing tags in git repository
 
 outputs:
   current-version:
     description: Current version
-    value: ${{ steps.semantic.outputs.current-version }}
+    value: ${{ steps.calculate-version.outputs.current-version }}
   next-version:
-    description: Next version
-    value: ${{ steps.semantic.outputs.next-version }}
+    description: Next calculated version
+    value: ${{ steps.calculate-version.outputs.next-version }}
   next-version-without-hyphens:
-    description: Next version without hyphens. Useful for python packages
-    value: ${{ steps.semantic.outputs.next-version-without-hyphens }}
+    description: Next version without hyphens (e.g. 0.1.0rc). Useful for Python packages
+    value: ${{ steps.calculate-version.outputs.next-version-without-hyphens }}
   is-latest:
-    description: Is a version semantically latest compared to the latest git tag?
-    value: ${{ steps.semantic.outputs.is-latest }}
+    description: Is the version semantically latest compared to the latest git tag?
+    value: ${{ steps.calculate-version.outputs.is-latest }}
   latest-tag:
     description: Semantically latest git tag in the repository
-    value: ${{ steps.semantic.outputs.latest-tag }}
+    value: ${{ steps.calculate-version.outputs.latest-tag }}
 
 runs:
   using: "composite"
@@ -26,8 +27,7 @@ runs:
       with:
         fetch-depth: 0
     - name: Calculate version
-      id: semantic
-      shell: bash
+      id: calculate-version
       run: |
         #!/bin/bash
         # set -x
@@ -123,3 +123,4 @@ runs:
         echo "next-version-without-hyphens=${NEXT_VERSION_WITHOUT_HYPHENS}" >>$GITHUB_OUTPUT
         echo "latest-tag=${LATEST_TAG}" >>$GITHUB_OUTPUT
         echo "is-latest=${IS_LATEST}" >>$GITHUB_OUTPUT
+      shell: bash

@@ -1,4 +1,4 @@
-name: NodeJS Release workflow
+name: NodeJS Release Workflow
 
 on:
   workflow_call:
@@ -45,7 +45,7 @@ on:
         default: "latest"
       docker-build-enabled:
         type: boolean
-        description: "Enable Docker build"
+        description: Enable Docker build
         default: true
       trivy-enabled:
         type: boolean
@@ -85,11 +85,11 @@ on:
         default: '["ubuntu-24.04"]'
       platforms:
         type: string
-        description: Docker build platform
+        description: Docker build platforms
         default: "linux/amd64"
       dockerfile-path:
         type: string
-        description: Path to the Dockerfile
+        description: Path to the Dockerfile (default is ./Dockerfile)
         default: "Dockerfile"
 
 env:
@@ -111,17 +111,15 @@ jobs:
       ort-version: ${{ inputs.ort-version }}
       node-version: ${{ inputs.node-version }}
       runs-on: ${{ inputs.runs-on }}
-
   calculate_version:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
-      next-version: ${{ steps.semantic_versioning.outputs.next-version }}
-      is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
-      latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
+      next-version: ${{ steps.semantic-versioning.outputs.next-version }}
+      is-latest: ${{ steps.semantic-versioning.outputs.is-latest }}
+      latest-tag: ${{ steps.semantic-versioning.outputs.latest-tag }}
     steps:
       - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.3
-        id: semantic_versioning
-
+        id: semantic-versioning
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
@@ -171,7 +169,6 @@ jobs:
           clean-install: true
           registry-url: "https://registry.npmjs.org"
       - name: Set version
-        shell: bash
         run: |
           npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version || true # upstream branch may already be updated
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
@@ -198,9 +195,8 @@ jobs:
             ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
-      - name: Publish packages to npmjs
+      - name: Publish packages to npm registry
         if: ${{ inputs.publish-enabled }}
-        shell: bash
         run: |
           #!/bin/bash
           if node -e "process.exit(require('./package.json').scripts?.['build:publishable'] ? 0 : 1)"; then
@@ -208,18 +204,19 @@ jobs:
           else
             npm run build
           fi
-          PUBLISH_COMMAND="npm run publish"
-          ARGS=""
+          publish_command="npm run publish"
+          args=""
           if [ "$IS_DEVELOPMENT_BRANCH" == "true" ]; then
-            ARGS+=" --development"
+            args+=" --development"
           fi
           if [ "$IS_RELEASE_BRANCH" == "true" ] && [ "$IS_LATEST" == "true" ]; then
-            ARGS+=" --tag latest"
+            args+=" --tag latest"
           fi
-          if [ -n "$ARGS" ]; then
-            PUBLISH_COMMAND+=" --"$ARGS
+          if [ -n "$args" ]; then
+            publish_command+=" --${args}"
           fi
-          $PUBLISH_COMMAND
+          eval "$publish_command"
+        shell: bash
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}

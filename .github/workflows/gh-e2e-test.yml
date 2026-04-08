@@ -1,4 +1,4 @@
-name: Run e2e-tests on GitHub
+name: Run E2E Tests on GitHub
 
 on:
   workflow_call:
@@ -46,10 +46,10 @@ on:
       report-prefix:
         type: string
         description: Test report name prefix
-        default: ${{ github.run_id }}
+        default: "${{ github.run_id }}"
       timeout-minutes:
         type: number
-        description: The maximum number of minutes to let a job run before GitHub automatically cancels it.
+        description: The maximum number of minutes to let a job run before GitHub automatically cancels it
         default: 60
       environment-name:
         type: string
@@ -72,7 +72,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  e2e-tests:
+  e2e_tests:
     name: ${{ matrix.target }}
     runs-on: ubuntu-latest
     environment:
@@ -107,15 +107,15 @@ jobs:
           curl -fsSL --retry 5 --retry-delay 2 https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure_${ALLURE_VERSION}-1_all.deb -o /tmp/allure.deb
           sudo dpkg -i /tmp/allure.deb
           echo "Allure CLI version: $(allure --version)"
-        shell: bash
         env:
           ALLURE_VERSION: ${{ inputs.allure-version }}
       - name: Install Playwright
         run: |
-          npm install -D @playwright/test@${{ inputs.playwright-version }} allure-playwright
+          npm install -D @playwright/test@${PLAYWRIGHT_VERSION} allure-playwright
           npx playwright install --with-deps
           echo "Playwright version: $(npx playwright --version)"
-        shell: bash
+        env:
+          PLAYWRIGHT_VERSION: ${{ inputs.playwright-version }}
       - name: Wait for environment
         run: |
           #!/bin/bash
@@ -188,7 +188,6 @@ jobs:
           echo "Config for attachment response e2e api tests: ${ENTITY_SIMPLE_REQUEST_FOR_API_TESTS}"
           echo "Simple requests model for e2e tests:          ${SIMPLE_REQUEST_MODEL}"
           npx nx run chat-e2e:e2e:${{ matrix.target }} --configuration=production --output-style=stream --skipInstall
-        shell: bash
         env:
           E2E_HOST: ${{ inputs.e2e-host }}
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
@@ -197,13 +196,12 @@ jobs:
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
           NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
-      - name: Generate Allure Report
+      - name: Generate Allure report
         if: ${{ !cancelled() }}
         run: |
           allure generate ./apps/chat-e2e/allure-${{ matrix.target }}-results -o ./apps/chat-e2e/allure-${{ matrix.target }}-report --clean
-        shell: bash
-      - name: Upload Allure Report
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      - name: Upload Allure report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: ${{ !cancelled() }}
         with:
           name: "${{ inputs.report-prefix }}-${{ matrix.target }}"

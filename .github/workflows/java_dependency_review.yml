@@ -21,14 +21,14 @@ permissions:
   contents: read
 
 jobs:
-  dependency-review:
+  dependency_review:
     # Do not perform dependency review on private repos - GitHub Advanced Security is not enabled
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       contents: write # to submit dependency graph
     steps:
-      - name: Harden Runner
+      - name: Harden runner
         uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           disable-telemetry: true

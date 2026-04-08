@@ -1,4 +1,4 @@
-name: Python Docker tests
+name: Python Docker Tests
 
 on:
   workflow_call:
@@ -92,10 +92,8 @@ jobs:
           poetry-version: ${{ inputs.poetry-version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass-checks || inputs.style-checks-bypassed }}
-        shell: bash
         run: |
           make lint
-
   code_checks:
     if: ${{ inputs.code-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
@@ -135,10 +133,8 @@ jobs:
           poetry-version: ${{ inputs.poetry-version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass-checks || inputs.code-checks-bypassed }}
-        shell: bash
         run: |
           make test
-
   ort:
     if: ${{ inputs.ort-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}

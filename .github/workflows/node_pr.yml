@@ -1,4 +1,4 @@
-name: NodeJS PR workflow
+name: NodeJS PR Workflow
 
 on:
   workflow_call:
@@ -45,7 +45,7 @@ on:
         default: "latest"
       docker-build-enabled:
         type: boolean
-        description: "Enable Docker build"
+        description: Enable Docker build
         default: true
       trivy-enabled:
         type: boolean
@@ -61,7 +61,7 @@ on:
         default: "CRITICAL,HIGH"
       trivy-severity-for-sarif:
         type: string
-        description: "Severities of vulnerabilities in SARIF report"
+        description: Severities of vulnerabilities in SARIF report
         default: "CRITICAL,HIGH"
       trivy-limit-severities-for-sarif:
         type: boolean
@@ -77,15 +77,15 @@ on:
         default: false
       runs-on:
         type: string
-        description: "Overrides jobs runs-on settings (json-encoded list)"
+        description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
       platforms:
         type: string
-        description: "Docker build platforms"
+        description: Docker build platforms
         default: "linux/amd64"
       dockerfile-path:
         type: string
-        description: "Path to the Dockerfile (default: ./Dockerfile)"
+        description: Path to the Dockerfile (default is ./Dockerfile)
         default: "Dockerfile"
 
 env:

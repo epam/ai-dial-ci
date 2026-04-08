@@ -1,4 +1,4 @@
-name: Generic Docker PR workflow
+name: Generic Docker PR Workflow
 
 on:
   workflow_call:
@@ -74,7 +74,6 @@ jobs:
       ort-bypassed: ${{ inputs.ort-bypassed }}
       ort-version: ${{ inputs.ort-version }}
       runs-on: ${{ inputs.runs-on }}
-
   docker_build:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:

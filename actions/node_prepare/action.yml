@@ -1,4 +1,5 @@
 name: Prepare NodeJS
+
 description: Set up NodeJS, (optionally) perform clean install of NPM dependencies
 
 inputs:
@@ -26,6 +27,6 @@ runs:
         registry-url: ${{ inputs.registry-url }}
     - name: Install dependencies
       if: ${{ fromJSON(inputs.clean-install) }} # workaround for composite jobs not being able to pass boolean inputs
-      shell: bash
       run: |
         npm ci
+      shell: bash

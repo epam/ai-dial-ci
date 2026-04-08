@@ -1,72 +1,72 @@
-name: Java PR workflow
+name: Java PR Workflow
 
 on:
   workflow_call:
     inputs:
       bypass-checks:
         type: boolean
-        default: false
         description: Do not fail pipeline if checks failed
+        default: false
       style-checks-enabled:
         type: boolean
-        default: true
         description: Enable style_checks
+        default: true
       style-checks-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if style_checks failed
+        default: false
       code-checks-enabled:
         type: boolean
-        default: true
         description: Enable code_checks
+        default: true
       code-checks-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if code_checks failed
+        default: false
       ort-enabled:
         type: boolean
-        default: true
         description: Enable ORT scanning
+        default: true
       ort-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if ORT scan failed
+        default: false
       ort-version:
         type: string
-        default: "latest"
         description: ORT version to use
+        default: "latest"
       trivy-enabled:
         type: boolean
-        default: true
         description: Enable Trivy scanning
+        default: true
       trivy-bypassed:
         type: boolean
-        default: false
         description: Do not fail pipeline if Trivy failed
+        default: false
       trivy-severity:
         type: string
-        default: "CRITICAL,HIGH"
         description: Severities of vulnerabilities to fail the build
+        default: "CRITICAL,HIGH"
       trivy-severity-for-sarif:
         type: string
-        default: "CRITICAL,HIGH"
         description: Severities of vulnerabilities in SARIF report
+        default: "CRITICAL,HIGH"
       trivy-limit-severities-for-sarif:
         type: boolean
-        default: true
         description: By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter
+        default: true
       java-version:
         type: string
-        default: "17"
         description: Java version to use
+        default: "17"
       java-distribution:
         type: string
-        default: "temurin"
         description: Java distribution to use
+        default: "temurin"
       maximize-build-space:
         type: boolean
-        default: false
         description: Maximize build space by removing unwanted software
+        default: false
       runs-on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
@@ -106,7 +106,8 @@ jobs:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
           build-scan-publish: true
-      - run: ./gradlew build -x test
+      - run: |
+          ./gradlew build -x test
         env:
           GPR_USERNAME: ${{ github.actor }}
           GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

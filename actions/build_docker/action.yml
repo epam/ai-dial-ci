@@ -1,5 +1,7 @@
-name: Build docker
+name: Build Docker
+
 description: Build a docker image, tag it, (optionally) scan it, and (optionally) push it to Dockerhub and GHCR
+
 inputs:
   bypass-checks:
     description: Do not fail pipeline if checks failed
@@ -38,20 +40,20 @@ inputs:
     description: Extra aliases for the image, e.g. to publish to multiple registries
     default: ""
   ghcr-username:
-    description: GitHub Container Registry username. This is required for pushing to GitHub Container Registry
-    default: ${{ github.actor }}
+    description: GitHub Container Registry (GHCR) username. Required for pushing to GHCR
+    default: "${{ github.actor }}"
   ghcr-password:
-    description: GitHub Container Registry password/token. This is required for pushing to GitHub Container Registry
+    description: GitHub Container Registry (GHCR) password/token. Required for pushing to GHCR
     default: ""
   dockerhub-username:
-    description: Docker Hub username. This is required for pushing to Docker Hub
+    description: Docker Hub username. Required for pushing to Docker Hub
     default: ""
   dockerhub-password:
-    description: Docker Hub password/token. This is required for pushing to Docker Hub
+    description: Docker Hub password/token. Required for pushing to Docker Hub
     default: ""
   gpr-username:
     description: GitHub Package Registry username (for pulling packages from image being built)
-    default: ${{ github.actor }}
+    default: "${{ github.actor }}"
   gpr-password:
     description: GitHub Package Registry password/token (for pulling packages from image being built)
     default: ""
@@ -65,7 +67,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Setup Docker Qemu
+    - name: Setup Docker QEMU
       if: ${{ inputs.platforms != 'linux/amd64' }}
       uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
     - name: Setup Docker Buildx

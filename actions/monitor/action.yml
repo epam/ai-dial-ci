@@ -1,5 +1,7 @@
 name: Monitor
+
 description: Periodically updates PR comment with workflow status
+
 inputs:
   comment-id:
     description: The ID of the comment to update

@@ -1,4 +1,5 @@
 name: Prepare Python
+
 description: Install Python and (optionally) install Poetry with (optional) cache support
 
 inputs:
@@ -35,6 +36,7 @@ runs:
       # When the cache is hit, and Poetry is restored, installation will run with default settings.
       # To make things work the same as when Poetry is installed by snok/install-poetry action, this step is needed.
       run: |
+        #!/bin/bash
         echo "$HOME/.local/bin" >> "$GITHUB_PATH"
         export PATH="$HOME/.local/bin:$PATH"
         poetry config virtualenvs.create true
@@ -61,5 +63,6 @@ runs:
         key: venv-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-poetry-${{ hashFiles('**/poetry.lock') }} # inspired by setup-python action
     - name: Install dependencies
       if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry-dependencies.outputs.cache-hit != 'true' }}
-      run: poetry install --no-interaction --no-root
+      run: |
+        poetry install --no-interaction --no-root
       shell: bash
