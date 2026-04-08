@@ -38,7 +38,7 @@
 #     - DEPLOY_ACCESS_TOKEN:                  GitLab access token with API access to the deployment project
 #     - DEPLOY_TRIGGER_TOKEN:                 GitLab trigger token for the deployment project
 
-name: deploy-review-command
+name: Deploy Review
 
 on:
   repository_dispatch:
@@ -49,7 +49,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy-review:
+  deploy_review:
     runs-on: ubuntu-latest
     environment:
       name: review
@@ -60,6 +60,7 @@ jobs:
       - name: Check dispatch repository ownership
         id: owner
         run: |
+          #!/bin/bash
           DISPATCHED_REPO_NAME=${{ github.event.client_payload.github.payload.repository.name }}
           DISPATCHED_REPO_OWNER=${{ github.event.client_payload.github.payload.repository.owner.login }}
           ERROR_MESSAGE=""
@@ -82,9 +83,11 @@ jobs:
             exit 1
           fi
           echo "All checks passed."
+        shell: bash
       - name: Check all required values are present in the dispatch payload
         id: vars
         run: |
+          #!/bin/bash
           ERROR_MESSAGE=""
           if [[ -z "${{ github.event.client_payload.slash_command.args.named.application }}" ]]; then
             ERROR_MESSAGE="The 'application' argument is missing."
@@ -103,6 +106,7 @@ jobs:
             exit 1
           fi
           echo "All required values are present."
+        shell: bash
       - name: Deploy environment
         id: deploy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@c59b56e9d2688ab42c1304322ac8831a4ef6f7d2 # v1.4.0
@@ -123,6 +127,7 @@ jobs:
       - name: Define applications to be tested
         id: test-applications
         run: |
+          #!/bin/bash
           INPUT="${{ github.event.client_payload.slash_command.args.named.test-applications || 'chat' }}"
           DEFAULT_REPO="epam/ai-dial-chat"
           # Parse comma-separated items, each can be "application" or "application:repo"
@@ -138,25 +143,26 @@ jobs:
           ) | map(select(.application != ""))
           ')
           echo "json=$JSON" >> $GITHUB_OUTPUT
-
-  e2e-test:
+        shell: bash
+  e2e_test:
     name: ${{ matrix.application }}
     runs-on: ubuntu-latest
     if: ${{ !(contains(github.event.client_payload.github.payload.issue.labels.*.name, 'skip-e2e') || contains(github.event.client_payload.slash_command.args.unnamed.all, 'skip-e2e')) }}
     needs:
-      - deploy-review
+      - deploy_review
     timeout-minutes: 60
     environment:
       name: review
     strategy:
       matrix:
-        include: ${{ fromJson(needs.deploy-review.outputs.test-applications) }}
+        include: ${{ fromJson(needs.deploy_review.outputs.test-applications) }}
       fail-fast: false
     env:
       ENVIRONMENT_URL: "https://${{ matrix.application }}-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
     steps:
       - name: Wait for environment
         run: |
+          #!/bin/bash
           echo "Expected environment URL ${ENVIRONMENT_URL}, waiting to be available..."
           env_hostname=$(echo "$ENVIRONMENT_URL" | awk -F/ '{print $3}')
 
@@ -236,7 +242,6 @@ jobs:
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
-
   monitor:
     runs-on: ubuntu-latest
     if: always()

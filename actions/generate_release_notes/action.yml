@@ -1,4 +1,5 @@
-name: Generate release notes
+name: Generate Release Notes
+
 description: Generate release notes based on conventional commits
 
 inputs:
@@ -18,7 +19,6 @@ runs:
         # ref: https://github.com/actions/checkout/issues/270
         lfs: true
     - name: Generate changelog
-      id: generate_changelog
       run: |
         #!/bin/bash
 

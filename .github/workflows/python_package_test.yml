@@ -1,4 +1,4 @@
-name: Python Package tests
+name: Python Package Tests
 
 on:
   workflow_call:
@@ -98,10 +98,8 @@ jobs:
           poetry-version: ${{ inputs.poetry-version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass-checks || inputs.style-checks-bypassed }}
-        shell: bash
         run: |
           make lint
-
   code_checks:
     if: ${{ inputs.code-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
@@ -119,8 +117,8 @@ jobs:
           poetry-version: ${{ inputs.poetry-version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass-checks || inputs.code-checks-bypassed }}
-        shell: bash
         run: |
+          #!/bin/bash
           # Workflow explanation:
           # 1. Use venv from python_prepare action and build the package(s)
           # 2. Check package(s) long description renders correctly with twine
@@ -129,7 +127,7 @@ jobs:
           make build
           pipx run "twine~=6.0" check dist/*
           make test PYTHON=${{ matrix.python-version }}
-
+        shell: bash
   ort:
     if: ${{ inputs.ort-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
@@ -146,7 +144,6 @@ jobs:
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
         continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
-
   trivy:
     if: ${{ inputs.trivy-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
@@ -176,7 +173,6 @@ jobs:
         if: ${{ steps.trivy.outcome == 'success' && !github.event.repository.private && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) }}
         run: |
           trivy convert --format sarif --output trivy-results.sarif --exit-code 0 trivy-results.json
-        shell: bash
         env:
           TRIVY_SCANNERS: ${{ inputs.trivy-scanners }}
           TRIVY_SEVERITY: ${{ inputs.trivy-limit-severities-for-sarif && inputs.trivy-severity-for-sarif || '' }}
@@ -193,7 +189,6 @@ jobs:
         if: ${{ steps.trivy.outcome == 'success' }}
         run: |
           trivy convert --format table --exit-code 1 trivy-results.json
-        shell: bash
         env:
           TRIVY_SCANNERS: ${{ inputs.trivy-scanners }}
           TRIVY_SEVERITY: ${{ inputs.trivy-severity }}

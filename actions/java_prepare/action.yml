@@ -1,4 +1,5 @@
 name: Prepare Java
+
 description: Set up Java with Gradle
 
 inputs:

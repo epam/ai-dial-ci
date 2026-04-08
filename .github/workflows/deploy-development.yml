@@ -24,7 +24,7 @@ on:
         required: true
 
 jobs:
-  trigger-pipeline:
+  trigger_pipeline:
     runs-on: ubuntu-latest
     concurrency: ${{ inputs.environment-name }}
     environment:

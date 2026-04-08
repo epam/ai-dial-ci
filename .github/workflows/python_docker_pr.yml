@@ -1,4 +1,4 @@
-name: Python Docker PR workflow
+name: Python Docker PR Workflow
 
 on:
   workflow_call:
@@ -95,7 +95,6 @@ jobs:
       poetry-version: ${{ inputs.poetry-version }}
       runs-on: ${{ inputs.runs-on }}
       maximize-build-space: ${{ inputs.maximize-build-space }}
-
   docker_build:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:

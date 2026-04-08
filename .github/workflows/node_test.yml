@@ -1,4 +1,4 @@
-name: NodeJS tests
+name: NodeJS Tests
 
 on:
   workflow_call:
@@ -66,10 +66,8 @@ jobs:
           clean-install: true
       - name: Test
         continue-on-error: ${{ inputs.bypass-checks || inputs.format-checks-bypassed }}
-        shell: bash
         run: |
           npm run format
-
   style_checks:
     if: ${{ inputs.style-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
@@ -83,10 +81,8 @@ jobs:
           clean-install: true
       - name: Test
         continue-on-error: ${{ inputs.bypass-checks || inputs.style-checks-bypassed }}
-        shell: bash
         run: |
           npm run lint
-
   code_checks:
     if: ${{ inputs.code-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
@@ -100,10 +96,8 @@ jobs:
           clean-install: true
       - name: Test
         continue-on-error: ${{ inputs.bypass-checks || inputs.code-checks-bypassed }}
-        shell: bash
         run: |
           npm run test
-
   ort:
     if: ${{ inputs.ort-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}

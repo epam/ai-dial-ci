@@ -1,4 +1,4 @@
-name: Python Package PR workflow
+name: Python Package PR Workflow
 
 on:
   workflow_call:
@@ -96,7 +96,6 @@ jobs:
       python-version: ${{ inputs.python-version }}
       poetry-version: ${{ inputs.poetry-version }}
       runs-on: ${{ inputs.runs-on }}
-
   build:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
@@ -107,4 +106,5 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
-      - run: make build
+      - run: |
+          make build

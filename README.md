@@ -358,8 +358,8 @@ flowchart-elk TD
     A[Developer comments /deploy-review on PR] --> B[Slash Command Dispatch triggers repository_dispatch in epam/ai-dial-ci]
 
     subgraph workflow["deploy-review-command workflow run"]
-        subgraph deploy["deploy-review job"]
-            B --> C[deploy-review job]
+        subgraph deploy["deploy_review job"]
+            B --> C[deploy_review job]
             C --> D{Validate dispatch repository against whitelist}
             D -->|Invalid| E[Fail with error]
             D -->|Valid| F{Validate required payload values}
@@ -367,7 +367,7 @@ flowchart-elk TD
             F -->|Present| G[Trigger GitLab deployment pipeline]
         end
 
-        subgraph e2e["e2e-test job (matrix for each application)"]
+        subgraph e2e["e2e_test job (matrix for each application)"]
             G --> I{Does skip-e2e label on PR exist or argument been passed?}
             I -->|Yes| J[Skip E2E tests]
             I -->|No| K[Wait for application be available]
