@@ -3,6 +3,10 @@ name: Python Package Release workflow
 on:
   workflow_call:
     inputs:
+      promote:
+        type: boolean
+        description: Promote release to stable (for release-* branches only)
+        default: false
       bypass-checks:
         type: boolean
         description: Do not fail pipeline if checks failed
@@ -97,12 +101,15 @@ jobs:
   calculate_version:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
+      next-version: ${{ steps.semantic_versioning.outputs.next-version }}
       next-version-without-hyphens: ${{ steps.semantic_versioning.outputs.next-version-without-hyphens }}
-      latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
+      latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
+      changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
       - uses: epam/ai-dial-ci/actions/semantic_versioning@3.1.3
         id: semantic_versioning
-
+        with:
+          promote: ${{ inputs.promote }}
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
@@ -115,7 +122,8 @@ jobs:
     steps:
       - uses: epam/ai-dial-ci/actions/generate_release_notes@3.1.3
         with:
-          latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
+          latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
+          use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
@@ -136,8 +144,9 @@ jobs:
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
       - uses: epam/ai-dial-ci/actions/publish_tag_release@3.1.3
+        if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
-          tag-version: ${{ needs.calculate_version.outputs.next-version-without-hyphens }}
+          tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
           artifacts: "dist/*"
           extra-commit-command: |

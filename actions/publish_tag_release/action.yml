@@ -1,5 +1,7 @@
-name: Publish git tag and release
+name: Publish Git Tag and Release
+
 description: Commit changes back to git, apply tag and create release
+
 inputs:
   extra-commit-command:
     description: Extra command to commit changes, e.g. `git add version.txt ; git commit -m "[skip ci] Update version" || true`
@@ -25,23 +27,17 @@ runs:
 
         ${{ inputs.extra-commit-command }}
 
-        CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
-        CURRENT_BRANCH=${CURRENT_BRANCH##refs/heads/}
-        CURRENT_BRANCH=${CURRENT_BRANCH:-HEAD}
-        if [[ "$CURRENT_BRANCH" =~ "release-" ]]; then
-          git tag -a "${{ inputs.tag-version }}" -m "$(cat ${{ inputs.changelog-file }})"
-        fi
+        git tag -a "${{ inputs.tag-version }}" -m "$(cat ${{ inputs.changelog-file }})"
 
         git push
         git push --tags
       shell: bash
     - uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
-      if: github.ref != 'refs/heads/development'
       with:
         artifacts: ${{ inputs.artifacts }}
         bodyFile: ${{ inputs.changelog-file }}
         allowUpdates: true
         updateOnlyUnreleased: true
-        makeLatest: true
-        draft: true
+        prerelease: ${{ contains(inputs.tag-version, '-') }} # will capture e.g. `-rc`
+        makeLatest: ${{ contains(inputs.tag-version, '-') && 'false' || 'legacy' }} # false if it's a pre-release, otherwise let GitHub decide (based on semver)
         tag: ${{ inputs.tag-version }}
