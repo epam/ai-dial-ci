@@ -95,7 +95,7 @@ jobs:
       java-distribution: ${{ inputs.java-distribution }}
       runs-on: ${{ inputs.runs-on }}
 
-  submit-dependencies:
+  dependency-graph:
     # Do not submit dependencies on private repos - GitHub Advanced Security is not enabled
     if: ${{ !github.event.repository.private }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
