@@ -89,7 +89,7 @@ jobs:
           ref: ${{ inputs.test-branch }}
           lfs: true
           persist-credentials: false
-      - uses: falti/dotenv-action@f4656c46de6bc223dda660f6724d52537bc0642a # v1.1.5
+      - uses: falti/dotenv-action@73fafca04177425fd3e0a0849257015ae9d42034 # v1.2.0
         with:
           path: ${{ inputs.dotenv-file }}
           log-variables: true
