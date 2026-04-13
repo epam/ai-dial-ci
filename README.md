@@ -246,7 +246,7 @@ jobs:
           EOF
       - if: ${{ steps.dependency-review.outputs.comment-content != null }}
         # Use separate action to comment because the original one can't do it without PR context
-        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           number: ${{ steps.get-pr.outputs.number }}
           header: dependency-review
@@ -255,7 +255,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
       - if: failure()
         # If the review fails, we still want to "outdate" the comment to avoid stale information
-        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           number: ${{ steps.get-pr.outputs.number }}
           header: dependency-review
