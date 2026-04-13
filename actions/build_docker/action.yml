@@ -141,7 +141,7 @@ runs:
       continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
     - name: Upload Trivy report (SARIF)
       if: ${{ steps.trivy-generate-sarif.outcome == 'success' }}
-      uses: github/codeql-action/upload-sarif@cdefb33c0f6224e58673d9004f47f7cb3e328b89 # v4.31.10
+      uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
       with:
         sarif_file: "trivy-results.sarif"
         category: trivy
