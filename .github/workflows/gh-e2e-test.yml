@@ -89,13 +89,13 @@ jobs:
           ref: ${{ inputs.test-branch }}
           lfs: true
           persist-credentials: false
-      - uses: falti/dotenv-action@f4656c46de6bc223dda660f6724d52537bc0642a # v1.1.5
+      - uses: falti/dotenv-action@73fafca04177425fd3e0a0849257015ae9d42034 # v1.2.0
         with:
           path: ${{ inputs.dotenv-file }}
           log-variables: true
           export-variables: true
           keys-case: bypass
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ inputs.node-version }}
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
@@ -203,7 +203,7 @@ jobs:
           allure generate ./apps/chat-e2e/allure-${{ matrix.target }}-results -o ./apps/chat-e2e/allure-${{ matrix.target }}-report --clean
         shell: bash
       - name: Upload Allure Report
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         if: ${{ !cancelled() }}
         with:
           name: "${{ inputs.report-prefix }}-${{ matrix.target }}"
