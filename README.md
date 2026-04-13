@@ -134,7 +134,23 @@ jobs:
 
 #### Dependency Review
 
-To support Dependabot security updates, GitHub requires uploading dependency graph data to GitHub's Dependency Graph API. To enable this feature, add the workflow from example below to your repository. You'll start getting review comments on PRs.
+Without a dependency graph, GitHub has no visibility into what packages the Java project uses - so it can't warn when one of them has a known vulnerability (CVE).\
+The dependency graph snapshot is generated automatically as part of [PR Workflow](#pr-workflow-docker) and [Release Workflow](#release-workflow-docker) via integration with the [GitHub Dependency Graph Gradle Plugin](https://plugins.gradle.org/plugin/org.gradle.github-dependency-graph-gradle-plugin), and submitted via the [GitHub Dependency Submission API](https://docs.github.com/en/rest/dependency-graph/dependency-submission).\
+The generated dependency graph includes all of the dependencies, and is used by GitHub to generate [Dependabot Alerts](https://docs.github.com/en/code-security/dependabot/dependabot-alerts/about-dependabot-alerts) for vulnerable dependencies, as well as to populate the [Dependency Graph insights view](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/exploring-the-dependencies-of-a-repository#viewing-the-dependency-graph).
+
+Configuration:
+
+1. Navigate to "Settings -> Advanced Security" and enable `Dependency graph`, `Dependabot alerts`, `Dependabot security updates` features
+
+Additionally, repository maintainers can benefit from getting automated comments to PRs with insights on dependency changes:
+<!-- markdownlint-disable-next-line no-inline-html -->
+<img width="850" alt="GitHub job summary showing Dependency Review output" src="https://github.com/actions/dependency-review-action/assets/2161/42fbed1d-64a7-42bf-9b05-c416bc67493f">
+
+Configuration:
+
+1. Ensure dependency graph is enabled as described above
+1. Navigate to "Settings -> Actions -> General" and set "Workflow permissions" to `Read and write permissions`
+1. Commit a workflow file to default branch
 
 `dependency-review.yml`
 
@@ -142,20 +158,110 @@ To support Dependabot security updates, GitHub requires uploading dependency gra
 name: Dependency Review
 
 on:
-  pull_request_target:
+  workflow_run:
+    workflows: ["PR Workflow"]
     types:
-      - opened
-      - synchronize
+      - completed
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
   cancel-in-progress: true
+
+permissions:
+  actions: read # to download dependency graph artifact
+  contents: write # to submit dependency graph
+  pull-requests: read # to resolve PR info for fork PRs
 
 jobs:
   dependency-review:
-    uses: epam/ai-dial-ci/.github/workflows/java_dependency_review.yml@main
-    secrets:
-      ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
+    if: |
+      !github.event.repository.private &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          disable-telemetry: true
+          disable-sudo-and-containers: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            api.deps.dev:443
+            api.securityscorecards.dev:443
+      - name: Get PR
+        id: get-pr
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          retries: 3
+          script: |
+            const wfRun = context.payload.workflow_run;
+            const pr = wfRun.pull_requests[0];
+            let number, base_sha, head_sha;
+            if (pr) {
+              number = pr.number;
+              base_sha = pr.base.sha;
+              head_sha = pr.head.sha;
+            } else {
+              // Fork PR: pull_requests[] is empty, resolve via head branch filter
+              const headLabel = `${wfRun.head_repository.owner.login}:${wfRun.head_branch}`;
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: headLabel,
+              });
+              const matched = prs[0];
+              if (!matched) throw new Error(`No open PR found for head ${headLabel}`);
+              number = matched.number;
+              base_sha = matched.base.sha;
+              head_sha = wfRun.head_sha;
+            }
+            core.info(`is_fork:  ${pr ? 'false' : 'true'}`);
+            core.info(`number:   ${number}`);
+            core.info(`base_sha: ${base_sha}`);
+            core.info(`head_sha: ${head_sha}`);
+            core.setOutput('is_fork', pr ? 'false' : 'true');
+            core.setOutput('number', number);
+            core.setOutput('base_sha', base_sha);
+            core.setOutput('head_sha', head_sha);
+      - name: Download and submit dependency graph
+        uses: gradle/actions/dependency-submission@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
+        with:
+          dependency-graph: download-and-submit
+      - id: dependency-review
+        uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2
+        with:
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 600 # let GitHub process both graphs up to 10 minutes
+          base-ref: ${{ steps.get-pr.outputs.base_sha }}
+          head-ref: ${{ steps.get-pr.outputs.head_sha }}
+          warn-only: true # we don't want to fail the workflow, just to report the issues via comment
+      - if: ${{ steps.dependency-review.outputs.comment-content != null }}
+        name: Save dependency review output report
+        run: |
+          cat << 'EOF' > openssf-report.html
+          ${{ steps.dependency-review.outputs.comment-content }}
+          EOF
+      - if: ${{ steps.dependency-review.outputs.comment-content != null }}
+        # Use separate action to comment because the original one can't do it without PR context
+        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
+        with:
+          number: ${{ steps.get-pr.outputs.number }}
+          header: dependency-review
+          hide_and_recreate: true
+          path: openssf-report.html
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
+      - if: failure()
+        # If the review fails, we still want to "outdate" the comment to avoid stale information
+        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
+        with:
+          number: ${{ steps.get-pr.outputs.number }}
+          header: dependency-review
+          hide_and_recreate: true
+          message: "⚠️ Dependency review workflow failed - results may be outdated. [Check logs](${{ github.event.workflow_run.html_url }})"
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
 ### Python (Poetry)
