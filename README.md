@@ -231,7 +231,7 @@ jobs:
         with:
           dependency-graph: download-and-submit
       - id: dependency-review
-        uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
         with:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 600 # let GitHub process both graphs up to 10 minutes
