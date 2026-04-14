@@ -260,7 +260,7 @@ jobs:
           number: ${{ steps.get-pr.outputs.number }}
           header: dependency-review
           hide_and_recreate: true
-          message: "⚠️ Dependency review workflow failed - results may be outdated. [Check logs](${{ github.event.workflow_run.html_url }})"
+          message: "⚠️ Dependency review workflow failed - results may be outdated. [Check logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           GITHUB_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
 
