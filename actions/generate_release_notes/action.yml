@@ -1,10 +1,13 @@
-name: Generate release notes
+name: Generate Release Notes
 description: Generate release notes based on conventional commits
 
 inputs:
   latest-tag:
     description: Semantically latest git tag in the repository
     required: true
+  use-merge-base:
+    description: Use latest-tag as changelog base, ignoring branch tags from git describe (full changelog since last stable release; full history if latest-tag is empty)
+    default: "false"
 
 runs:
   using: "composite"
@@ -18,7 +21,6 @@ runs:
         # ref: https://github.com/actions/checkout/issues/270
         lfs: true
     - name: Generate changelog
-      id: generate_changelog
       run: |
         #!/bin/bash
 
@@ -28,23 +30,45 @@ runs:
 
         # set -x
 
-        latest_tag_repo="${INPUT_LATEST_TAG}"                                      # Trying to obtain the last tag if provided as ENV variable
-        latest_tag_branch=$(git describe --tags --abbrev=0 2>/dev/null || echo '') # Trying to obtain the latest GIT tag in the current branch
+        if [[ "${INPUT_USE_MERGE_BASE}" == "true" ]]; then
+            # Full changelog since last stable release: use the provided stable tag as baseline.
+            # If no stable tag exists (first-ever release), fall back to full history.
+            LAST_TAG="${INPUT_LATEST_TAG:-NO}"
+        else
+            # Incremental changelog: tag-based, branch tags have priority
+            latest_tag_repo="${INPUT_LATEST_TAG}"                                      # Trying to obtain the last tag if provided as ENV variable
+            latest_tag_branch=$(git describe --tags --abbrev=0 2>/dev/null || echo '') # Trying to obtain the latest GIT tag in the current branch
 
-        # Local branch tags should have priority.
-        # If no tags are found in both methods, it sets LAST_TAG as 'NO'
-        LAST_TAG="${latest_tag_branch:-${latest_tag_repo:-NO}}"
+            # If the branch tag is an ancestor of the provided stable tag, it belongs to a previous
+            # release line (e.g. 1.0.0-rc.0 visible from release-1.1 via the shared branch point).
+            # Discard it so the stable tag is used as the baseline instead.
+            if [[ -n "${latest_tag_branch}" && -n "${latest_tag_repo}" ]] &&
+                git merge-base --is-ancestor "${latest_tag_branch}" "${latest_tag_repo}" 2>/dev/null; then
+                latest_tag_branch=""
+            fi
+
+            # Local branch tags should have priority.
+            # If no tags are found in both methods, it sets LAST_TAG as 'NO'
+            LAST_TAG="${latest_tag_branch:-${latest_tag_repo:-NO}}"
+        fi
 
         # Fetch all commit messages if no tags found, else fetch messages since the LAST_TAG
         if [[ "${LAST_TAG}" == "NO" ]]; then
             git log --pretty=format:"%s" >/tmp/my_commits_log
         else
-            git log "${LAST_TAG}"..HEAD --pretty=format:"%s" >/tmp/my_commits_log
+            # Layer 1: patch-level dedup (catches clean cherry-picks by comparing patch-ids)
+            git log --cherry-pick --right-only "${LAST_TAG}...HEAD" --pretty=format:"%s" >/tmp/my_commits_log
+
+            # Layer 2: message-level dedup (catches conflict-resolved or amended cherry-picks)
+            git log "${LAST_TAG}" --pretty=format:"%s" | sort -u >/tmp/already_shipped
+            grep -Fxvf /tmp/already_shipped /tmp/my_commits_log >/tmp/my_commits_log_deduped || true
+            mv /tmp/my_commits_log_deduped /tmp/my_commits_log
         fi
 
         sort --unique --output /tmp/my_commits_log{,} # Sorting commits and removing duplicates
 
         sed -i '/\[skip ci\] Update version/d' /tmp/my_commits_log # Removing '[skip ci] Update version' commits
+        sed -i '/^Merge branch/d' /tmp/my_commits_log              # Removing merge commits
 
         # Creating empty files for each category.
         echo -n '' >/tmp/my_changelog_breaking_changes
@@ -114,9 +138,10 @@ runs:
         if [[ "$(wc -l </tmp/my_changelog_other)" -gt 0 ]]; then
             {
                 echo -e "## Other\n"
-                grep -v "Merge branch " /tmp/my_changelog_other # Removing merge commits
+                cat /tmp/my_changelog_other
             } >>/tmp/my_changelog
         fi
       env:
         INPUT_LATEST_TAG: ${{ inputs.latest-tag }}
+        INPUT_USE_MERGE_BASE: ${{ inputs.use-merge-base }}
       shell: bash

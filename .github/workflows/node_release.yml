@@ -3,6 +3,10 @@ name: NodeJS Release workflow
 on:
   workflow_call:
     inputs:
+      promote:
+        type: boolean
+        description: Promote release to stable (for release-* branches only)
+        default: false
       bypass-checks:
         type: boolean
         description: Do not fail pipeline if checks failed
@@ -116,12 +120,17 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
       next-version: ${{ steps.semantic_versioning.outputs.next-version }}
+      latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
+      is-release-candidate: ${{ steps.semantic_versioning.outputs.is-release-candidate }}
+      is-release: ${{ steps.semantic_versioning.outputs.is-release }}
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
-      latest-tag: ${{ steps.semantic_versioning.outputs.latest-tag }}
+      release-line: ${{ steps.semantic_versioning.outputs.release-line }}
+      changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@3.2.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.0.0
         id: semantic_versioning
-
+        with:
+          promote: ${{ inputs.promote }}
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
@@ -158,14 +167,15 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@3.2.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.0.0
         with:
-          latest-tag: ${{ needs.calculate_version.outputs.latest-tag }}
+          latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
+          use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@3.2.0
+      - uses: epam/ai-dial-ci/actions/node_prepare@4.0.0
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -173,17 +183,17 @@ jobs:
       - name: Set version
         shell: bash
         run: |
-          npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version || true # upstream branch may already be updated
+          npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version --allow-same-version
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ inputs.docker-build-enabled && (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@3.2.0
+        uses: epam/ai-dial-ci/actions/build_docker@4.0.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
           dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
           image-name: ghcr.io/${{ env.IMAGE_NAME }}
-          image-tag: ${{ needs.calculate_version.outputs.next-version }}
+          image-tag: ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
           push-enabled: true
           trivy-enabled: ${{ inputs.trivy-enabled }}
           bypass-checks: ${{ inputs.trivy-bypassed }}
@@ -193,39 +203,54 @@ jobs:
           platforms: ${{ inputs.platforms }}
           dockerfile-path: ${{ inputs.dockerfile-path }}
           image-extra-aliases: |
-            ${{ env.IMAGE_NAME }}:${{ needs.calculate_version.outputs.next-version }}
-            ${{ github.ref == 'refs/heads/development' && format('{0}:{1}', env.IMAGE_NAME, 'development') || ''}}
-            ${{ github.ref == 'refs/heads/development' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'development') || ''}}
-            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || ''}}
-            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || ''}}
+            ${{ env.IMAGE_NAME }}:${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
+            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || '' }}
+            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || '' }}
       - name: Publish packages to npmjs
         if: ${{ inputs.publish-enabled }}
         shell: bash
         run: |
           #!/bin/bash
+          # Builds and publishes the package to the npm registry.
+          # Steps:
+          # 1. (naive) check if a package with the same version is already exists in the registry
+          # 2. build the package using either `build:publishable` (useful for monorepos) or `build` script
+          # 3. publish the package using `publish` script with distribution tags:
+          #    - development branch --> `development` distribution tag
+          #    - release candidate version --> `{release-line}-rc` distribution tag (e.g. `1.0-rc`)
+          #    - stable version
+          #      - `latest` distribution tag if it's semantically latest stable version
+          #      - `release-{release-line}` distribution tag (e.g. `release-1.0`) for other stable versions. HACK: we have to use this tag, otherwise npm will create `latest` by default
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" &>/dev/null; then
+            echo "Version $PACKAGE_NAME@$PACKAGE_VERSION already published, skipping"; exit 0
+          fi
           if node -e "process.exit(require('./package.json').scripts?.['build:publishable'] ? 0 : 1)"; then
             npm run build:publishable
           else
             npm run build
           fi
-          PUBLISH_COMMAND="npm run publish"
-          ARGS=""
-          if [ "$IS_DEVELOPMENT_BRANCH" == "true" ]; then
-            ARGS+=" --development"
+          if [ "$IS_DEVELOPMENT" = "true" ]; then
+            npm run publish -- --tag "development"
+          elif [ "$IS_RELEASE_CANDIDATE" = "true" ]; then
+            npm run publish -- --tag "$RELEASE_LINE-rc"
+          elif [ "$IS_RELEASE" = "true" ]; then
+            if [ "$IS_LATEST" = "true" ]; then
+              npm run publish -- --tag "latest"
+            else
+              npm run publish -- --tag "release-$RELEASE_LINE"
+            fi
           fi
-          if [ "$IS_RELEASE_BRANCH" == "true" ] && [ "$IS_LATEST" == "true" ]; then
-            ARGS+=" --tag latest"
-          fi
-          if [ -n "$ARGS" ]; then
-            PUBLISH_COMMAND+=" --"$ARGS
-          fi
-          $PUBLISH_COMMAND
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          IS_DEVELOPMENT: ${{ github.ref == 'refs/heads/development' }}
+          IS_RELEASE_CANDIDATE: ${{ needs.calculate_version.outputs.is-release-candidate == 'true' }}
+          IS_RELEASE: ${{ needs.calculate_version.outputs.is-release == 'true' }}
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
-          IS_DEVELOPMENT_BRANCH: ${{ github.ref == 'refs/heads/development' }}
-          IS_RELEASE_BRANCH: ${{ startsWith(github.ref, 'refs/heads/release-') }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@3.2.0
+          RELEASE_LINE: ${{ needs.calculate_version.outputs.release-line }}
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.0.0
+        if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
