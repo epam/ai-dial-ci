@@ -429,6 +429,9 @@ jobs:
 
 The E2E testing system for review environments enables automated testing of pull request changes in isolated, short-lived environments. When a developer comments `/deploy-review` on a PR, the system deploys the PR code to a review environment and runs E2E tests against it.
 
+<details>
+  <summary>Flowchart diagram</summary>
+
 ```mermaid
 flowchart-elk TD
     A[Developer comments /deploy-review on PR] --> B[Slash Command Dispatch triggers repository_dispatch in epam/ai-dial-ci]
@@ -461,6 +464,8 @@ flowchart-elk TD
 
     Q --> R[Final status updated in PR comment]
 ```
+
+</details>
 
 ###### Test Repository Structure
 
