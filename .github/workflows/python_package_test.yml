@@ -92,7 +92,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.3
+      - uses: epam/ai-dial-ci/actions/python_prepare@3.2.0
         with:
           python-version: ${{ inputs.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -113,7 +113,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@3.1.3
+      - uses: epam/ai-dial-ci/actions/python_prepare@3.2.0
         with:
           python-version: ${{ matrix.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -184,7 +184,7 @@ jobs:
         continue-on-error: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}
       - name: Upload Trivy report (SARIF)
         if: ${{ steps.trivy-generate-sarif.outcome == 'success' }}
-        uses: github/codeql-action/upload-sarif@cdefb33c0f6224e58673d9004f47f7cb3e328b89 # v4.31.10
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy
