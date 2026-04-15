@@ -7,18 +7,22 @@
     - [Changelog Generation](#changelog-generation)
       - [Filters and transformers](#filters-and-transformers)
     - [NodeJS (npm)](#nodejs-npm)
+      - [Requirements](#requirements)
       - [PR Workflow](#pr-workflow)
       - [Release Workflow](#release-workflow)
     - [Java (gradle)](#java-gradle)
+      - [Requirements](#requirements-1)
       - [PR Workflow (Docker)](#pr-workflow-docker)
       - [Release Workflow (Docker)](#release-workflow-docker)
       - [Dependency Review](#dependency-review)
     - [Python (Poetry)](#python-poetry)
+      - [Requirements](#requirements-2)
       - [PR Workflow (Docker)](#pr-workflow-docker-1)
       - [Release Workflow (Docker)](#release-workflow-docker-1)
       - [PR Workflow (package)](#pr-workflow-package)
       - [Release Workflow (package)](#release-workflow-package)
     - [Generic Docker](#generic-docker)
+      - [Requirements](#requirements-3)
       - [PR Workflow](#pr-workflow-1)
       - [Release Workflow](#release-workflow-1)
     - [Others](#others)
@@ -80,7 +84,38 @@ Changelog is automatically generated based on git commit history (commit message
 ### NodeJS (npm)
 
 > [!tip]
-> Workflows allow independent choices of output artifacts: container image, npm package, or both (default) via `docker-build-enabled` and `publish-enabled` inputs respectively. Set variable values to match your needs.
+> Workflows allow independent choices of build artifacts: container image, npm package, or both (default). Can be controlled via `docker-build-enabled` and `publish-enabled` inputs respectively. Set inputs values to match your repository needs.
+
+#### Requirements
+
+Consumer repository **must** have:
+
+- `package.json` file with `format`, `lint`, `test`, `build`, and `publish` scripts defined
+
+`package.json`
+
+```json
+{
+  "name": "@scope/my-package",
+  "version": "0.0.0",
+  "scripts": {
+    "format": "prettier --check .",
+    "lint": "eslint .",
+    "test": "jest",
+    "build": "tsc",
+    "publish": "npm publish"
+  }
+}
+```
+
+> [!warning]
+> The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+
+> [!tip]
+> We require script *names* only, not specific implementations - you can use any tools you like as long as you provide the required scripts
+
+> [!tip]
+> If a `build:publishable` script exists, it takes precedence over `build` for the release build (useful in monorepos)
 
 #### PR Workflow
 
@@ -133,6 +168,27 @@ jobs:
 ```
 
 ### Java (gradle)
+
+#### Requirements
+
+Consumer repository must have:
+
+- `build.gradle` with `check`, `checkstyleMain` and `build` tasks exposed
+
+`build.gradle`
+
+```groovy
+plugins {
+    id "java" // exposes `check`, `build` tasks
+    id "checkstyle" // exposes `checkstyleMain` task
+}
+
+group = "org.example"
+version = "0.0.0"
+```
+
+> [!warning]
+> The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
 
 #### PR Workflow (Docker)
 
@@ -211,6 +267,55 @@ jobs:
 ```
 
 ### Python (Poetry)
+
+#### Requirements
+
+Consumer repository must have:
+
+- `Makefile` file with `lint`, `build`, `test`, `publish` targets defined
+- `pyproject.toml` file with `name` and `version` defined
+
+`Makefile`
+
+```makefile
+PYTHON ?= python3
+PORT ?= 5001
+
+.PHONY: install lint build test publish
+
+install:
+    poetry install --all-extras
+
+lint: install
+    poetry run ruff check .
+    poetry run ruff format --check .
+
+build: install
+	poetry build
+
+test: install
+	poetry env use $(PYTHON) && poetry run pytest
+
+publish:
+	poetry publish --username __token__ --password $(PYPI_TOKEN) --skip-existing
+```
+
+`pyproject.toml`
+
+```toml
+[tool.poetry]
+name = "my-package"
+version = "0.0.0"
+```
+
+> [!warning]
+> The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+
+> [!note]
+> `publish` target is required only for repositories that produce Python packages as build artifacts
+
+> [!tip]
+> `test` target receives `PYTHON=<version>` environment variable, e.g. `3.9`, `3.10`, `3.11`, etc. Controlled by `code-checks-python-versions` input in Python package PR workflow
 
 #### PR Workflow (Docker)
 
@@ -313,6 +418,36 @@ jobs:
 ```
 
 ### Generic Docker
+
+#### Requirements
+
+Consumer repository must have:
+
+- `Makefile` with `lint` target defined
+- `Dockerfile`
+
+`Makefile`
+
+```makefile
+.PHONY: all lint build run help
+
+all: lint build
+
+build:
+	docker build -t my-image .
+
+run:
+	docker run my-image
+
+lint:
+	docker run --rm -i hadolint/hadolint < Dockerfile
+
+help:
+	@echo '===================='
+	@echo 'lint                         - lint the Dockerfile'
+	@echo 'build                        - build docker image'
+	@echo 'run                          - run docker image'
+```
 
 #### PR Workflow
 
