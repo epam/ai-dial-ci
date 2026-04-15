@@ -238,6 +238,7 @@ jobs:
           base-ref: ${{ steps.get-pr.outputs.base_sha }}
           head-ref: ${{ steps.get-pr.outputs.head_sha }}
           warn-only: true # we don't want to fail the workflow, just to report the issues via comment
+          show-patched-versions: true
       - if: ${{ steps.dependency-review.outputs.comment-content != null }}
         name: Save dependency review output report
         run: |
