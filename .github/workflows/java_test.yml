@@ -15,6 +15,10 @@ on:
         type: boolean
         default: false
         description: Do not fail pipeline if style_checks failed
+      style-task-name:
+        type: string
+        default: "checkstyleMain"
+        description: Gradle task name to run in style_checks
       code-checks-enabled:
         type: boolean
         default: true
@@ -66,8 +70,13 @@ jobs:
         env:
           GPR_USERNAME: ${{ github.actor }}
           GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          STYLE_TASK_NAME: ${{ inputs.style-task-name }}
         run: |
-          ./gradlew checkstyleMain
+          if [ -n "$STYLE_TASK_NAME" ] && ./gradlew tasks --all --quiet | grep -qw "$STYLE_TASK_NAME"; then
+            ./gradlew "$STYLE_TASK_NAME"
+          else
+            echo "::error::Gradle task '$STYLE_TASK_NAME' was not found" && exit 1
+          fi
 
   code_checks:
     if: ${{ inputs.code-checks-enabled }}
@@ -86,8 +95,20 @@ jobs:
         env:
           GPR_USERNAME: ${{ github.actor }}
           GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          SKIP_STYLE_TASK: ${{ inputs.style-checks-enabled }}
+          STYLE_TASK_NAME: ${{ inputs.style-task-name }}
         run: |
-          ./gradlew check || { echo "::error::Tests failed" && exit 1; } # TODO: figure out why we need to capture exit code
+          #!/bin/bash
+          check_args=()
+
+          if [ "$SKIP_STYLE_TASK" = "true" ]; then
+            if [ -n "$STYLE_TASK_NAME" ] && ./gradlew tasks --all --quiet | grep -qw "$STYLE_TASK_NAME"; then
+              check_args=(-x "$STYLE_TASK_NAME")
+            else
+              echo "::warning::Gradle task '$STYLE_TASK_NAME' was not found; nothing to exclude"
+            fi
+          fi
+          ./gradlew check "${check_args[@]}" || { echo "::error::Checks failed" && exit 1; } # TODO: figure out why we need to capture exit code
 
   ort:
     if: ${{ inputs.ort-enabled }}
