@@ -379,38 +379,38 @@ jobs:
 
 Consumer repository must have:
 
-- `Makefile` file with `lint`, `build`, `test`, `publish` targets defined
+- `Makefile` file with `lint`, `build`, `test`, `publish` (only for Python packages) targets defined
 - `pyproject.toml` file with `name` and `version` defined
 
 `Makefile`
 
 ```makefile
-PYTHON ?= python3
 PORT ?= 5001
 
 .PHONY: install lint build test publish
 
 install:
-    poetry install --all-extras
+	poetry install --all-extras
 
 lint: install
-    poetry run ruff check .
-    poetry run ruff format --check .
+	poetry run ruff check .
+	poetry run ruff format --check .
 
 build: install
 	poetry build
 
 test: install
-	poetry env use $(PYTHON) && poetry run pytest
+	if [ -n "$(PYTHON)" ]; then poetry env use "$(PYTHON)"; fi
+	poetry run pytest
 
-publish:
+publish: # Required only for Python packages
 	poetry publish --username __token__ --password $(PYPI_TOKEN) --skip-existing
 ```
 
 `pyproject.toml`
 
 ```toml
-[tool.poetry]
+[project]
 name = "my-package"
 version = "0.0.0"
 ```
@@ -422,7 +422,7 @@ version = "0.0.0"
 > `publish` target is required only for repositories that produce Python packages as build artifacts
 
 > [!tip]
-> `test` target receives `PYTHON=<version>` environment variable, e.g. `3.9`, `3.10`, `3.11`, etc. Controlled by `code-checks-python-versions` input in Python package PR workflow
+> `test` target receives Python version, e.g. `make test PYTHON=<version>`, where `<version>` is the one defined in `code-checks-python-versions` workflow input. If multiple versions are defined, the workflow will run tests for each of them in parallel
 
 #### PR Workflow (Docker)
 
