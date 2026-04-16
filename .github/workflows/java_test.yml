@@ -99,16 +99,16 @@ jobs:
           STYLE_TASK_NAME: ${{ inputs.style-task-name }}
         run: |
           #!/bin/bash
-          CHECK_ARGS=()
+          check_args=()
 
           if [ "$SKIP_STYLE_TASK" = "true" ]; then
             if [ -n "$STYLE_TASK_NAME" ] && ./gradlew tasks --all --quiet | grep -qw "$STYLE_TASK_NAME"; then
-              CHECK_ARGS=(-x "$STYLE_TASK_NAME")
+              check_args=(-x "$STYLE_TASK_NAME")
             else
               echo "::warning::Gradle task '$STYLE_TASK_NAME' was not found; nothing to exclude"
             fi
           fi
-          ./gradlew check "${CHECK_ARGS[@]}" || { echo "::error::Checks failed" && exit 1; } # TODO: figure out why we need to capture exit code
+          ./gradlew check "${check_args[@]}" || { echo "::error::Checks failed" && exit 1; } # TODO: figure out why we need to capture exit code
 
   ort:
     if: ${{ inputs.ort-enabled }}
