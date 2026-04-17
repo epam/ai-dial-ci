@@ -379,7 +379,7 @@ jobs:
 
 Consumer repository must have:
 
-- `Makefile` file with `lint`, `build`, `test`, `publish` (only for Python packages) targets defined
+- `Makefile` file with `lint`, `build` (only for Python packages), `test`, `publish` (only for Python packages) targets defined
 - `pyproject.toml` file with `name` and `version` defined
 
 `Makefile`
@@ -396,7 +396,7 @@ lint: install
 	poetry run ruff check .
 	poetry run ruff format --check .
 
-build: install
+build: install # Required only for Python packages
 	poetry build
 
 test: install
@@ -419,7 +419,7 @@ version = "0.0.0"
 > The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
 
 > [!note]
-> `publish` target is required only for repositories that produce Python packages as build artifacts
+> `build` and `publish` Makefile targets are required only for repositories that produce Python packages as build artifacts
 
 > [!tip]
 > `test` target receives Python version, e.g. `make test PYTHON=<version>`, where `<version>` is the one defined in `code-checks-python-versions` workflow input. If multiple versions are defined, the workflow will run tests for each of them in parallel
