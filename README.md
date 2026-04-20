@@ -4,6 +4,7 @@
   - [Overview](#overview)
   - [Usage](#usage)
     - [Branching](#branching)
+      - [Skipping Release Candidates (RC)](#skipping-release-candidates-rc)
     - [Changelog Generation](#changelog-generation)
       - [Filters and transformers](#filters-and-transformers)
     - [NodeJS (npm)](#nodejs-npm)
@@ -60,6 +61,43 @@ We expect consumer repositories to follow the given branching strategy:
 1. Fixes to maintenance branches must be backported from `development` branch via cherry-picks
 
 More details can be found in [Branching Strategy](docs/BRANCHING_STRATEGY.md)
+
+#### Skipping Release Candidates (RC)
+
+In some cases, maintainers may want to skip Release Candidate (RC) phase and produce stable versions directly from `release-X.Y` branches. For example, if repository produce package(s) as build artifacts, and no strict QA/verification process is required.
+
+To achieve that, replace `workflow_dispatch` input approach with static `true` value for `promote` input in `Release Workflow`
+
+<details>
+<summary>Example</summary>
+
+```diff
+name: Release Workflow
+
+on:
+  push:
+    branches: [development, release-*]
+  workflow_dispatch:
+-   inputs:
+-     promote:
+-       type: boolean
+-       default: false
+-       description: Promote release to stable (for release-* branches only)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@4.0.0
+    with:
+-     promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
++     promote: true
+    secrets: inherit
+```
+
+</details>
 
 ### Changelog Generation
 
