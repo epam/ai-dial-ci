@@ -72,7 +72,7 @@ jobs:
           fi
 
           if [[ -n "$error_message" ]]; then
-            echo "status="$error_message" >>$GITHUB_OUTPUT
+            echo "status=$error_message" >>$GITHUB_OUTPUT
             exit 1
           fi
 
@@ -94,7 +94,7 @@ jobs:
           fi
 
           if [[ -n "$error_message" ]]; then
-            echo "status="$error_message" >>$GITHUB_OUTPUT
+            echo "status=$error_message" >>$GITHUB_OUTPUT
             exit 1
           fi
           echo "All checks passed"
