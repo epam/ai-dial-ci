@@ -60,28 +60,48 @@ jobs:
       - name: Check dispatch repository ownership
         id: owner
         run: |
-          DISPATCHED_REPO_NAME=${{ github.event.client_payload.github.payload.repository.name }}
-          DISPATCHED_REPO_OWNER=${{ github.event.client_payload.github.payload.repository.owner.login }}
-          ERROR_MESSAGE=""
-          if [[ "$DISPATCHED_REPO_OWNER" != "$GITHUB_REPOSITORY_OWNER" ]]; then
-          ERROR_MESSAGE="The event was not dispatched by a repository within the same owner."
+          #!/bin/bash
+
+          error_message=""
+
+          if [[ -z "$DISPATCHED_REPO_NAME" ]]; then
+            error_message="Dispatched repository name is missing."
           fi
-          WHITELIST='${{ vars.DISPATCH_WHITELIST || '["ai-dial*"]' }}'
-          MATCHED=false
-          for pattern in $(echo "$WHITELIST" | jq -r '.[]'); do
-            if [[ "$DISPATCHED_REPO_NAME" == $pattern ]]; then
-              MATCHED=true
-              break
-            fi
-          done
-          if [[ "$MATCHED" != "true" ]]; then
-            ERROR_MESSAGE+=" The event was dispatched by an unauthorized repository."
+          if [[ -z "$DISPATCHED_REPO_OWNER" ]]; then
+            error_message+=" Dispatched repository owner is missing."
           fi
-          if [[ -n "$ERROR_MESSAGE" ]]; then
-            echo "status=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
+
+          if [[ -n "$error_message" ]]; then
+            echo "status=$error_message" >>$GITHUB_OUTPUT
             exit 1
           fi
-          echo "All checks passed."
+
+          if [[ "$DISPATCHED_REPO_OWNER" != "$GITHUB_REPOSITORY_OWNER" ]]; then
+            error_message+=" The event was not dispatched by a repository within the same owner."
+          fi
+
+          matched=false
+          while IFS= read -r pattern; do
+            # shellcheck disable=SC2053
+            if [[ "$DISPATCHED_REPO_NAME" == $pattern ]]; then
+              matched=true
+              break
+            fi
+          done < <(jq -r '.[]' <<<"$DISPATCH_WHITELIST")
+
+          if [[ "$matched" != "true" ]]; then
+            error_message+=" The event was dispatched by an unauthorized repository."
+          fi
+
+          if [[ -n "$error_message" ]]; then
+            echo "status=$error_message" >>$GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "All checks passed"
+        env:
+          DISPATCHED_REPO_NAME: ${{ github.event.client_payload.github.payload.repository.name }}
+          DISPATCHED_REPO_OWNER: ${{ github.event.client_payload.github.payload.repository.owner.login }}
+          DISPATCH_WHITELIST: ${{ vars.DISPATCH_WHITELIST || '["ai-dial*"]' }}
       - name: Check all required values are present in the dispatch payload
         id: vars
         run: |
