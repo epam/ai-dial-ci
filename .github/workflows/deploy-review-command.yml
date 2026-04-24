@@ -236,7 +236,7 @@ jobs:
 
           wait_for_dns ${env_hostname}
 
-          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${ENVIRONMENT_URL}"/api/health
+          curl --max-time 10 --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${ENVIRONMENT_URL}"/api/health
         shell: bash
         env:
           ENVIRONMENT_URL: ${{ env.ENVIRONMENT_URL }}
