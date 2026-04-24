@@ -30,6 +30,13 @@
 #     - E2E_USERNAME:                         Name(s) of application user(s) for ai-dial-chat tests
 #     - E2E_PASSWORD:                         Password for the application users
 #     - NEXT_PUBLIC_OVERLAY_USER_BUCKET:      A blob storage prefix for specific application user
+#     - DIAL_ADMIN_USERS_FILE:                Users data file for ai-dial-admin-perf tests
+#     - INFLUX_HOST:                          InfluxDB host for ai-dial-admin-perf tests
+#     - INFLUX_TOKEN:                         InfluxDB token for ai-dial-admin-perf tests
+#     - AUTH0_DOMAIN:                         Auth0 domain for ai-dial-admin-perf authentication
+#     - DIAL_ADMIN_CLIENT_ID:                 Auth0 client ID for ai-dial-admin-perf tests
+#     - DIAL_ADMIN_CLIENT_SECRET:             Auth0 client secret for ai-dial-admin-perf tests
+#     - DIAL_ADMIN_NEXTAUTH_SECRET:           NextAuth secret for ai-dial-admin-perf tests
 # - GitHub environment `review`:
 #   - Variables:
 #     - DEPLOY_PROJECT_ID:                    ID of the GitLab project to trigger deployment in
@@ -251,12 +258,20 @@ jobs:
           # This is requested by QA team to verify changes in tests before rolling them out for everyone
           test-branch: ${{ matrix.test-repository == github.event.client_payload.pull_request.head.repo.full_name && github.event.client_payload.pull_request.head.ref || '' }}
         env:
+	        # ai-dial-chat
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
           E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
-
+          # ai-dial-admin-perf
+          DIAL_ADMIN_USERS_FILE: ${{ secrets.DIAL_ADMIN_USERS_FILE }}
+          INFLUX_HOST: ${{ secrets.INFLUX_HOST }}
+          INFLUX_TOKEN: ${{ secrets.INFLUX_TOKEN }}
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          DIAL_ADMIN_CLIENT_ID: ${{ secrets.DIAL_ADMIN_CLIENT_ID }}
+          DIAL_ADMIN_CLIENT_SECRET: ${{ secrets.DIAL_ADMIN_CLIENT_SECRET }}
+          DIAL_ADMIN_NEXTAUTH_SECRET: ${{ secrets.DIAL_ADMIN_NEXTAUTH_SECRET }}
   monitor:
     runs-on: ubuntu-latest
     if: always()
