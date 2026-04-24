@@ -79,7 +79,7 @@ jobs:
           fi
 
           if [[ -n "$error_message" ]]; then
-            echo "status=$error_message" >>$GITHUB_OUTPUT
+            echo "::error::$error_message"
             exit 1
           fi
 
@@ -101,7 +101,7 @@ jobs:
           fi
 
           if [[ -n "$error_message" ]]; then
-            echo "status=$error_message" >>$GITHUB_OUTPUT
+            echo "::error::$error_message"
             exit 1
           fi
           echo "All checks passed"
@@ -126,7 +126,7 @@ jobs:
             ERROR_MESSAGE+=" Pull request head ref is missing."
           fi
           if [[ -n "$ERROR_MESSAGE" ]]; then
-            echo "status=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
+            echo "::error::$ERROR_MESSAGE"
             exit 1
           fi
           echo "All required values are present."
