@@ -90,7 +90,7 @@ concurrency:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@4.0.0
+    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@main
     with:
 -     promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
 +     promote: true
