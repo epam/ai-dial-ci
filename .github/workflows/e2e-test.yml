@@ -30,6 +30,8 @@ jobs:
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
           ref: ${{ github.event.client_payload.gitlab-project-ref || vars.DEPLOY_REF }}
+          download_artifacts_on_failure: false
+          verbose: true
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ github.event.client_payload.github-app }}",
@@ -71,6 +73,7 @@ jobs:
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
           ref: ${{ github.event.client_payload.gitlab-project-ref || vars.DEPLOY_REF }}
+          download_artifacts_on_failure: false
           verbose: true
           variables: >
             {

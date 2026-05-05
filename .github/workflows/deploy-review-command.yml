@@ -132,6 +132,7 @@ jobs:
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ vars.DEPLOY_PROJECT_ID }}
           ref: ${{ vars.DEPLOY_REF }}
+          download_artifacts_on_failure: false
           verbose: true
           variables: >
             {
