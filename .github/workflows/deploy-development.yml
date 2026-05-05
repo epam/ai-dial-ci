@@ -39,3 +39,4 @@ jobs:
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ inputs.gitlab-project-id }}
           ref: ${{ inputs.gitlab-project-ref }}
+          verbose: true

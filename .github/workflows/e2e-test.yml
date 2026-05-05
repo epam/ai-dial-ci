@@ -25,7 +25,7 @@ jobs:
         id: deploy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@c59b56e9d2688ab42c1304322ac8831a4ef6f7d2 # v1.4.0
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
+          host: ${{ vars.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
@@ -66,11 +66,12 @@ jobs:
         id: destroy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@c59b56e9d2688ab42c1304322ac8831a4ef6f7d2 # v1.4.0
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
+          host: ${{ vars.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
           ref: ${{ github.event.client_payload.gitlab-project-ref || vars.DEPLOY_REF }}
+          verbose: true
           variables: >
             {
               "TRIGGER_GITHUB_APP":"${{ needs.deploy-env.outputs.github-app }}",
