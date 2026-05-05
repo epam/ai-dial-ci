@@ -134,11 +134,12 @@ jobs:
           ref: ${{ vars.DEPLOY_REF }}
           variables: >
             {
-              "GITHUB_APP":"${{ github.event.client_payload.slash_command.args.named.application }}",
-              "GITHUB_PR":"pr-${{ github.event.client_payload.pull_request.number }}",
-              "GITHUB_REPO":"${{ github.event.client_payload.pull_request.head.repo.full_name }}",
-              "GITHUB_REF":"${{ github.event.client_payload.pull_request.head.ref }}",
-              "GITHUB_TRIGGER": "${{ github.event.client_payload.github.payload.comment.html_url }}"
+              "APPLICATION_NAME":"${{ github.event.client_payload.slash_command.args.named.application }}",
+              "SOURCE_REPOSITORY":"${{ github.event.client_payload.pull_request.head.repo.full_name }}",
+              "SOURCE_BRANCH_NAME":"${{ github.event.client_payload.pull_request.head.ref }}",
+              "SOURCE_COMMIT_SHA":"${{ github.event.client_payload.pull_request.head.sha }}",
+              "SOURCE_PR_IID":"pr-${{ github.event.client_payload.pull_request.number }}",
+              "SOURCE_TRIGGER": "${{ github.event.client_payload.github.payload.comment.html_url }}"
             }
       - name: Define applications to be tested
         id: test-applications

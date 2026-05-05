@@ -90,7 +90,7 @@ concurrency:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@4.0.0
+    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@main
     with:
 -     promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
 +     promote: true
@@ -685,7 +685,9 @@ on:
 jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
-    if: ${{ github.event.issue.pull_request }}
+    if: |
+      github.event.issue.pull_request &&
+      github.event.issue.state == 'open'
     steps:
       - name: Slash Command Dispatch
         id: scd
