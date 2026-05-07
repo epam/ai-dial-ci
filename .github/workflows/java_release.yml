@@ -37,7 +37,7 @@ on:
         description: Do not fail pipeline if ORT scan failed
       ort-version:
         type: string
-        default: "latest"
+        default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
         description: ORT version to use
       trivy-enabled:
         type: boolean

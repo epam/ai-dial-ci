@@ -46,7 +46,7 @@ on:
       ort-version:
         type: string
         description: ORT version to use
-        default: "latest"
+        default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
       docker-build-enabled:
         type: boolean
         description: "Enable Docker build"
