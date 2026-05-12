@@ -11,6 +11,7 @@
 #                                             If test repository is omitted, epam/ai-dial-chat will be used
 #                                             Default: chat (with default test repository)
 #                                             Example: chat,admin:epam/ai-dial-admin-tests
+#   - (optional) environment                  GitHub environment for this run (secrets/variables). Default - `dial-review`
 # - Unnamed:
 #   - (optional) skip-e2e                     If present, E2E tests will be skipped
 # - PR Labels:
@@ -19,24 +20,25 @@
 # Recommended secrets and variables layout:
 # - Repository:
 #   - Variables:
-#     - DEPLOY_HOST:                          GitLab instance hostname (e.g. gitlab.com)
-#     - REVIEW_BASE_DOMAIN:                   Base domain for review environments (e.g. example.com)
-#     - (optional) DISPATCH_WHITELIST:        JSON array of repository names (wildcard supported) allowed to dispatch slash command events
+#     - DEPLOY_HOST                           GitLab instance hostname (e.g. gitlab.com)
+#     - (optional) DISPATCH_WHITELIST         JSON array of repository names (wildcard supported) allowed to dispatch slash command events
 #                                             Default: ["ai-dial*"]
 #   - Secrets:
-#     - ACTIONS_BOT_TOKEN:                    GitHub token with permissions to create/update comments
-#     - E2E_ADMIN:                            A name of an application user with admin privileges
-#     - E2E_OVERLAY_USERNAME:                 Name(s) of application user(s) for ai-dial-chat (overlay) tests
-#     - E2E_USERNAME:                         Name(s) of application user(s) for ai-dial-chat tests
-#     - E2E_PASSWORD:                         Password for the application users
-#     - NEXT_PUBLIC_OVERLAY_USER_BUCKET:      A blob storage prefix for specific application user
-# - GitHub environment `review`:
+#     - ACTIONS_BOT_TOKEN                     GitHub token with permissions to create/update comments
+#     - E2E_ADMIN                             A name of an application user with admin privileges
+#     - E2E_OVERLAY_USERNAME                  Name(s) of application user(s) for ai-dial-chat (overlay) tests
+#     - E2E_USERNAME                          Name(s) of application user(s) for ai-dial-chat tests
+#     - E2E_PASSWORD                          Password for the application users
+#     - NEXT_PUBLIC_OVERLAY_USER_BUCKET       A blob storage prefix for specific application user
+#
+# - GitHub environment (name from "environment" argument, default - `dial-review`):
 #   - Variables:
-#     - DEPLOY_PROJECT_ID:                    ID of the GitLab project to trigger deployment in
-#     - DEPLOY_REF:                           Git ref to use for deployment (e.g. main)
+#     - REVIEW_BASE_DOMAIN                    Base domain for review environment (e.g. example.com)
+#     - DEPLOY_PROJECT_ID                     ID of the GitLab project to trigger deployment in
+#     - DEPLOY_REF                            Git ref to use for deployment (e.g. main)
 #   - Secrets:
-#     - DEPLOY_ACCESS_TOKEN:                  GitLab access token with API access to the deployment project
-#     - DEPLOY_TRIGGER_TOKEN:                 GitLab trigger token for the deployment project
+#     - DEPLOY_ACCESS_TOKEN                   GitLab access token with API access to the deployment project
+#     - DEPLOY_TRIGGER_TOKEN                  GitLab trigger token for the deployment project
 
 name: deploy-review-command
 
@@ -52,7 +54,7 @@ jobs:
   deploy-review:
     runs-on: ubuntu-latest
     environment:
-      name: review
+      name: ${{ github.event.client_payload.slash_command.args.named.environment || 'dial-review' }}
     timeout-minutes: 30
     outputs:
       test-applications: ${{ steps.test-applications.outputs.json }}
@@ -170,7 +172,7 @@ jobs:
       - deploy-review
     timeout-minutes: 60
     environment:
-      name: review
+      name: ${{ github.event.client_payload.slash_command.args.named.environment || 'dial-review' }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.deploy-review.outputs.test-applications) }}
