@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.client_payload.slash_command.args.named.environment || 'dial-review' }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     outputs:
       test-applications: ${{ steps.test-applications.outputs.json }}
     steps:
