@@ -16,10 +16,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
         with:
           types: |
-            fix
-            hotfix
             feat
-            feature
+            fix
+            docs
+            test
+            ci
             chore
       - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         # When the previous steps fails, the workflow would stop. By adding this
