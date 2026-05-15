@@ -7,6 +7,10 @@ on:
         type: boolean
         description: Promote release to stable (for release-* branches only)
         default: false
+      draft-stable-releases:
+        type: boolean
+        description: Create stable GitHub releases as drafts
+        default: false
       bypass-checks:
         type: boolean
         description: Do not fail pipeline if checks failed
@@ -148,6 +152,7 @@ jobs:
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
+          draft-stable-releases: ${{ inputs.draft-stable-releases }}
           artifacts: "dist/*"
           extra-commit-command: |
             git add pyproject.toml
