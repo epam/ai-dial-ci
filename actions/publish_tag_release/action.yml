@@ -41,6 +41,7 @@ runs:
         bodyFile: ${{ inputs.changelog-file }}
         allowUpdates: true
         updateOnlyUnreleased: true
+        omitDraftDuringUpdate: true
         draft: ${{ fromJSON(inputs.draft-stable-releases) && !contains(inputs.tag-version, '-') }} # draft if it's a stable release and the input is 'true'
         prerelease: ${{ contains(inputs.tag-version, '-') }} # will capture e.g. `-rc`
         makeLatest: ${{ contains(inputs.tag-version, '-') && 'false' || 'legacy' }} # false if it's a pre-release, otherwise let GitHub decide (based on semver)
