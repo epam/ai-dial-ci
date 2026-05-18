@@ -7,6 +7,10 @@ on:
         type: boolean
         description: Promote release to stable (for release-* branches only)
         default: false
+      draft-stable-releases:
+        type: boolean
+        description: Create stable GitHub releases as drafts
+        default: false
       bypass-checks:
         type: boolean
         description: Do not fail pipeline if checks failed
@@ -87,7 +91,7 @@ jobs:
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.1.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.2.0
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
@@ -127,7 +131,7 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.1.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.2.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -135,7 +139,7 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/build_docker@4.1.0
+      - uses: epam/ai-dial-ci/actions/build_docker@4.2.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -154,8 +158,9 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || '' }}
             ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || '' }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.1.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.2.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
+          draft-stable-releases: ${{ inputs.draft-stable-releases }}
