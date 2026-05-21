@@ -219,7 +219,7 @@ jobs:
           # Steps:
           # 1. (naive) check if a package with the same version is already exists in the registry
           # 2. build the package using either `build:publishable` (useful for monorepos) or `build` script
-          # 3. publish the package using `publish` script with distribution tags:
+          # 3. publish the package using `publish:npm` script (if exists) or `npm publish` directly with distribution tags:
           #    - development branch --> `development` distribution tag
           #    - release candidate version --> `{release-line}-rc` distribution tag (e.g. `1.0-rc`)
           #    - stable version
@@ -235,15 +235,28 @@ jobs:
           else
             npm run build
           fi
+          if node -e "process.exit(require('./package.json').scripts?.['publish:npm'] ? 0 : 1)"; then
+            HAS_PUBLISH_NPM_SCRIPT=true
+          else
+            HAS_PUBLISH_NPM_SCRIPT=false
+          fi
+          publish_with_tag() {
+            local tag="$1"
+            if [ "$HAS_PUBLISH_NPM_SCRIPT" = "true" ]; then
+              npm run publish:npm -- --tag "$tag"
+            else
+              npm publish --tag "$tag"
+            fi
+          }
           if [ "$IS_DEVELOPMENT" = "true" ]; then
-            npm run publish -- --tag "development"
+            publish_with_tag "development"
           elif [ "$IS_RELEASE_CANDIDATE" = "true" ]; then
-            npm run publish -- --tag "$RELEASE_LINE-rc"
+            publish_with_tag "$RELEASE_LINE-rc"
           elif [ "$IS_RELEASE" = "true" ]; then
             if [ "$IS_LATEST" = "true" ]; then
-              npm run publish -- --tag "latest"
+              publish_with_tag "latest"
             else
-              npm run publish -- --tag "release-$RELEASE_LINE"
+              publish_with_tag "release-$RELEASE_LINE"
             fi
           fi
         env:
