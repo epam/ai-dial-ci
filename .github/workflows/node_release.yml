@@ -138,6 +138,7 @@ jobs:
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
+      id-token: write
       contents: write
       packages: write
       security-events: write
