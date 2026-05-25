@@ -128,7 +128,7 @@ Changelog is automatically generated based on git commit history (commit message
 
 Consumer repository **must** have:
 
-- `package.json` file with `format`, `lint`, `test`, `build`, and `publish` scripts defined
+- `package.json` file with `format`, `lint`, `test`, `build`, and `publish:npm` scripts defined
 
 `package.json`
 
@@ -141,7 +141,7 @@ Consumer repository **must** have:
     "lint": "eslint .",
     "test": "jest",
     "build": "tsc",
-    "publish": "npm publish"
+    "publish:npm": "npm publish"
   }
 }
 ```
