@@ -128,7 +128,7 @@ Changelog is automatically generated based on git commit history (commit message
 
 Consumer repository **must** have:
 
-- `package.json` file with `format`, `lint`, `test`, `build`, and `publish` scripts defined
+- `package.json` file with `format`, `lint`, `test`, `build` scripts defined
 
 `package.json`
 
@@ -140,8 +140,7 @@ Consumer repository **must** have:
     "format": "prettier --check .",
     "lint": "eslint .",
     "test": "jest",
-    "build": "tsc",
-    "publish": "npm publish"
+    "build": "nx run-many -t build",
   }
 }
 ```
@@ -153,7 +152,10 @@ Consumer repository **must** have:
 > We require script *names* only, not specific implementations - you can use any tools you like as long as you provide the required scripts
 
 > [!tip]
-> If a `build:publishable` script exists, it takes precedence over `build` for the release build (useful in monorepos)
+> If a `build:publishable` script exists, it takes precedence over `build` for building the package. Useful in monorepos to avoid building the whole repository when only subset should be published, e.g. `"build:publishable": "nx run-many -t build --projects=tag:publishable"`
+
+> [!tip]
+> If a `publish:npm` script exists, it takes precedence over regular `npm publish` command for publishing the package. This allows to implement any custom publish logic. The custom script will receive desired distribution tag as a `--tag` argument
 
 #### PR Workflow
 
