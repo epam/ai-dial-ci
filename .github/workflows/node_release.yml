@@ -235,14 +235,9 @@ jobs:
           else
             npm run build
           fi
-          if node -e "process.exit(require('./package.json').scripts?.['publish:npm'] ? 0 : 1)"; then
-            HAS_PUBLISH_NPM_SCRIPT=true
-          else
-            HAS_PUBLISH_NPM_SCRIPT=false
-          fi
           publish_with_tag() {
             local tag="$1"
-            if [ "$HAS_PUBLISH_NPM_SCRIPT" = "true" ]; then
+            if node -e "process.exit(require('./package.json').scripts?.['publish:npm'] ? 0 : 1)"; then
               npm run publish:npm -- --tag "$tag"
             else
               npm publish --tag "$tag"
