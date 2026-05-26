@@ -128,34 +128,40 @@ Changelog is automatically generated based on git commit history (commit message
 
 Consumer repository **must** have:
 
-- `package.json` file with `format`, `lint`, `test`, `build` scripts defined
+- `package.json` file with `format`, `lint`, `test`, `build` scripts defined. We require scripts to exist, but not restrict their implementation - you can use any tools you like.
 
-`package.json`
+  <details>
+    <summary>Example</summary>
 
-```json
-{
-  "name": "@scope/my-package",
-  "version": "0.0.0",
-  "scripts": {
-    "format": "prettier --check .",
-    "lint": "eslint .",
-    "test": "jest",
-    "build": "nx run-many -t build",
-  }
-}
-```
+    ```json
+    {
+      "name": "@scope/my-package",
+      "version": "0.0.0",
+      "scripts": {
+        "format": "prettier --check .",
+        "lint": "eslint .",
+        "test": "jest",
+        "build": "nx run-many -t build",
+      }
+    }
+    ```
 
-> [!warning]
-> The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+    > [!warning]
+    > The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
 
-> [!tip]
-> We require script *names* only, not specific implementations - you can use any tools you like as long as you provide the required scripts
+    > [!tip]
+    > If a `build:publishable` script exists, it takes precedence over `build` for building the package. Useful in monorepos to avoid building the whole repository when only subset should be published, e.g. `"build:publishable": "nx run-many -t build --projects=tag:publishable"`
 
-> [!tip]
-> If a `build:publishable` script exists, it takes precedence over `build` for building the package. Useful in monorepos to avoid building the whole repository when only subset should be published, e.g. `"build:publishable": "nx run-many -t build --projects=tag:publishable"`
+    > [!tip]
+    > If a `publish:npm` script exists, it takes precedence over regular `npm publish` command for publishing the package. This allows to implement any custom publish logic. The custom script will receive desired distribution tag as a `--tag` argument
+  </details>
 
-> [!tip]
-> If a `publish:npm` script exists, it takes precedence over regular `npm publish` command for publishing the package. This allows to implement any custom publish logic. The custom script will receive desired distribution tag as a `--tag` argument
+- Authentication to npm registry
+
+  While publishing a package to [npm registry](https://npmjs.com), we support 2 options how to provide credentials.
+
+  - (recommended) [Trusted publishing](https://docs.npmjs.com/trusted-publishers): grant release GitHub workflow `id-token: write` permission (see [example](#release-workflow))
+  - [Granular access token](https://docs.npmjs.com/creating-and-viewing-access-tokens): create a token and store it as `NPM_TOKEN` [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
 
 #### PR Workflow
 
@@ -199,6 +205,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  packages: write
+  security-events: write
+  id-token: write
+
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/node_release.yml@main
@@ -211,24 +223,26 @@ jobs:
 
 #### Requirements
 
-Consumer repository must have:
+Consumer repository **must** have:
 
 - `build.gradle` with `check`, `checkstyleMain` and `build` tasks exposed
 
-`build.gradle`
+  <details>
+    <summary>Example</summary>
 
-```groovy
-plugins {
-    id "java" // exposes `check`, `build` tasks
-    id "checkstyle" // exposes `checkstyleMain` task
-}
+  ```groovy
+  plugins {
+      id "java" // exposes `check`, `build` tasks
+      id "checkstyle" // exposes `checkstyleMain` task
+  }
 
-group = "org.example"
-version = "0.0.0"
-```
+  group = "org.example"
+  version = "0.0.0"
+  ```
 
-> [!warning]
-> The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+  > [!warning]
+  > The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+  </details>
 
 #### PR Workflow (Docker)
 
@@ -417,52 +431,57 @@ jobs:
 
 #### Requirements
 
-Consumer repository must have:
+Consumer repository **must** have:
 
 - `Makefile` file with `lint`, `build` (only for Python packages), `test`, `publish` (only for Python packages) targets defined
+
+  <details>
+    <summary>Example</summary>
+
+  ```makefile
+  PORT ?= 5001
+
+  .PHONY: install lint build test publish
+
+  install:
+    poetry install --all-extras
+
+  lint: install
+    poetry run ruff check .
+    poetry run ruff format --check .
+
+  build: install # Required only for Python packages
+    poetry build
+
+  test: install
+    if [ -n "$(PYTHON)" ]; then poetry env use "$(PYTHON)"; fi
+    poetry run pytest
+
+  publish: # Required only for Python packages
+    poetry publish --username __token__ --password $(PYPI_TOKEN) --skip-existing
+  ```
+
+  > [!note]
+  > `build` and `publish` Makefile targets are required only for repositories that produce Python packages as build artifacts
+
+  > [!tip]
+  > `test` target receives Python version, e.g. `make test PYTHON=<version>`, where `<version>` is the one defined in `code-checks-python-versions` workflow input. If multiple versions are defined, the workflow will run tests for each of them in parallel
+  </details>
+
 - `pyproject.toml` file with `name` and `version` defined
 
-`Makefile`
+  <details>
+    <summary>Example</summary>
 
-```makefile
-PORT ?= 5001
+  ```toml
+  [project]
+  name = "my-package"
+  version = "0.0.0"
+  ```
 
-.PHONY: install lint build test publish
-
-install:
-	poetry install --all-extras
-
-lint: install
-	poetry run ruff check .
-	poetry run ruff format --check .
-
-build: install # Required only for Python packages
-	poetry build
-
-test: install
-	if [ -n "$(PYTHON)" ]; then poetry env use "$(PYTHON)"; fi
-	poetry run pytest
-
-publish: # Required only for Python packages
-	poetry publish --username __token__ --password $(PYPI_TOKEN) --skip-existing
-```
-
-`pyproject.toml`
-
-```toml
-[project]
-name = "my-package"
-version = "0.0.0"
-```
-
-> [!warning]
-> The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
-
-> [!note]
-> `build` and `publish` Makefile targets are required only for repositories that produce Python packages as build artifacts
-
-> [!tip]
-> `test` target receives Python version, e.g. `make test PYTHON=<version>`, where `<version>` is the one defined in `code-checks-python-versions` workflow input. If multiple versions are defined, the workflow will run tests for each of them in parallel
+  > [!warning]
+  > The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+  </details>
 
 #### PR Workflow (Docker)
 
@@ -568,33 +587,37 @@ jobs:
 
 #### Requirements
 
-Consumer repository must have:
+Consumer repository **must** have:
 
 - `Makefile` with `lint` target defined
+
+  <details>
+    <summary>Example</summary>
+
+    ```makefile
+    .PHONY: all lint build run help
+
+    all: lint build
+
+    build:
+      docker build -t my-image .
+
+    run:
+      docker run my-image
+
+    lint:
+      docker run --rm -i hadolint/hadolint < Dockerfile
+
+    help:
+      @echo '===================='
+      @echo 'lint                         - lint the Dockerfile'
+      @echo 'build                        - build docker image'
+      @echo 'run                          - run docker image'
+    ```
+
+  </details>
+
 - `Dockerfile`
-
-`Makefile`
-
-```makefile
-.PHONY: all lint build run help
-
-all: lint build
-
-build:
-	docker build -t my-image .
-
-run:
-	docker run my-image
-
-lint:
-	docker run --rm -i hadolint/hadolint < Dockerfile
-
-help:
-	@echo '===================='
-	@echo 'lint                         - lint the Dockerfile'
-	@echo 'build                        - build docker image'
-	@echo 'run                          - run docker image'
-```
 
 #### PR Workflow
 
