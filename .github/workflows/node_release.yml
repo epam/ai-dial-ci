@@ -138,10 +138,10 @@ jobs:
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
-      id-token: write
       contents: write
-      packages: write
-      security-events: write
+      id-token: write # for trusted publishing to npmjs registry
+      packages: write # for publishing to GitHub Packages registry
+      security-events: write # for uploading Trivy SARIF report to GitHub
     needs:
       - calculate_version
       - test
