@@ -199,6 +199,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# required only for trusted publishing package to mpmjs registry 
+permissions:
+  id-token: write
+
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/node_release.yml@main
@@ -206,6 +210,12 @@ jobs:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
     secrets: inherit
 ```
+> [!NOTE]
+> While publishing a public package to npmjs, there are 2 options how to provide credentials.
+>
+> **Option 1:** Create NPM access token -> add token to NPM_TOKEN GitHub variable (Settings - Secrets and variables - Actions) -> make first publish -> Create granular token and update NPM_TOKEN variable.
+>
+> **Option 2:** Create NPM access token -> add token to NPM_TOKEN GitHub variable (Settings - Secrets and variables - Actions) -> make first publish -> Configure OIDC provider in npmjs package settings using [official documentation](https://docs.npmjs.com/trusted-publishers) -> configure GitHub workflow with necessary permisions (see permissions in yaml file above) -> delete NPM_TOKEN variable.
 
 ### Java (gradle)
 
