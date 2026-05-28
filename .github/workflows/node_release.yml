@@ -51,6 +51,14 @@ on:
         type: string
         description: ORT version to use
         default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+      ort-config-repository:
+        type: string
+        description: ORT config repository to use
+        default: "https://github.com/oss-review-toolkit/ort-config.git"
+      ort-config-revision:
+        type: string
+        description: ORT config revision to use
+        default: "main"
       docker-build-enabled:
         type: boolean
         description: "Enable Docker build"
@@ -117,6 +125,8 @@ jobs:
       ort-enabled: ${{ inputs.ort-enabled }}
       ort-bypassed: ${{ inputs.ort-bypassed }}
       ort-version: ${{ inputs.ort-version }}
+      ort-config-repository: ${{ inputs.ort-config-repository }}
+      ort-config-revision: ${{ inputs.ort-config-revision }}
       node-version: ${{ inputs.node-version }}
       runs-on: ${{ inputs.runs-on }}
 
