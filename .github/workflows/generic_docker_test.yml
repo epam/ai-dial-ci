@@ -27,6 +27,14 @@ on:
         type: string
         description: ORT version to use
         default: "latest"
+      ort-config-repository:
+        type: string
+        description: ORT config repository to use
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
+      ort-config-revision:
+        type: string
+        description: ORT config revision to use
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
       runs-on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
@@ -62,5 +70,6 @@ jobs:
           allow-dynamic-versions: "true"
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace"
-          ort-config-revision: 5650fed55a20397b9abb9017a0c6bb674dc8481d
+          ort-config-repository: ${{ inputs.ort-config-repository }}
+          ort-config-revision: ${{ inputs.ort-config-revision }}
         continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
