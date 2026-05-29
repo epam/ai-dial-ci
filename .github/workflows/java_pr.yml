@@ -41,7 +41,7 @@ on:
         description: ORT config repository to use
       ort-config-revision:
         type: string
-        default: "main"
+        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
         description: ORT config revision to use
       trivy-enabled:
         type: boolean

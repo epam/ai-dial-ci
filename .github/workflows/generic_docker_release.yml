@@ -42,7 +42,7 @@ on:
       ort-config-revision:
         type: string
         description: ORT config revision to use
-        default: "main"
+        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
       trivy-enabled:
         type: boolean
         description: Enable Trivy scanning
