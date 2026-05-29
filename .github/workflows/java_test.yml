@@ -39,6 +39,14 @@ on:
         type: string
         default: "latest"
         description: ORT version to use
+      ort-config-repository:
+        type: string
+        description: ORT config repository to use
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
+      ort-config-revision:
+        type: string
+        description: ORT config revision to use
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
       java-version:
         type: string
         default: "17"
@@ -60,7 +68,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.3.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.3.1
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -85,7 +93,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.3.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.3.1
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -125,4 +133,6 @@ jobs:
           allow-dynamic-versions: "true"
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Gradle"
+          ort-config-repository: ${{ inputs.ort-config-repository }}
+          ort-config-revision: ${{ inputs.ort-config-revision }}
         continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
