@@ -71,6 +71,14 @@ on:
         type: string
         description: ORT version to use
         default: "latest"
+      ort-config-repository:
+        type: string
+        description: ORT config repository to use
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
+      ort-config-revision:
+        type: string
+        description: ORT config revision to use
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
       python-version:
         type: string
         description: Python version to use
@@ -145,6 +153,8 @@ jobs:
           allow-dynamic-versions: "true"
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
+          ort-config-repository: ${{ inputs.ort-config-repository }}
+          ort-config-revision: ${{ inputs.ort-config-revision }}
         continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
 
   trivy:

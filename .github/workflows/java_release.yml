@@ -43,6 +43,14 @@ on:
         type: string
         default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
         description: ORT version to use
+      ort-config-repository:
+        type: string
+        default: "https://github.com/oss-review-toolkit/ort-config.git"
+        description: ORT config repository to use
+      ort-config-revision:
+        type: string
+        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
+        description: ORT config revision to use
       trivy-enabled:
         type: boolean
         default: true
@@ -99,6 +107,8 @@ jobs:
       ort-enabled: ${{ inputs.ort-enabled }}
       ort-bypassed: ${{ inputs.ort-bypassed }}
       ort-version: ${{ inputs.ort-version }}
+      ort-config-repository: ${{ inputs.ort-config-repository }}
+      ort-config-revision: ${{ inputs.ort-config-revision }}
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       runs-on: ${{ inputs.runs-on }}
