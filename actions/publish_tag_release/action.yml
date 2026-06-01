@@ -29,9 +29,6 @@ runs:
   using: "composite"
   steps:
     - name: Commit and push changes
-      env:
-        RELEASE_GIT_USER_NAME: ${{ vars.RELEASE_GIT_USER_NAME || 'ai-dial-actions' }}
-        RELEASE_GIT_USER_EMAIL: ${{ vars.RELEASE_GIT_USER_EMAIL || '149404362+ai-dial-actions@users.noreply.github.com' }}
       run: |
         set -x
 
