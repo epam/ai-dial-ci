@@ -43,6 +43,14 @@ on:
         type: string
         description: ORT version to use
         default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+      ort-config-repository:
+        type: string
+        description: ORT config repository to use
+        default: "https://github.com/oss-review-toolkit/ort-config.git"
+      ort-config-revision:
+        type: string
+        description: ORT config revision to use
+        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
       trivy-enabled:
         type: boolean
         description: Enable Trivy scanning
@@ -99,6 +107,8 @@ jobs:
       ort-enabled: ${{ inputs.ort-enabled }}
       ort-bypassed: ${{ inputs.ort-bypassed }}
       ort-version: ${{ inputs.ort-version }}
+      ort-config-repository: ${{ inputs.ort-config-repository }}
+      ort-config-revision: ${{ inputs.ort-config-revision }}
       python-version: ${{ inputs.python-version }}
       poetry-version: ${{ inputs.poetry-version }}
       runs-on: ${{ inputs.runs-on }}
@@ -113,7 +123,7 @@ jobs:
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.3.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.4.0
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
@@ -153,7 +163,7 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.3.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.4.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -165,7 +175,7 @@ jobs:
         shell: bash
         run: |
           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-without-hyphens }}\"/g" pyproject.toml
-      - uses: epam/ai-dial-ci/actions/build_docker@4.3.1
+      - uses: epam/ai-dial-ci/actions/build_docker@4.4.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -183,9 +193,11 @@ jobs:
           image-extra-names: ${{ env.IMAGE_NAME }}
           image-extra-tag-rules: |
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.3.1
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.4.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
+          git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}
+          git-user-email: ${{ vars.ACTIONS_BOT_EMAIL || '149404362+ai-dial-actions@users.noreply.github.com' }}
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
           draft-stable-releases: ${{ inputs.draft-stable-releases }}

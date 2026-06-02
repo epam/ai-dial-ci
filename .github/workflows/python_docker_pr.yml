@@ -35,6 +35,14 @@ on:
         type: string
         description: ORT version to use
         default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+      ort-config-repository:
+        type: string
+        description: ORT config repository to use
+        default: "https://github.com/oss-review-toolkit/ort-config.git"
+      ort-config-revision:
+        type: string
+        description: ORT config revision to use
+        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
       trivy-enabled:
         type: boolean
         description: Enable Trivy scanning
@@ -91,6 +99,8 @@ jobs:
       ort-enabled: ${{ inputs.ort-enabled }}
       ort-bypassed: ${{ inputs.ort-bypassed }}
       ort-version: ${{ inputs.ort-version }}
+      ort-config-repository: ${{ inputs.ort-config-repository }}
+      ort-config-revision: ${{ inputs.ort-config-revision }}
       python-version: ${{ inputs.python-version }}
       poetry-version: ${{ inputs.poetry-version }}
       runs-on: ${{ inputs.runs-on }}
@@ -128,7 +138,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@4.3.1
+      - uses: epam/ai-dial-ci/actions/build_docker@4.4.0
         with:
           image-name: ghcr.io/${{ env.IMAGE_NAME }}
           image-tag: test

@@ -3,6 +3,9 @@
 - [AI DIAL workflows](#ai-dial-workflows)
   - [Overview](#overview)
   - [Usage](#usage)
+    - [Repository configuration](#repository-configuration)
+      - [Repository variables](#repository-variables)
+      - [Repository secrets](#repository-secrets)
     - [Branching](#branching)
       - [Skipping Release Candidates (RC)](#skipping-release-candidates-rc)
     - [Changelog Generation](#changelog-generation)
@@ -48,6 +51,27 @@ Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub 
 ## Usage
 
 These workflows could be imported to any repository under EPAM GitHub organization as standard `.github/workflows` files. See examples below (replace `@main` with specific version tag).
+
+### Repository configuration
+
+#### Repository variables
+
+> [!tip]
+> [Creating configuration variables for a repository](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables#creating-configuration-variables-for-a-repository)
+
+| Name                | Example value                                        | Required | Description                         |
+| ------------------- | ---------------------------------------------------- | -------- | ----------------------------------- |
+| `ACTIONS_BOT_NAME`  | `ai-dial-actions`                                    | false    | Git user name for CI/CD automation  |
+| `ACTIONS_BOT_EMAIL` | `149404362+ai-dial-actions@users.noreply.github.com` | false    | Git user email for CI/CD automation |
+
+#### Repository secrets
+
+> [!tip]
+> [Creating secrets for a repository](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets#creating-secrets-for-a-repository)
+
+| Name                | Example value                    | Required | Description                                                                          |
+| ------------------- | -------------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| `ACTIONS_BOT_TOKEN` | `ghp_1234567890abcdef1234567890` | true     | Personal access token for CI/CD automation user with `repo`, `write:packages` scopes |
 
 ### Branching
 
