@@ -187,10 +187,10 @@ gitGraph
 
 | Output                         | Expected value                     |
 | ------------------------------ | ---------------------------------- |
-| Next version                   | `1.0.0-dev.1`                      |
+| Next version                   | `1.1.0-dev.1`                      |
 | Git tag                        | -                                  |
 | Container tags                 | `IMAGE:development`                |
-| npm artifacts (`tag: version`) | `development: 1.0.0-dev.1` created |
+| npm artifacts (`tag: version`) | `development: 1.1.0-dev.1` created |
 | GitHub Release                 | -                                  |
 | Release changelog              | -                                  |
 
@@ -205,7 +205,7 @@ docker manifest inspect $IMAGE:development
 
 npm dist-tag ls $PKG
 # --> 1.0-rc: 1.0.0-rc.0
-#     development: 1.0.0-dev.1
+#     development: 1.1.0-dev.1
 
 gh release list
 # --> 1.0.0-rc.0  Pre-release  (1.0.0-rc.0)
@@ -252,7 +252,7 @@ docker manifest inspect $IMAGE:1.0.0-rc.1
 
 npm dist-tag ls $PKG
 # --> 1.0-rc: 1.0.0-rc.1
-#     development: 1.0.0-dev.1
+#     development: 1.1.0-dev.1
 
 gh release view 1.0.0-rc.1 --json isPrerelease
 # --> {"isPrerelease":true}
@@ -310,7 +310,7 @@ docker manifest inspect $IMAGE:latest
 
 npm dist-tag ls $PKG
 # --> 1.0-rc: 1.0.0-rc.1
-#     development: 1.0.0-dev.1
+#     development: 1.1.0-dev.1
 #     latest: 1.0.0
 
 gh release view 1.0.0 --json isPrerelease
@@ -325,7 +325,7 @@ gh release view 1.0.0 --json body | jq -r '.body'
 ### Scenario 6 - Sequential push of 2 commits to `development` after stable `1.0.0` exists
 
 **Pre-conditions:** End state of Scenario 5. Tags: `1.0.0`, `1.0.0-rc.1`, `1.0.0-rc.0`.
-npm: `latest: 1.0.0`, `1.0-rc: 1.0.0-rc.1`, `development: 1.0.0-dev.1`.
+npm: `latest: 1.0.0`, `1.0-rc: 1.0.0-rc.1`, `development: 1.1.0-dev.1`.
 `IMAGE:latest` points to `IMAGE:1.0.0`. No `2.x` stable exists.
 
 > [!note]
