@@ -119,6 +119,10 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
+      - uses: epam/ai-dial-ci/actions/node_prepare@4.4.0
+        with:
+          node-version: ${{ inputs.node-version }}
+          clean-install: true
       - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
         env:
           CONTINUE_ON_ERROR: ${{ inputs.bypass-checks || inputs.ort-bypassed }} # Hack to use the input below as a boolean
