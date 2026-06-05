@@ -7,14 +7,7 @@ setup_file() {
   export ACTION_RUN_SCRIPT="${BATS_FILE_TMPDIR}/calculate_version_from_action.sh"
 
   # Parse the run-block from GitHub Action once for all tests in this file
-  awk '
-    $0 ~ /^      run: \|$/ { in_run=1; next }
-    in_run && $0 ~ /^      env:$/ { exit }
-    in_run {
-      sub(/^        /, "", $0)
-      print
-    }
-  ' "${ACTION_FILE}" > "${ACTION_RUN_SCRIPT}"
+  yq '.runs.steps[] | select(.id == "calculate-version") | .run' "${ACTION_FILE}" > "${ACTION_RUN_SCRIPT}"
   chmod +x "${ACTION_RUN_SCRIPT}"
 }
 
