@@ -24,14 +24,21 @@
 #     - (optional) DISPATCH_WHITELIST         JSON array of repository names (wildcard supported) allowed to dispatch slash command events
 #                                             Default: ["ai-dial*"]
 #   - Secrets:
-#     - ACTIONS_BOT_TOKEN                     GitHub token with permissions to create/update comments
-#     - E2E_ADMIN                             A name of an application user with admin privileges
-#     - E2E_OVERLAY_USERNAME                  Name(s) of application user(s) for ai-dial-chat (overlay) tests
-#     - E2E_USERNAME                          Name(s) of application user(s) for ai-dial-chat tests
-#     - E2E_PASSWORD                          Password for the application users
-#     - NEXT_PUBLIC_OVERLAY_USER_BUCKET       A blob storage prefix for specific application user
-#
-# - GitHub environment (name from "environment" argument, default - `dial-review`):
+#     - ACTIONS_BOT_TOKEN:                    GitHub token with permissions to create/update comments
+#     - DEPLOY_HOST:                          GitLab instance hostname (e.g. gitlab.com)
+#     - E2E_ADMIN:                            A name of an application user with admin privileges
+#     - E2E_OVERLAY_USERNAME:                 Name(s) of application user(s) for ai-dial-chat (overlay) tests
+#     - E2E_USERNAME:                         Name(s) of application user(s) for ai-dial-chat tests
+#     - E2E_PASSWORD:                         Password for the application users
+#     - NEXT_PUBLIC_OVERLAY_USER_BUCKET:      A blob storage prefix for specific application user
+#     - DIAL_ADMIN_USERS_FILE:                Users data file for ai-dial-admin-perf tests
+#     - INFLUX_HOST:                          InfluxDB host for ai-dial-admin-perf tests
+#     - INFLUX_TOKEN:                         InfluxDB token for ai-dial-admin-perf tests
+#     - AUTH0_DOMAIN:                         Auth0 domain for ai-dial-admin-perf authentication
+#     - DIAL_ADMIN_CLIENT_ID:                 Auth0 client ID for ai-dial-admin-perf tests
+#     - DIAL_ADMIN_CLIENT_SECRET:             Auth0 client secret for ai-dial-admin-perf tests
+#     - DIAL_ADMIN_NEXTAUTH_SECRET:           NextAuth secret for ai-dial-admin-perf tests
+# - GitHub environment `review`:
 #   - Variables:
 #     - REVIEW_BASE_DOMAIN                    Base domain for review environment (e.g. example.com)
 #     - DEPLOY_PROJECT_ID                     ID of the GitLab project to trigger deployment in
@@ -74,7 +81,7 @@ jobs:
           fi
 
           if [[ -n "$error_message" ]]; then
-            echo "status=$error_message" >>$GITHUB_OUTPUT
+            echo "::error::$error_message"
             exit 1
           fi
 
@@ -96,7 +103,7 @@ jobs:
           fi
 
           if [[ -n "$error_message" ]]; then
-            echo "status=$error_message" >>$GITHUB_OUTPUT
+            echo "::error::$error_message"
             exit 1
           fi
           echo "All checks passed"
@@ -121,7 +128,7 @@ jobs:
             ERROR_MESSAGE+=" Pull request head ref is missing."
           fi
           if [[ -n "$ERROR_MESSAGE" ]]; then
-            echo "status=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
+            echo "::error::$ERROR_MESSAGE"
             exit 1
           fi
           echo "All required values are present."
@@ -232,6 +239,7 @@ jobs:
               local http_success_codes="401 404" # treat these HTTP codes as success
               local http_fail_codes=""           # treat these HTTP codes as non-recoverable failure
 
+              
               printf "HTTP check: GET %s\n" "$url"
               while [ $attempt -le $attempt_limit ]; do
                   local curl_exit=0
@@ -282,12 +290,20 @@ jobs:
           # This is requested by QA team to verify changes in tests before rolling them out for everyone
           test-branch: ${{ matrix.test-repository == github.event.client_payload.pull_request.head.repo.full_name && github.event.client_payload.pull_request.head.ref || '' }}
         env:
+	        # ai-dial-chat
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
           E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
-
+          # ai-dial-admin-perf
+          DIAL_ADMIN_USERS_FILE: ${{ secrets.DIAL_ADMIN_USERS_FILE }}
+          INFLUX_HOST: ${{ secrets.INFLUX_HOST }}
+          INFLUX_TOKEN: ${{ secrets.INFLUX_TOKEN }}
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          DIAL_ADMIN_CLIENT_ID: ${{ secrets.DIAL_ADMIN_CLIENT_ID }}
+          DIAL_ADMIN_CLIENT_SECRET: ${{ secrets.DIAL_ADMIN_CLIENT_SECRET }}
+          DIAL_ADMIN_NEXTAUTH_SECRET: ${{ secrets.DIAL_ADMIN_NEXTAUTH_SECRET }}
   monitor:
     runs-on: ubuntu-latest
     if: always()
