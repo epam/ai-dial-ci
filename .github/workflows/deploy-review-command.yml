@@ -239,7 +239,6 @@ jobs:
               local http_success_codes="401 404" # treat these HTTP codes as success
               local http_fail_codes=""           # treat these HTTP codes as non-recoverable failure
 
-              
               printf "HTTP check: GET %s\n" "$url"
               while [ $attempt -le $attempt_limit ]; do
                   local curl_exit=0
@@ -290,7 +289,7 @@ jobs:
           # This is requested by QA team to verify changes in tests before rolling them out for everyone
           test-branch: ${{ matrix.test-repository == github.event.client_payload.pull_request.head.repo.full_name && github.event.client_payload.pull_request.head.ref || '' }}
         env:
-	        # ai-dial-chat
+          # ai-dial-chat
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
           E2E_OVERLAY_USERNAME: ${{ secrets.E2E_OVERLAY_USERNAME }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}

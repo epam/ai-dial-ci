@@ -839,17 +839,17 @@ Besides inputs, the action will have access to environment variables:
 - `DIAL_ADMIN_NEXTAUTH_SECRET`
 
 > [!important]
-> Checkout in the composite action should be performed with great caution to avoid executing untrusted code from PRs. After checkout, `working-directory` usage is mandatory. See example below for recommended approach
+> Checkout in the composite action should be performed with great caution to avoid executing untrusted code from PRs. After checkout, `working-directory` usage is mandatory in all supported steps. See example below for recommended approach
 
 <details>
   <summary>Example of composite action.yml</summary>
 
 ```yml
-name: AI Dial Admin Performance Tests
-description: Runs Gatling performance tests against AI Dial Admin with InfluxDB reporting
+name: Example test action
+description: Dummy action to demonstrate how to work with review environment context
 
 inputs:
-  # standardized
+  # Required inputs
   environment-url:
     description: "URL of the deployed review environment (specific application)"
     required: true
@@ -862,13 +862,16 @@ inputs:
   test-branch:
     description: "Branch name of GitHub repository with tests source code"
     default: "development" # TODO: modify this according to your use case
+  # Custom inputs
   working-directory:
-    description: "Working directory for anything happening in the current action. Not actually an input, but a convenient way to store common value for all steps"
+    description: "Working directory for anything happening in the current action. Note: this is not actually an input, but a HACK to store common value as `env` is unavailable in composite actions"
     default: "tests"
 
 runs:
   using: "composite"
   steps:
+    # Checkout repository with test source code into a separate directory
+    # Never use default path, otherwise you'll overwrite action code and parent workflow will fail to complete
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         repository: ${{ inputs.test-repository }}
@@ -876,16 +879,18 @@ runs:
         path: ${{ inputs.working-directory }}
         lfs: true
         persist-credentials: false
+    # Dummy tests trigger
     - name: Running tests
       run: |
         echo "Running tests against ${{ inputs.environment-url }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+    # Example of saving test artifacts
     - name: Upload test artifacts
       if: always()
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
-        name: test-artifacts
+        name: ${{ inputs.report-prefix }}-test-artifacts
         path: |
           ${{ inputs.working-directory }}/*.log
         retention-days: 7
