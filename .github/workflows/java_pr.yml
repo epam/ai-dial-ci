@@ -175,7 +175,7 @@ jobs:
       - uses: epam/ai-dial-ci/actions/build_docker@4.4.0
         with:
           image-names: ghcr.io/${{ env.IMAGE_NAME }}
-          image-tags: type=raw,value=test
+          image-tags: test
           trivy-enabled: ${{ inputs.trivy-enabled }}
           bypass-checks: ${{ inputs.trivy-bypassed }}
           trivy-severity: ${{ inputs.trivy-severity }}
