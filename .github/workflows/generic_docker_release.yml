@@ -76,9 +76,6 @@ on:
         description: Docker build platforms
         default: "linux/amd64"
 
-env:
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   test:
     uses: ./.github/workflows/generic_docker_test.yml
@@ -155,8 +152,12 @@ jobs:
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
           dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          image-name: ghcr.io/${{ env.IMAGE_NAME }}
-          image-tag: ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
+          image-names: |
+            ${{ env.IMAGE_NAME }}
+            ghcr.io/${{ env.IMAGE_NAME }}
+          image-tags: |
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
           push-enabled: true
           trivy-enabled: ${{ inputs.trivy-enabled }}
           bypass-checks: ${{ inputs.trivy-bypassed }}
@@ -164,9 +165,9 @@ jobs:
           trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
           trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
           platforms: ${{ inputs.platforms }}
-          image-extra-names: ${{ env.IMAGE_NAME }}
-          image-extra-tag-rules: |
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
+        env:
+          IMAGE_NAME: ${{ github.repository }}
+
       - uses: epam/ai-dial-ci/actions/publish_tag_release@4.4.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:

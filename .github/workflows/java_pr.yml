@@ -84,9 +84,6 @@ on:
         description: Docker build platforms
         default: "linux/amd64"
 
-env:
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   test:
     uses: ./.github/workflows/java_test.yml
@@ -177,8 +174,8 @@ jobs:
           lfs: true
       - uses: epam/ai-dial-ci/actions/build_docker@4.4.0
         with:
-          image-name: ghcr.io/${{ env.IMAGE_NAME }}
-          image-tag: test
+          image-names: ghcr.io/${{ env.IMAGE_NAME }}
+          image-tags: type=raw,value=test
           trivy-enabled: ${{ inputs.trivy-enabled }}
           bypass-checks: ${{ inputs.trivy-bypassed }}
           trivy-severity: ${{ inputs.trivy-severity }}
@@ -187,3 +184,5 @@ jobs:
           gpr-username: ${{ github.actor }}
           gpr-password: ${{ secrets.GITHUB_TOKEN }}
           platforms: ${{ inputs.platforms }}
+        env:
+          IMAGE_NAME: ${{ github.repository }}

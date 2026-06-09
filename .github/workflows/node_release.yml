@@ -108,9 +108,6 @@ on:
         description: Path to the Dockerfile
         default: "Dockerfile"
 
-env:
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   test:
     uses: ./.github/workflows/node_test.yml
@@ -207,8 +204,12 @@ jobs:
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
           dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          image-name: ghcr.io/${{ env.IMAGE_NAME }}
-          image-tag: ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
+          image-names: |
+            ${{ env.IMAGE_NAME }}
+            ghcr.io/${{ env.IMAGE_NAME }}
+          image-tags: |
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
           push-enabled: true
           trivy-enabled: ${{ inputs.trivy-enabled }}
           bypass-checks: ${{ inputs.trivy-bypassed }}
@@ -217,9 +218,8 @@ jobs:
           trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
           platforms: ${{ inputs.platforms }}
           dockerfile-path: ${{ inputs.dockerfile-path }}
-          image-extra-names: ${{ env.IMAGE_NAME }}
-          image-extra-tag-rules: |
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
+        env:
+          IMAGE_NAME: ${{ github.repository }}
       - name: Publish packages to npmjs
         if: ${{ inputs.publish-enabled }}
         shell: bash
