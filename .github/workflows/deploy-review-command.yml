@@ -36,7 +36,6 @@
 #     - INFLUX_TOKEN:                         InfluxDB token for ai-dial-admin-perf tests
 #     - AUTH0_DOMAIN:                         Auth0 domain for ai-dial-admin-perf authentication
 #     - DIAL_ADMIN_CLIENT_ID:                 Auth0 client ID for ai-dial-admin-perf tests
-#     - DIAL_ADMIN_CLIENT_SECRET:             Auth0 client secret for ai-dial-admin-perf tests
 #     - DIAL_ADMIN_NEXTAUTH_SECRET:           NextAuth secret for ai-dial-admin-perf tests
 # - GitHub environment `review`:
 #   - Variables:
@@ -301,7 +300,6 @@ jobs:
           INFLUX_TOKEN: ${{ secrets.INFLUX_TOKEN }}
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
           DIAL_ADMIN_CLIENT_ID: ${{ secrets.DIAL_ADMIN_CLIENT_ID }}
-          DIAL_ADMIN_CLIENT_SECRET: ${{ secrets.DIAL_ADMIN_CLIENT_SECRET }}
           DIAL_ADMIN_NEXTAUTH_SECRET: ${{ secrets.DIAL_ADMIN_NEXTAUTH_SECRET }}
   monitor:
     runs-on: ubuntu-latest
