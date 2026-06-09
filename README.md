@@ -835,7 +835,6 @@ Besides inputs, the action will have access to environment variables:
 - `INFLUX_TOKEN`
 - `AUTH0_DOMAIN`
 - `DIAL_ADMIN_CLIENT_ID`
-- `DIAL_ADMIN_CLIENT_SECRET`
 - `DIAL_ADMIN_NEXTAUTH_SECRET`
 
 > [!important]
