@@ -23,7 +23,7 @@ runs:
         # Not using `cache: gradle` because `setup-gradle` action takes care of it
         # ref: https://github.com/gradle/actions/blob/main/docs/setup-gradle.md#incompatibility-with-other-caching-mechanisms
     - name: Set up Gradle
-      uses: gradle/actions/setup-gradle@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
+      uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
       with:
         build-scan-publish: ${{ fromJSON(inputs.build-scan-publish) }}
         build-scan-terms-of-use-url: "https://gradle.com/help/legal-terms-of-use"
