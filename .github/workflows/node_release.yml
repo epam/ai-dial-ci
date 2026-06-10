@@ -7,6 +7,10 @@ on:
         type: boolean
         description: Promote release to stable (for release-* branches only)
         default: false
+      draft-stable-releases:
+        type: boolean
+        description: Create stable GitHub releases as drafts
+        default: false
       bypass-checks:
         type: boolean
         description: Do not fail pipeline if checks failed
@@ -46,7 +50,15 @@ on:
       ort-version:
         type: string
         description: ORT version to use
-        default: "latest"
+        default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+      ort-config-repository:
+        type: string
+        description: ORT config repository to use
+        default: "https://github.com/oss-review-toolkit/ort-config.git"
+      ort-config-revision:
+        type: string
+        description: ORT config revision to use
+        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
       docker-build-enabled:
         type: boolean
         description: "Enable Docker build"
@@ -113,6 +125,8 @@ jobs:
       ort-enabled: ${{ inputs.ort-enabled }}
       ort-bypassed: ${{ inputs.ort-bypassed }}
       ort-version: ${{ inputs.ort-version }}
+      ort-config-repository: ${{ inputs.ort-config-repository }}
+      ort-config-revision: ${{ inputs.ort-config-revision }}
       node-version: ${{ inputs.node-version }}
       runs-on: ${{ inputs.runs-on }}
 
@@ -127,7 +141,7 @@ jobs:
       release-line: ${{ steps.semantic_versioning.outputs.release-line }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.0.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.4.1
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
@@ -135,8 +149,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
-      packages: write
-      security-events: write
+      id-token: write # for trusted publishing to npmjs registry
+      packages: write # for publishing to GitHub Packages registry
+      security-events: write # for uploading Trivy SARIF report to GitHub
     needs:
       - calculate_version
       - test
@@ -167,15 +182,15 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.0.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.4.1
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@4.0.0
+      - uses: epam/ai-dial-ci/actions/node_prepare@4.4.1
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -186,7 +201,7 @@ jobs:
           npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version --allow-same-version
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ inputs.docker-build-enabled && (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@4.0.0
+        uses: epam/ai-dial-ci/actions/build_docker@4.4.1
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -215,7 +230,7 @@ jobs:
           # Steps:
           # 1. (naive) check if a package with the same version is already exists in the registry
           # 2. build the package using either `build:publishable` (useful for monorepos) or `build` script
-          # 3. publish the package using `publish` script with distribution tags:
+          # 3. publish the package using `publish:npm` script (if exists) or `npm publish` directly with distribution tags:
           #    - development branch --> `development` distribution tag
           #    - release candidate version --> `{release-line}-rc` distribution tag (e.g. `1.0-rc`)
           #    - stable version
@@ -231,15 +246,23 @@ jobs:
           else
             npm run build
           fi
+          publish_with_tag() {
+            local tag="$1"
+            if node -e "process.exit(require('./package.json').scripts?.['publish:npm'] ? 0 : 1)"; then
+              npm run publish:npm -- --tag "$tag"
+            else
+              npm publish --tag "$tag"
+            fi
+          }
           if [ "$IS_DEVELOPMENT" = "true" ]; then
-            npm run publish -- --tag "development"
+            publish_with_tag "development"
           elif [ "$IS_RELEASE_CANDIDATE" = "true" ]; then
-            npm run publish -- --tag "$RELEASE_LINE-rc"
+            publish_with_tag "$RELEASE_LINE-rc"
           elif [ "$IS_RELEASE" = "true" ]; then
             if [ "$IS_LATEST" = "true" ]; then
-              npm run publish -- --tag "latest"
+              publish_with_tag "latest"
             else
-              npm run publish -- --tag "release-$RELEASE_LINE"
+              publish_with_tag "release-$RELEASE_LINE"
             fi
           fi
         env:
@@ -249,11 +272,14 @@ jobs:
           IS_RELEASE: ${{ needs.calculate_version.outputs.is-release == 'true' }}
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           RELEASE_LINE: ${{ needs.calculate_version.outputs.release-line }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.0.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.4.1
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
+          git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}
+          git-user-email: ${{ vars.ACTIONS_BOT_EMAIL || '149404362+ai-dial-actions@users.noreply.github.com' }}
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
+          draft-stable-releases: ${{ inputs.draft-stable-releases }}
           extra-commit-command: |
             git add package.json package-lock.json
             git commit -m '[skip ci] Update version' || true # upstream branch may already be updated

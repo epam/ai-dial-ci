@@ -15,6 +15,15 @@ inputs:
   artifacts:
     description: Artifacts to upload
     default: ""
+  draft-stable-releases:
+    description: Create stable GitHub releases as drafts
+    default: "false"
+  git-user-name:
+    description: Git user name for committing changes
+    default: "github-actions[bot]"
+  git-user-email:
+    description: Git user email for committing changes
+    default: "41898282+github-actions[bot]@users.noreply.github.com"
 
 runs:
   using: "composite"
@@ -22,8 +31,6 @@ runs:
     - name: Commit and push changes
       run: |
         set -x
-        git config --global user.name "ai-dial-actions"
-        git config --global user.email "149404362+ai-dial-actions@users.noreply.github.com"
 
         ${{ inputs.extra-commit-command }}
 
@@ -31,6 +38,11 @@ runs:
 
         git push
         git push --tags
+      env:
+        GIT_AUTHOR_NAME: ${{ inputs.git-user-name }}
+        GIT_AUTHOR_EMAIL: ${{ inputs.git-user-email }}
+        GIT_COMMITTER_NAME: ${{ inputs.git-user-name }}
+        GIT_COMMITTER_EMAIL: ${{ inputs.git-user-email }}
       shell: bash
     - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
       with:
@@ -38,6 +50,8 @@ runs:
         bodyFile: ${{ inputs.changelog-file }}
         allowUpdates: true
         updateOnlyUnreleased: true
+        omitDraftDuringUpdate: true
+        draft: ${{ fromJSON(inputs.draft-stable-releases) && !contains(inputs.tag-version, '-') }} # draft if it's a stable release and the input is 'true'
         prerelease: ${{ contains(inputs.tag-version, '-') }} # will capture e.g. `-rc`
         makeLatest: ${{ contains(inputs.tag-version, '-') && 'false' || 'legacy' }} # false if it's a pre-release, otherwise let GitHub decide (based on semver)
         tag: ${{ inputs.tag-version }}

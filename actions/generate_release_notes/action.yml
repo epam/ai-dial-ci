@@ -13,7 +13,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout repository
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         fetch-depth: 0
         # HACK: there's a bug in actions/checkout, where all subsequent checkouts within single job with `lfs: true`
@@ -26,120 +26,146 @@ runs:
 
         # This script generates a changelog based on the commits since the last tag in the repository or the latest tag specified as an input.
         # It categorizes the commits into features, fixes, and other changes.
-        # The script outputs the changelog to a file named my_changelog in the /tmp directory.
+        # The script outputs the changelog to a /tmp/my_changelog file.
 
         # set -x
 
+        commits_log_file="/tmp/commits_log"
+        shipped_commits_log_file="/tmp/shipped_commits_log"
+        breaking_changes_file="/tmp/changelog_breaking_changes"
+        features_file="/tmp/changelog_features"
+        fixes_file="/tmp/changelog_fixes"
+        docs_file="/tmp/changelog_docs"
+        tests_file="/tmp/changelog_tests"
+        ci_file="/tmp/changelog_ci"
+        other_file="/tmp/changelog_other"
+        changelog_file="/tmp/my_changelog"
+
+        append_markdown_section() {
+          local title="$1"
+          local file="$2"
+
+          if [[ -s "${file}" ]]; then
+            {
+              echo -e "## ${title}\n"
+              cat "${file}"
+              echo ""
+            } >>"${changelog_file}"
+          fi
+        }
+
         if [[ "${INPUT_USE_MERGE_BASE}" == "true" ]]; then
-            # Full changelog since last stable release: use the provided stable tag as baseline.
-            # If no stable tag exists (first-ever release), fall back to full history.
-            LAST_TAG="${INPUT_LATEST_TAG:-NO}"
+          # Full changelog since last stable release: use the provided stable tag as baseline.
+          # If no stable tag exists (first-ever release), fall back to full history.
+          LAST_TAG="${INPUT_LATEST_TAG:-NO}"
         else
-            # Incremental changelog: tag-based, branch tags have priority
-            latest_tag_repo="${INPUT_LATEST_TAG}"                                      # Trying to obtain the last tag if provided as ENV variable
-            latest_tag_branch=$(git describe --tags --abbrev=0 2>/dev/null || echo '') # Trying to obtain the latest GIT tag in the current branch
+          # Incremental changelog: tag-based, branch tags have priority
+          latest_tag_repo="${INPUT_LATEST_TAG}"                                      # Trying to obtain the last tag if provided as ENV variable
+          latest_tag_branch=$(git describe --tags --abbrev=0 2>/dev/null || echo '') # Trying to obtain the latest GIT tag in the current branch
 
-            # If the branch tag is an ancestor of the provided stable tag, it belongs to a previous
-            # release line (e.g. 1.0.0-rc.0 visible from release-1.1 via the shared branch point).
-            # Discard it so the stable tag is used as the baseline instead.
-            if [[ -n "${latest_tag_branch}" && -n "${latest_tag_repo}" ]] &&
-                git merge-base --is-ancestor "${latest_tag_branch}" "${latest_tag_repo}" 2>/dev/null; then
-                latest_tag_branch=""
-            fi
+          # If the branch tag is an ancestor of the provided stable tag, it belongs to a previous
+          # release line (e.g. 1.0.0-rc.0 visible from release-1.1 via the shared branch point).
+          # Discard it so the stable tag is used as the baseline instead.
+          if [[ -n "${latest_tag_branch}" && -n "${latest_tag_repo}" ]] &&
+            git merge-base --is-ancestor "${latest_tag_branch}" "${latest_tag_repo}" 2>/dev/null; then
+            latest_tag_branch=""
+          fi
 
-            # Local branch tags should have priority.
-            # If no tags are found in both methods, it sets LAST_TAG as 'NO'
-            LAST_TAG="${latest_tag_branch:-${latest_tag_repo:-NO}}"
+          # Local branch tags should have priority.
+          # If no tags are found in both methods, it sets LAST_TAG as 'NO'
+          LAST_TAG="${latest_tag_branch:-${latest_tag_repo:-NO}}"
         fi
 
         # Fetch all commit messages if no tags found, else fetch messages since the LAST_TAG
         if [[ "${LAST_TAG}" == "NO" ]]; then
-            git log --pretty=format:"%s" >/tmp/my_commits_log
+          git log --pretty=format:"%s" >${commits_log_file}
         else
-            # Layer 1: patch-level dedup (catches clean cherry-picks by comparing patch-ids)
-            git log --cherry-pick --right-only "${LAST_TAG}...HEAD" --pretty=format:"%s" >/tmp/my_commits_log
+          # Layer 1: patch-level dedup (catches clean cherry-picks by comparing patch-ids)
+          git log --cherry-pick --right-only "${LAST_TAG}...HEAD" --pretty=format:"%s" >${commits_log_file}
 
-            # Layer 2: message-level dedup (catches conflict-resolved or amended cherry-picks)
-            git log "${LAST_TAG}" --pretty=format:"%s" | sort -u >/tmp/already_shipped
-            grep -Fxvf /tmp/already_shipped /tmp/my_commits_log >/tmp/my_commits_log_deduped || true
-            mv /tmp/my_commits_log_deduped /tmp/my_commits_log
+          # Layer 2: message-level dedup (catches conflict-resolved or amended cherry-picks)
+          git log "${LAST_TAG}" --pretty=format:"%s" | sort -u >${shipped_commits_log_file}
+          grep -Fxvf ${shipped_commits_log_file} ${commits_log_file} >"${commits_log_file}_deduped" || true
+          mv "${commits_log_file}_deduped" ${commits_log_file}
         fi
 
-        sort --unique --output /tmp/my_commits_log{,} # Sorting commits and removing duplicates
+        sort --unique --output ${commits_log_file}{,} # Sorting commits and removing duplicates (inline)
 
-        sed -i '/\[skip ci\] Update version/d' /tmp/my_commits_log # Removing '[skip ci] Update version' commits
-        sed -i '/^Merge branch/d' /tmp/my_commits_log              # Removing merge commits
+        sed -i '/\[skip ci\] Update version/d' ${commits_log_file} # Removing '[skip ci] Update version' commits
+        sed -i '/^Merge branch/d' ${commits_log_file}              # Removing merge commits
 
-        # Creating empty files for each category.
-        echo -n '' >/tmp/my_changelog_breaking_changes
-        echo -n '' >/tmp/my_changelog_features
-        echo -n '' >/tmp/my_changelog_fixes
-        echo -n '' >/tmp/my_changelog_other
-        echo -n '' >/tmp/my_changelog
+        # Creating empty files for each category
+        echo -n '' >${breaking_changes_file}
+        echo -n '' >${features_file}
+        echo -n '' >${fixes_file}
+        echo -n '' >${docs_file}
+        echo -n '' >${tests_file}
+        echo -n '' >${ci_file}
+        echo -n '' >${other_file}
+        echo -n '' >${changelog_file}
 
-        # Regular expression patterns for categorizing commits
-        FEATURES_REGEX="^feat:|^feature:"
-        FIXES_REGEX="^fix:|^hotfix:"
-        BREAKING_CHANGES_REGEX="^.*!:"
+        # Regular expression pattern for supported conventional commits with optional scope
+        SUPPORTED_CONVENTIONAL_COMMIT_REGEX='^(fix|feat|docs|test|ci|chore)(\(([a-zA-Z0-9_.-]+)\))?(!)?:[[:space:]]+(.+)$'
 
-        # Separating breaking change commits
-        { grep -E "${BREAKING_CHANGES_REGEX}" /tmp/my_commits_log || echo -n ''; } | while read -r l; do
-            DESCRIPTION=$(echo "${l}" | sed "s/${BREAKING_CHANGES_REGEX} *//") # Removing leading keywords for neat display
-            echo "* ${DESCRIPTION}" >>/tmp/my_changelog_breaking_changes
-        done
+        # Parse commits once and route them into their categories
+        while IFS= read -r l; do
+          [[ -z "${l}" ]] && continue
 
-        # Separating feature commits
-        { grep -E "${FEATURES_REGEX}" /tmp/my_commits_log || echo -n ''; } | while read -r l; do
-            DESCRIPTION=$(echo "${l}" | sed "s/^feat: *//;s/^feature: *//") # Removing leading keywords for neat display
-            echo "* ${DESCRIPTION}" >>/tmp/my_changelog_features
-        done
+          if [[ "${l}" =~ ${SUPPORTED_CONVENTIONAL_COMMIT_REGEX} ]]; then
+            TYPE="${BASH_REMATCH[1]}"
+            SCOPE="${BASH_REMATCH[3]}"
+            BREAKING_FLAG="${BASH_REMATCH[4]}"
+            DESCRIPTION="${BASH_REMATCH[5]}"
 
-        # Separating fix commits
-        { grep -E "${FIXES_REGEX}" /tmp/my_commits_log || echo -n ''; } | while read -r l; do
-            DESCRIPTION=$(echo "${l}" | sed "s/^fix: *//;s/^hotfix: *//")
-            echo "* ${DESCRIPTION}" >>/tmp/my_changelog_fixes
-        done
+            if [[ -n "${SCOPE}" ]]; then
+              ENTRY="* (${SCOPE}) ${DESCRIPTION}"
+            else
+              ENTRY="* ${DESCRIPTION}"
+            fi
 
-        # Separating other commits
-        { grep -Ev "${BREAKING_CHANGES_REGEX}|${FEATURES_REGEX}|${FIXES_REGEX}" /tmp/my_commits_log || echo -n ''; } | while read -r l; do
-            DESCRIPTION=$(echo "${l}" | sed "s/^chore: *//")
-            echo "* ${DESCRIPTION}" >>/tmp/my_changelog_other
-        done
+            if [[ -n "${BREAKING_FLAG}" ]]; then
+              echo "${ENTRY}" >>${breaking_changes_file}
+            fi
 
-        # Creating the final changelog file with markdown syntax
-        # breaking changes
-        if [[ "$(wc -l </tmp/my_changelog_breaking_changes)" -gt 0 ]]; then
-            {
-                echo -e "## BREAKING CHANGES\n"
-                cat /tmp/my_changelog_breaking_changes
-                echo ""
-            } >>/tmp/my_changelog
-        fi
+            case "${TYPE}" in
+            feat)
+              echo "${ENTRY}" >>${features_file}
+              ;;
+            fix)
+              echo "${ENTRY}" >>${fixes_file}
+              ;;
+            docs)
+              echo "${ENTRY}" >>${docs_file}
+              ;;
+            test)
+              echo "${ENTRY}" >>${tests_file}
+              ;;
+            ci)
+              echo "${ENTRY}" >>${ci_file}
+              ;;
+            # chore is not categorized in the changelog and is treated as "other"
+            *)
+              echo "${ENTRY}" >>${other_file}
+              ;;
+            esac
+          else
+            echo "* ${l}" >>${other_file}
+          fi
+        done <${commits_log_file}
 
-        # features
-        if [[ "$(wc -l </tmp/my_changelog_features)" -gt 0 ]]; then
-            {
-                echo -e "## Features\n"
-                cat /tmp/my_changelog_features
-                echo ""
-            } >>/tmp/my_changelog
-        fi
+        # Compiling the final changelog file with markdown headers for each category
+        append_markdown_section "BREAKING CHANGES" "${breaking_changes_file}"
+        append_markdown_section "Features" "${features_file}"
+        append_markdown_section "Fixes" "${fixes_file}"
+        append_markdown_section "Docs" "${docs_file}"
+        append_markdown_section "Tests" "${tests_file}"
+        append_markdown_section "CI" "${ci_file}"
+        append_markdown_section "Other" "${other_file}"
 
-        # fixes
-        if [[ "$(wc -l </tmp/my_changelog_fixes)" -gt 0 ]]; then
-            {
-                echo -e "## Fixes\n"
-                cat /tmp/my_changelog_fixes
-                echo ""
-            } >>/tmp/my_changelog
-        fi
-
-        # other
-        if [[ "$(wc -l </tmp/my_changelog_other)" -gt 0 ]]; then
-            {
-                echo -e "## Other\n"
-                cat /tmp/my_changelog_other
-            } >>/tmp/my_changelog
+        if [[ -s ${changelog_file} ]]; then
+          echo "Changelog generated successfully: ${changelog_file}"
+        else
+          echo "::warning::Changelog is empty"
         fi
       env:
         INPUT_LATEST_TAG: ${{ inputs.latest-tag }}

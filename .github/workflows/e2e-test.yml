@@ -17,28 +17,30 @@ jobs:
         id: sha
         shell: bash
         env:
-          TRIGGER_GITHUB_SHA: ${{ github.event.client_payload.github-sha}}
+          SOURCE_COMMIT_SHA: ${{ github.event.client_payload.github-sha }}
         run: |
           # shorten the commit SHA to the first 7 characters
-          echo "SHA=${TRIGGER_GITHUB_SHA:0:7}" >>$GITHUB_OUTPUT
+          echo "SHA=${SOURCE_COMMIT_SHA:0:7}" >>$GITHUB_OUTPUT
       - name: Deploy environment
         id: deploy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@c59b56e9d2688ab42c1304322ac8831a4ef6f7d2 # v1.4.0
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
+          host: ${{ vars.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
           ref: ${{ github.event.client_payload.gitlab-project-ref || vars.DEPLOY_REF }}
+          download_artifacts_on_failure: false
+          verbose: true
           variables: >
             {
-              "TRIGGER_GITHUB_APP":"${{ github.event.client_payload.github-app }}",
-              "TRIGGER_GITHUB_SHA": "${{ steps.sha.outputs.SHA }}",
-              "GITHUB_STAGE": "deploy"
+              "APPLICATION_NAME":"${{ github.event.client_payload.github-app }}",
+              "SOURCE_COMMIT_SHA": "${{ steps.sha.outputs.SHA }}",
+              "ENVIRONMENT_ACTION": "deploy"
             }
 
   e2e-test:
-    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@4.0.0
+    uses: epam/ai-dial-ci/.github/workflows/gh-e2e-test.yml@4.4.1
     needs:
       - deploy-env
     with:
@@ -66,14 +68,16 @@ jobs:
         id: destroy
         uses: digital-blueprint/gitlab-pipeline-trigger-action@c59b56e9d2688ab42c1304322ac8831a4ef6f7d2 # v1.4.0
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
+          host: ${{ vars.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
           access_token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
           id: ${{ github.event.client_payload.gitlab-project-id }}
           ref: ${{ github.event.client_payload.gitlab-project-ref || vars.DEPLOY_REF }}
+          download_artifacts_on_failure: false
+          verbose: true
           variables: >
             {
-              "TRIGGER_GITHUB_APP":"${{ needs.deploy-env.outputs.github-app }}",
-              "TRIGGER_GITHUB_SHA": "${{ needs.deploy-env.outputs.github-sha }}",
-              "GITHUB_STAGE": "destroy"
+              "APPLICATION_NAME":"${{ needs.deploy-env.outputs.github-app }}",
+              "SOURCE_COMMIT_SHA": "${{ needs.deploy-env.outputs.github-sha }}",
+              "ENVIRONMENT_ACTION": "destroy"
             }

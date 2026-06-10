@@ -9,8 +9,8 @@ updates:
       day: "wednesday"
       time: "09:00"
     commit-message:
-      # Prefix all commit messages with "chore: "
-      prefix: "chore"
+      prefix: "ci"
+      include: scope
     ignore:
       - dependency-name: "epam/ai-dial-ci"
     open-pull-requests-limit: 100

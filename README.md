@@ -3,6 +3,9 @@
 - [AI DIAL workflows](#ai-dial-workflows)
   - [Overview](#overview)
   - [Usage](#usage)
+    - [Repository configuration](#repository-configuration)
+      - [Repository variables](#repository-variables)
+      - [Repository secrets](#repository-secrets)
     - [Branching](#branching)
       - [Skipping Release Candidates (RC)](#skipping-release-candidates-rc)
     - [Changelog Generation](#changelog-generation)
@@ -49,6 +52,27 @@ Contains reusable workflows for AI-DIAL group of repositories under EPAM GitHub 
 
 These workflows could be imported to any repository under EPAM GitHub organization as standard `.github/workflows` files. See examples below (replace `@main` with specific version tag).
 
+### Repository configuration
+
+#### Repository variables
+
+> [!tip]
+> [Creating configuration variables for a repository](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables#creating-configuration-variables-for-a-repository)
+
+| Name                | Example value                                        | Required | Description                         |
+| ------------------- | ---------------------------------------------------- | -------- | ----------------------------------- |
+| `ACTIONS_BOT_NAME`  | `ai-dial-actions`                                    | false    | Git user name for CI/CD automation  |
+| `ACTIONS_BOT_EMAIL` | `149404362+ai-dial-actions@users.noreply.github.com` | false    | Git user email for CI/CD automation |
+
+#### Repository secrets
+
+> [!tip]
+> [Creating secrets for a repository](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets#creating-secrets-for-a-repository)
+
+| Name                | Example value                    | Required | Description                                                                          |
+| ------------------- | -------------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| `ACTIONS_BOT_TOKEN` | `ghp_1234567890abcdef1234567890` | true     | Personal access token for CI/CD automation user with `repo`, `write:packages` scopes |
+
 ### Branching
 
 We expect consumer repositories to follow the given branching strategy:
@@ -90,7 +114,7 @@ concurrency:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@4.0.0
+    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@main
     with:
 -     promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
 +     promote: true
@@ -128,32 +152,40 @@ Changelog is automatically generated based on git commit history (commit message
 
 Consumer repository **must** have:
 
-- `package.json` file with `format`, `lint`, `test`, `build`, and `publish` scripts defined
+- `package.json` file with `format`, `lint`, `test`, `build` scripts defined. We require scripts to exist, but not restrict their implementation - you can use any tools you like.
 
-`package.json`
+  <details>
+    <summary>Example</summary>
 
-```json
-{
-  "name": "@scope/my-package",
-  "version": "0.0.0",
-  "scripts": {
-    "format": "prettier --check .",
-    "lint": "eslint .",
-    "test": "jest",
-    "build": "tsc",
-    "publish": "npm publish"
-  }
-}
-```
+    ```json
+    {
+      "name": "@scope/my-package",
+      "version": "0.0.0",
+      "scripts": {
+        "format": "prettier --check .",
+        "lint": "eslint .",
+        "test": "jest",
+        "build": "nx run-many -t build",
+      }
+    }
+    ```
 
-> [!warning]
-> The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+    > [!warning]
+    > The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
 
-> [!tip]
-> We require script *names* only, not specific implementations - you can use any tools you like as long as you provide the required scripts
+    > [!tip]
+    > If a `build:publishable` script exists, it takes precedence over `build` for building the package. Useful in monorepos to avoid building the whole repository when only subset should be published, e.g. `"build:publishable": "nx run-many -t build --projects=tag:publishable"`
 
-> [!tip]
-> If a `build:publishable` script exists, it takes precedence over `build` for the release build (useful in monorepos)
+    > [!tip]
+    > If a `publish:npm` script exists, it takes precedence over regular `npm publish` command for publishing the package. This allows to implement any custom publish logic. The custom script will receive desired distribution tag as a `--tag` argument
+  </details>
+
+- Authentication to npm registry
+
+  While publishing a package to [npm registry](https://npmjs.com), we support 2 options how to provide credentials.
+
+  - (recommended) [Trusted publishing](https://docs.npmjs.com/trusted-publishers): grant release GitHub workflow `id-token: write` permission (see [example](#release-workflow))
+  - [Granular access token](https://docs.npmjs.com/creating-and-viewing-access-tokens): create a token and store it as `NPM_TOKEN` [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
 
 #### PR Workflow
 
@@ -197,6 +229,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  packages: write
+  security-events: write
+  id-token: write
+
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/node_release.yml@main
@@ -209,24 +247,26 @@ jobs:
 
 #### Requirements
 
-Consumer repository must have:
+Consumer repository **must** have:
 
 - `build.gradle` with `check`, `checkstyleMain` and `build` tasks exposed
 
-`build.gradle`
+  <details>
+    <summary>Example</summary>
 
-```groovy
-plugins {
-    id "java" // exposes `check`, `build` tasks
-    id "checkstyle" // exposes `checkstyleMain` task
-}
+  ```groovy
+  plugins {
+      id "java" // exposes `check`, `build` tasks
+      id "checkstyle" // exposes `checkstyleMain` task
+  }
 
-group = "org.example"
-version = "0.0.0"
-```
+  group = "org.example"
+  version = "0.0.0"
+  ```
 
-> [!warning]
-> The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+  > [!warning]
+  > The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+  </details>
 
 #### PR Workflow (Docker)
 
@@ -415,52 +455,57 @@ jobs:
 
 #### Requirements
 
-Consumer repository must have:
+Consumer repository **must** have:
 
 - `Makefile` file with `lint`, `build` (only for Python packages), `test`, `publish` (only for Python packages) targets defined
+
+  <details>
+    <summary>Example</summary>
+
+  ```makefile
+  PORT ?= 5001
+
+  .PHONY: install lint build test publish
+
+  install:
+    poetry install --all-extras
+
+  lint: install
+    poetry run ruff check .
+    poetry run ruff format --check .
+
+  build: install # Required only for Python packages
+    poetry build
+
+  test: install
+    if [ -n "$(PYTHON)" ]; then poetry env use "$(PYTHON)"; fi
+    poetry run pytest
+
+  publish: # Required only for Python packages
+    poetry publish --username __token__ --password $(PYPI_TOKEN) --skip-existing
+  ```
+
+  > [!note]
+  > `build` and `publish` Makefile targets are required only for repositories that produce Python packages as build artifacts
+
+  > [!tip]
+  > `test` target receives Python version, e.g. `make test PYTHON=<version>`, where `<version>` is the one defined in `code-checks-python-versions` workflow input. If multiple versions are defined, the workflow will run tests for each of them in parallel
+  </details>
+
 - `pyproject.toml` file with `name` and `version` defined
 
-`Makefile`
+  <details>
+    <summary>Example</summary>
 
-```makefile
-PORT ?= 5001
+  ```toml
+  [project]
+  name = "my-package"
+  version = "0.0.0"
+  ```
 
-.PHONY: install lint build test publish
-
-install:
-	poetry install --all-extras
-
-lint: install
-	poetry run ruff check .
-	poetry run ruff format --check .
-
-build: install # Required only for Python packages
-	poetry build
-
-test: install
-	if [ -n "$(PYTHON)" ]; then poetry env use "$(PYTHON)"; fi
-	poetry run pytest
-
-publish: # Required only for Python packages
-	poetry publish --username __token__ --password $(PYPI_TOKEN) --skip-existing
-```
-
-`pyproject.toml`
-
-```toml
-[project]
-name = "my-package"
-version = "0.0.0"
-```
-
-> [!warning]
-> The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
-
-> [!note]
-> `build` and `publish` Makefile targets are required only for repositories that produce Python packages as build artifacts
-
-> [!tip]
-> `test` target receives Python version, e.g. `make test PYTHON=<version>`, where `<version>` is the one defined in `code-checks-python-versions` workflow input. If multiple versions are defined, the workflow will run tests for each of them in parallel
+  > [!warning]
+  > The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+  </details>
 
 #### PR Workflow (Docker)
 
@@ -566,33 +611,37 @@ jobs:
 
 #### Requirements
 
-Consumer repository must have:
+Consumer repository **must** have:
 
 - `Makefile` with `lint` target defined
+
+  <details>
+    <summary>Example</summary>
+
+    ```makefile
+    .PHONY: all lint build run help
+
+    all: lint build
+
+    build:
+      docker build -t my-image .
+
+    run:
+      docker run my-image
+
+    lint:
+      docker run --rm -i hadolint/hadolint < Dockerfile
+
+    help:
+      @echo '===================='
+      @echo 'lint                         - lint the Dockerfile'
+      @echo 'build                        - build docker image'
+      @echo 'run                          - run docker image'
+    ```
+
+  </details>
+
 - `Dockerfile`
-
-`Makefile`
-
-```makefile
-.PHONY: all lint build run help
-
-all: lint build
-
-build:
-	docker build -t my-image .
-
-run:
-	docker run my-image
-
-lint:
-	docker run --rm -i hadolint/hadolint < Dockerfile
-
-help:
-	@echo '===================='
-	@echo 'lint                         - lint the Dockerfile'
-	@echo 'build                        - build docker image'
-	@echo 'run                          - run docker image'
-```
 
 #### PR Workflow
 
@@ -685,7 +734,9 @@ on:
 jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
-    if: ${{ github.event.issue.pull_request }}
+    if: |
+      github.event.issue.pull_request &&
+      github.event.issue.state == 'open'
     steps:
       - name: Slash Command Dispatch
         id: scd
@@ -709,7 +760,7 @@ jobs:
 
 ##### End-to-end tests
 
-The E2E testing system for review environments enables automated testing of pull request changes in isolated, short-lived environments. When a developer comments `/deploy-review` on a PR, the system deploys the PR code to a review environment and runs E2E tests against it.
+The E2E testing system for review environments enables automated testing of pull request changes in isolated, short-lived environments. When a developer comments `/deploy-review` on a PR, the system deploys the PR code to a review environment and runs E2E tests against it. See [Skipping E2E Tests](#skipping-e2e-tests) section to disable this feature.
 
 <details>
   <summary>Flowchart diagram</summary>
@@ -760,14 +811,17 @@ A test repository must provide [composite actions](https://docs.github.com/en/ac
       action.yml <-- Composite action that runs tests
 ```
 
-> [!note]
-> The `<application>` placeholder must match the `application` value passed in `static_args` of the `slash-command-dispatch` action
+> [!important]
+> One composite action should be designed to test one application only
+
+> [!tip]
+> By default, [chat](https://github.com/epam/ai-dial-chat) tests are executed. To define custom applications (with corresponding test code sources), pass `test-applications` argument in `static_args` of the `slash-command-dispatch` action. Format: `application[:test-repository],application[:test-repository]`, e.g. `chat,admin:epam/ai-dial-admin-perf` will result in running tests from `epam/ai-dial-chat` (default tests code source) against `chat` application and tests from `epam/ai-dial-admin-perf` against `admin` application
 
 The action must have inputs:
 
-- `environment-url`: URL of the deployed review environment
-- `report-prefix`: (Optional) Prefix for report files generated by the action
-- `test-branch`: (Optional) Branch of repository with tests source code to use
+- `environment-url`: URL of the deployed review environment. Points to specific application, e.g. `https://chat-example.com`, `https://admin-example.com`, etc
+- `report-prefix`: Environment identifier that can be used (but not limited) to prefix test reports, e.g. `chat-pr-123`, `admin-pr-456`, etc
+- `test-branch`: Branch name of GitHub repository with tests source code. If tests are triggered from the test repository itself, `test-branch` equals PR source branch, e.g. `feat-something-new`, otherwise empty. This behavior allows QA team to verify changes in tests before rolling them out
 
 Besides inputs, the action will have access to environment variables:
 
@@ -776,9 +830,72 @@ Besides inputs, the action will have access to environment variables:
 - `E2E_PASSWORD`
 - `E2E_USERNAME`
 - `NEXT_PUBLIC_OVERLAY_USER_BUCKET`
+- `DIAL_ADMIN_USERS_FILE`
+- `INFLUX_HOST`
+- `INFLUX_TOKEN`
+- `AUTH0_DOMAIN`
+- `DIAL_ADMIN_CLIENT_ID`
+- `DIAL_ADMIN_NEXTAUTH_SECRET`
 
-> [!note]
-> One composite action should test one application only
+> [!important]
+> Checkout in the composite action should be performed with great caution to avoid executing untrusted code from PRs. After checkout, `working-directory` usage is mandatory in all supported steps. See example below for recommended approach
+
+<details>
+  <summary>Example of composite action.yml</summary>
+
+```yml
+name: Example test action
+description: Dummy action to demonstrate how to work with review environment context
+
+inputs:
+  # Required inputs
+  environment-url:
+    description: "URL of the deployed review environment (specific application)"
+    required: true
+  report-prefix:
+    description: "Prefix for report files generated by the action"
+    default: ""
+  test-repository:
+    description: "GitHub repository with tests source code"
+    default: "epam/ai-dial-chat" # TODO: modify this according to your use case
+  test-branch:
+    description: "Branch name of GitHub repository with tests source code"
+    default: "development" # TODO: modify this according to your use case
+  # Custom inputs
+  working-directory:
+    description: "Working directory for anything happening in the current action. Note: this is not actually an input, but a HACK to store common value as `env` is unavailable in composite actions"
+    default: "tests"
+
+runs:
+  using: "composite"
+  steps:
+    # Checkout repository with test source code into a separate directory
+    # Never use default path, otherwise you'll overwrite action code and parent workflow will fail to complete
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        repository: ${{ inputs.test-repository }}
+        ref: ${{ inputs.test-branch }}
+        path: ${{ inputs.working-directory }}
+        lfs: true
+        persist-credentials: false
+    # Dummy tests trigger
+    - name: Running tests
+      run: |
+        echo "Running tests against ${{ inputs.environment-url }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+    # Example of saving test artifacts
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: ${{ inputs.report-prefix }}-test-artifacts
+        path: |
+          ${{ inputs.working-directory }}/*.log
+        retention-days: 7
+```
+
+</details>
 
 ###### Skipping E2E Tests
 
@@ -954,8 +1071,8 @@ updates:
       day: "wednesday"
       time: "09:00"
     commit-message:
-      # Prefix all commit messages with "chore: "
-      prefix: "chore"
+      prefix: "ci"
+      include: scope
     groups:
       ai-dial-ci:
         applies-to: version-updates
