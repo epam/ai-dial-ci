@@ -92,9 +92,6 @@ on:
         description: Docker build platforms
         default: "linux/amd64"
 
-env:
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   test:
     uses: ./.github/workflows/java_test.yml
@@ -123,7 +120,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.1
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.5.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -142,7 +139,7 @@ jobs:
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.4.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.5.0
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
@@ -183,7 +180,7 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.4.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.5.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -191,7 +188,7 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.4.1
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.5.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -199,14 +196,18 @@ jobs:
         shell: bash
         run: |
           sed -i -E "s/^([ \t]*version[ \t]*=[ \t]*)[\"'].*[\"']/\1\"${{ needs.calculate_version.outputs.next-version }}\"/g" build.gradle
-      - uses: epam/ai-dial-ci/actions/build_docker@4.4.1
+      - uses: epam/ai-dial-ci/actions/build_docker@4.5.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
           dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          image-name: ghcr.io/${{ env.IMAGE_NAME }}
-          image-tag: ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
+          image-names: |
+            ${{ env.IMAGE_NAME }}
+            ghcr.io/${{ env.IMAGE_NAME }}
+          image-tags: |
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
           push-enabled: true
           trivy-enabled: ${{ inputs.trivy-enabled }}
           bypass-checks: ${{ inputs.trivy-bypassed }}
@@ -216,11 +217,9 @@ jobs:
           gpr-username: ${{ github.actor }}
           gpr-password: ${{ secrets.GITHUB_TOKEN }}
           platforms: ${{ inputs.platforms }}
-          image-extra-aliases: |
-            ${{ env.IMAGE_NAME }}:${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
-            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}:{1}', env.IMAGE_NAME, 'latest') || '' }}
-            ${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' && format('{0}/{1}:{2}', 'ghcr.io', env.IMAGE_NAME, 'latest') || '' }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.4.1
+        env:
+          IMAGE_NAME: ${{ github.repository }}
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.5.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}

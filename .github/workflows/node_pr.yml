@@ -96,9 +96,6 @@ on:
         description: "Path to the Dockerfile (default: ./Dockerfile)"
         default: "Dockerfile"
 
-env:
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   test:
     uses: ./.github/workflows/node_test.yml
@@ -153,10 +150,10 @@ jobs:
           lfs: true
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@4.4.1
+        uses: epam/ai-dial-ci/actions/build_docker@4.5.0
         with:
-          image-name: ghcr.io/${{ env.IMAGE_NAME }}
-          image-tag: test
+          image-names: ghcr.io/${{ env.IMAGE_NAME }}
+          image-tags: test
           trivy-enabled: ${{ inputs.trivy-enabled }}
           bypass-checks: ${{ inputs.trivy-bypassed }}
           trivy-severity: ${{ inputs.trivy-severity }}
@@ -164,3 +161,5 @@ jobs:
           trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
           platforms: ${{ inputs.platforms }}
           dockerfile-path: ${{ inputs.dockerfile-path }}
+        env:
+          IMAGE_NAME: ${{ github.repository }}
