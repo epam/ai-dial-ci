@@ -97,7 +97,7 @@ jobs:
     if: ${{ inputs.style-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/python_prepare@4.5.0
@@ -118,7 +118,7 @@ jobs:
       matrix:
         python-version: ${{ fromJSON(inputs.code-checks-python-versions) }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/python_prepare@4.5.0
@@ -142,7 +142,7 @@ jobs:
     if: ${{ inputs.ort-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
       - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
@@ -161,12 +161,12 @@ jobs:
     if: ${{ inputs.trivy-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
       - name: Run Trivy vulnerability scanner (JSON output, no fail)
         id: trivy
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -194,7 +194,7 @@ jobs:
         continue-on-error: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}
       - name: Upload Trivy report (SARIF)
         if: ${{ steps.trivy-generate-sarif.outcome == 'success' }}
-        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
+        uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
         with:
           sarif_file: "trivy-results.sarif"
           category: trivy
