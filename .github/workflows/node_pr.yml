@@ -150,7 +150,7 @@ jobs:
           lfs: true
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@4.4.1
+        uses: epam/ai-dial-ci/actions/build_docker@4.5.0
         with:
           image-names: ghcr.io/${{ env.IMAGE_NAME }}
           image-tags: test
