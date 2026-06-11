@@ -91,6 +91,10 @@ on:
         type: string
         description: Docker build platforms
         default: "linux/amd64"
+      filter-version:
+        type: string
+        description: Operate within versions matched regex
+        default: '[0-9]+\.[0-9]+'
 
 jobs:
   test:
@@ -143,6 +147,7 @@ jobs:
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
+          filter-version: ${{ inputs.filter-version }}
 
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
