@@ -94,7 +94,7 @@ runs:
           INPUT_FILTER_VERSION="[0-9]+\.[0-9]+"
         fi
         LATEST_STABLE_TAG=$(git tag | grep -E "^${INPUT_FILTER_VERSION}\.[0-9]+$" | sort -V | tail -1 || true)
-        LATEST_STABLE_TAG_WITHOUT_FILTER=$(git tag | grep -E "^[0-9]\.[0-9]\.[0-9]+$" | sort -V | tail -1 || true)
+        LATEST_STABLE_TAG_WITHOUT_FILTER=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1 || true)
         LATEST_RC_TAG=$(git tag | grep -E "^${INPUT_FILTER_VERSION}\.0-rc\.[0-9]+$" | sort -V | tail -1 || true)
 
         if [[ "${CURRENT_BRANCH}" == "development" || "${CURRENT_BRANCH}" =~ ^development- ]]; then
