@@ -91,7 +91,7 @@ runs:
         git fetch --tags
 
         if [ -z "${INPUT_FILTER_VERSION}" ]; then
-          INPUT_FILTER_VERSION="[0-9]\.[0-9]+"
+          INPUT_FILTER_VERSION="[0-9]+\.[0-9]+"
         fi
         LATEST_STABLE_TAG=$(git tag | grep -E "^${INPUT_FILTER_VERSION}\.[0-9]+$" | sort -V | tail -1 || true)
         LATEST_STABLE_TAG_WITHOUT_FILTER=$(git tag | grep -E "^[0-9]\.[0-9]\.[0-9]+$" | sort -V | tail -1 || true)
