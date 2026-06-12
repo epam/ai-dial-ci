@@ -51,9 +51,13 @@ runs:
       shell: bash
       run: |
         #!/bin/bash
+        set -euo pipefail
         # set -x
 
-        function version { echo "$@" | awk -F. '{ printf("%d%03d%03d\n", $1,$2,$3); }'; }
+        function version_gt { test "$1" != "$2" && test "$(echo $@ | tr ' ' '\n' | sort -V | tail -1)" == "$1"; }
+        function version_lt { test "$1" != "$2" && test "$(echo $@ | tr ' ' '\n' | sort -V | tail -1)" == "$2"; }
+        function version_ge { test "$1" == "$2" || version_gt "$1" "$2"; }
+        function version_le { test "$1" == "$2" || version_lt "$1" "$2"; }
 
         function bump_version {
           local VERSION
@@ -87,6 +91,8 @@ runs:
         IS_RELEASE="false"
         IS_LATEST="false"
         CHANGELOG_MODE="tag"
+        RELEASE_LINE=""
+        DEV_SOURCE=""
 
         git fetch --tags
 
@@ -122,9 +128,9 @@ runs:
 
           DEV_SOURCE=""  # "stable", "rc", or ""
           if [[ -n "${LATEST_STABLE_LINE}" && -n "${LATEST_RC_LINE}" ]]; then
-            if [[ "$(version "${LATEST_STABLE_LINE}.0")" -lt "$(version "${INITIAL_BRANCH_VERSION}")" && "$(version "${LATEST_RC_LINE}.0")" -lt "$(version "${INITIAL_BRANCH_VERSION}")" ]]; then
+            if version_lt "${LATEST_STABLE_LINE}.0" "${INITIAL_BRANCH_VERSION}" && version_lt "${LATEST_RC_LINE}.0" "${INITIAL_BRANCH_VERSION}"; then
               DEV_SOURCE="branch"
-            elif [[ "$(version "${LATEST_STABLE_LINE}.0")" -ge "$(version "${LATEST_RC_LINE}.0")" ]]; then
+            elif version_ge "${LATEST_STABLE_LINE}.0" "${LATEST_RC_LINE}.0"; then
               DEV_SOURCE="stable"
             else
               DEV_SOURCE="rc"
@@ -147,8 +153,8 @@ runs:
               NEXT_VERSION=$(bump_version "${LATEST_RC_LINE}.0" --minor --pre-release "-dev.${DEV_N}")
               ;;
             branch)
-              if [[ -n "${LATEST_STABLE_TAG}" && -n "$LATEST_RC_TAG" ]]; then
-                if [[ "$(version "${LATEST_STABLE_TAG}")" -gt "$(version "${LATEST_RC_TAG}")" ]]; then
+              if [[ -n "${LATEST_STABLE_TAG}" && -n "${LATEST_RC_TAG}" ]]; then
+                if version_gt "${LATEST_STABLE_TAG}" "${LATEST_RC_TAG}"; then
                   DEV_N=$(git rev-list --count "${LATEST_STABLE_TAG}..HEAD")
                 else
                   DEV_N=$(git rev-list --count "${LATEST_RC_TAG}..HEAD")
@@ -179,7 +185,7 @@ runs:
             CURRENT_VERSION="${STABLE_TAG}"
             NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" --patch)
             IS_RELEASE="true"
-            if [ "$(version "${NEXT_VERSION}")" -gt "$(version "${LATEST_STABLE_TAG_WITHOUT_FILTER}")" ]; then
+            if version_gt "${NEXT_VERSION}" "${LATEST_STABLE_TAG_WITHOUT_FILTER}"; then
               IS_LATEST="true"
             fi
 
@@ -189,7 +195,7 @@ runs:
             NEXT_VERSION="${RELEASE_LINE}.0"
             CHANGELOG_MODE="merge-base"
             IS_RELEASE="true"
-            if [ "$(version "${NEXT_VERSION}")" -gt "$(version "${LATEST_STABLE_TAG_WITHOUT_FILTER}")" ]; then
+            if version_gt "${NEXT_VERSION}" "${LATEST_STABLE_TAG_WITHOUT_FILTER}"; then
               IS_LATEST="true"
             fi
 
@@ -199,7 +205,7 @@ runs:
             LATEST_RC=$(git tag | grep -E "^${RELEASE_LINE}\.0-rc\.[0-9]+$" | sort -V | tail -1 || true)
 
             if [[ -n "${LATEST_RC}" ]]; then
-              RC_N=$(echo "${LATEST_RC}" | sed "s/^.*-rc\.//")
+              RC_N=${LATEST_RC/#*-rc\./}
               CURRENT_VERSION="${LATEST_RC}"
               NEXT_VERSION=$(bump_version "${RELEASE_LINE}.0" --pre-release "-rc.$((RC_N + 1))")
 
@@ -244,15 +250,17 @@ runs:
         echo "$OUTPUTS_SUMMARY" >>"$GITHUB_STEP_SUMMARY"
 
         # Outputs
-        echo "current-version=${CURRENT_VERSION}" >>$GITHUB_OUTPUT
-        echo "next-version=${NEXT_VERSION}" >>$GITHUB_OUTPUT
-        echo "next-version-without-hyphens=${NEXT_VERSION_WITHOUT_HYPHENS}" >>$GITHUB_OUTPUT
-        echo "latest-stable-tag=${LATEST_STABLE_TAG}" >>$GITHUB_OUTPUT
-        echo "is-release-candidate=${IS_RELEASE_CANDIDATE}" >>$GITHUB_OUTPUT
-        echo "is-release=${IS_RELEASE}" >>$GITHUB_OUTPUT
-        echo "is-latest=${IS_LATEST}" >>$GITHUB_OUTPUT
-        echo "release-line=${RELEASE_LINE:-}" >>$GITHUB_OUTPUT
-        echo "changelog-mode=${CHANGELOG_MODE}" >>$GITHUB_OUTPUT
+        cat <<EOF >>"${GITHUB_OUTPUT}"
+        current-version=${CURRENT_VERSION}
+        next-version=${NEXT_VERSION}
+        next-version-without-hyphens=${NEXT_VERSION_WITHOUT_HYPHENS}
+        latest-stable-tag=${LATEST_STABLE_TAG}
+        is-release-candidate=${IS_RELEASE_CANDIDATE}
+        is-release=${IS_RELEASE}
+        is-latest=${IS_LATEST}
+        release-line=${RELEASE_LINE}
+        changelog-mode=${CHANGELOG_MODE}
+        EOF
       env:
         INPUT_FILTER_VERSION: ${{ inputs.filter-version }}
         INPUT_PROMOTE: ${{ inputs.promote }}
