@@ -54,8 +54,9 @@ runs:
         set -euo pipefail
         # set -x
 
-        function version_gt { test "$1" != "$2" && test "$(echo $@ | tr ' ' '\n' | sort -V | tail -1)" == "$1"; }
-        function version_lt { test "$1" != "$2" && test "$(echo $@ | tr ' ' '\n' | sort -V | tail -1)" == "$2"; }
+        function latest_semver { echo "$@" | tr ' ' '\n' | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -1; }
+        function version_gt { test "$1" != "$2" && test "$(latest_semver "$@")" == "$1"; }
+        function version_lt { test "$1" != "$2" && test "$(latest_semver "$@")" == "$2"; }
         function version_ge { test "$1" == "$2" || version_gt "$1" "$2"; }
         function version_le { test "$1" == "$2" || version_lt "$1" "$2"; }
 
@@ -185,7 +186,7 @@ runs:
             CURRENT_VERSION="${STABLE_TAG}"
             NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" --patch)
             IS_RELEASE="true"
-            if version_gt "${NEXT_VERSION}" "${LATEST_STABLE_TAG_WITHOUT_FILTER}"; then
+            if version_gt "${NEXT_VERSION}" "${LATEST_STABLE_TAG_WITHOUT_FILTER}" || test -z "${LATEST_STABLE_TAG_WITHOUT_FILTER}"; then
               IS_LATEST="true"
             fi
 
@@ -195,7 +196,7 @@ runs:
             NEXT_VERSION="${RELEASE_LINE}.0"
             CHANGELOG_MODE="merge-base"
             IS_RELEASE="true"
-            if version_gt "${NEXT_VERSION}" "${LATEST_STABLE_TAG_WITHOUT_FILTER}"; then
+            if version_gt "${NEXT_VERSION}" "${LATEST_STABLE_TAG_WITHOUT_FILTER}" || test -z "${LATEST_STABLE_TAG_WITHOUT_FILTER}"; then
               IS_LATEST="true"
             fi
 
