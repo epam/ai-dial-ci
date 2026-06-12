@@ -3,6 +3,9 @@ name: Calculate Version
 description: Calculate semver-format version based on current branch name and existing tags in git repository
 
 inputs:
+  filter-version:
+    description: Operate within versions matched regex
+    default: '[0-9]+\.[0-9]+'
   promote:
     description: When "true", skips RC increment and produces stable X.Y.Z tag instead. Works only on `release-*` branches
     default: "false"
@@ -48,9 +51,14 @@ runs:
       shell: bash
       run: |
         #!/bin/bash
+        set -euo pipefail
         # set -x
 
-        function version { echo "$@" | awk -F. '{ printf("%d%03d%03d\n", $1,$2,$3); }'; }
+        function latest_semver { echo "$@" | tr ' ' '\n' | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -1; }
+        function version_gt { test "$1" != "$2" && test "$(latest_semver "$@")" == "$1"; }
+        function version_lt { test "$1" != "$2" && test "$(latest_semver "$@")" == "$2"; }
+        function version_ge { test "$1" == "$2" || version_gt "$1" "$2"; }
+        function version_le { test "$1" == "$2" || version_lt "$1" "$2"; }
 
         function bump_version {
           local VERSION
@@ -84,18 +92,25 @@ runs:
         IS_RELEASE="false"
         IS_LATEST="false"
         CHANGELOG_MODE="tag"
+        RELEASE_LINE=""
+        DEV_SOURCE=""
 
         git fetch --tags
 
-        LATEST_STABLE_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1 || true)
-        LATEST_RC_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.0-rc\.[0-9]+$" | sort -V | tail -1 || true)
+        if [ -z "${INPUT_FILTER_VERSION}" ]; then
+          INPUT_FILTER_VERSION="[0-9]+\.[0-9]+"
+        fi
+        LATEST_STABLE_TAG=$(git tag | grep -E "^${INPUT_FILTER_VERSION}\.[0-9]+$" | sort -V | tail -1 || true)
+        LATEST_STABLE_TAG_WITHOUT_FILTER=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1 || true)
+        LATEST_RC_TAG=$(git tag | grep -E "^${INPUT_FILTER_VERSION}\.0-rc\.[0-9]+$" | sort -V | tail -1 || true)
 
-        if [[ "${CURRENT_BRANCH}" == "development" ]]; then
+        if [[ "${CURRENT_BRANCH}" == "development" || "${CURRENT_BRANCH}" =~ ^development- ]]; then
           # Determine which is greater: latest stable tag or latest RC tag
           # If latest stable tag is greater, next version is minor bump of given stable with dev suffix added
           # If latest RC tag is greater, next version is given RC line with dev suffix added
           # If no tags found, next version is 0.1.0 with dev suffix added
           # dev suffix is `-dev.N` where N is commit count from the tag that determines the version base
+          # If branch line is greater than stable tag line or RC tag line then calculate next version based on branch line
 
           LATEST_STABLE_LINE=""
           if [[ -n "${LATEST_STABLE_TAG}" ]]; then
@@ -105,10 +120,18 @@ runs:
           if [[ -n "${LATEST_RC_TAG}" ]]; then
             LATEST_RC_LINE=$(echo "${LATEST_RC_TAG}" | grep -oE "^[0-9]+\.[0-9]+")
           fi
+          if [[ $CURRENT_BRANCH =~ ^development- ]]; then
+            BRANCH_LINE="$(echo "${CURRENT_BRANCH##development-}" | awk -F. '{print $1}')"
+            INITIAL_BRANCH_VERSION="${BRANCH_LINE}.0.0"
+          else
+            INITIAL_BRANCH_VERSION="0.0.0"
+          fi
 
           DEV_SOURCE=""  # "stable", "rc", or ""
           if [[ -n "${LATEST_STABLE_LINE}" && -n "${LATEST_RC_LINE}" ]]; then
-            if [ "$(version "${LATEST_STABLE_LINE}.0")" -ge "$(version "${LATEST_RC_LINE}.0")" ]; then
+            if version_lt "${LATEST_STABLE_LINE}.0" "${INITIAL_BRANCH_VERSION}" && version_lt "${LATEST_RC_LINE}.0" "${INITIAL_BRANCH_VERSION}"; then
+              DEV_SOURCE="branch"
+            elif version_ge "${LATEST_STABLE_LINE}.0" "${LATEST_RC_LINE}.0"; then
               DEV_SOURCE="stable"
             else
               DEV_SOURCE="rc"
@@ -130,6 +153,23 @@ runs:
               CURRENT_VERSION="${LATEST_RC_TAG}"
               NEXT_VERSION=$(bump_version "${LATEST_RC_LINE}.0" --minor --pre-release "-dev.${DEV_N}")
               ;;
+            branch)
+              if [[ -n "${LATEST_STABLE_TAG}" && -n "${LATEST_RC_TAG}" ]]; then
+                if version_gt "${LATEST_STABLE_TAG}" "${LATEST_RC_TAG}"; then
+                  DEV_N=$(git rev-list --count "${LATEST_STABLE_TAG}..HEAD")
+                else
+                  DEV_N=$(git rev-list --count "${LATEST_RC_TAG}..HEAD")
+                fi
+              elif [[ -n "${LATEST_STABLE_TAG}" ]]; then
+                DEV_N=$(git rev-list --count "${LATEST_STABLE_TAG}..HEAD")
+              elif [ -n "${LATEST_RC_TAG}" ]; then
+                DEV_N=$(git rev-list --count "${LATEST_RC_TAG}..HEAD")
+              else
+                DEV_N=$(git rev-list --count HEAD)
+              fi
+              CURRENT_VERSION=""
+              NEXT_VERSION=$(bump_version "${INITIAL_BRANCH_VERSION}" --pre-release "-dev.${DEV_N}")
+              ;;
             *)
               DEV_N=$(git rev-list --count HEAD)
               CURRENT_VERSION=""
@@ -146,7 +186,7 @@ runs:
             CURRENT_VERSION="${STABLE_TAG}"
             NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" --patch)
             IS_RELEASE="true"
-            if [ "$(version "${NEXT_VERSION}")" -gt "$(version "${LATEST_STABLE_TAG}")" ]; then
+            if version_gt "${NEXT_VERSION}" "${LATEST_STABLE_TAG_WITHOUT_FILTER}" || test -z "${LATEST_STABLE_TAG_WITHOUT_FILTER}"; then
               IS_LATEST="true"
             fi
 
@@ -156,7 +196,7 @@ runs:
             NEXT_VERSION="${RELEASE_LINE}.0"
             CHANGELOG_MODE="merge-base"
             IS_RELEASE="true"
-            if [ "$(version "${NEXT_VERSION}")" -gt "$(version "${LATEST_STABLE_TAG}")" ]; then
+            if version_gt "${NEXT_VERSION}" "${LATEST_STABLE_TAG_WITHOUT_FILTER}" || test -z "${LATEST_STABLE_TAG_WITHOUT_FILTER}"; then
               IS_LATEST="true"
             fi
 
@@ -166,7 +206,7 @@ runs:
             LATEST_RC=$(git tag | grep -E "^${RELEASE_LINE}\.0-rc\.[0-9]+$" | sort -V | tail -1 || true)
 
             if [[ -n "${LATEST_RC}" ]]; then
-              RC_N=$(echo "${LATEST_RC}" | sed "s/^.*-rc\.//")
+              RC_N=${LATEST_RC/#*-rc\./}
               CURRENT_VERSION="${LATEST_RC}"
               NEXT_VERSION=$(bump_version "${RELEASE_LINE}.0" --pre-release "-rc.$((RC_N + 1))")
 
@@ -177,7 +217,7 @@ runs:
           fi
 
         else
-          echo "::error::Unsupported branch name '${CURRENT_BRANCH}'. Only 'development' and 'release-X.Y' branches are supported"
+          echo "::error::Unsupported branch name '${CURRENT_BRANCH}'. Only 'development', 'development-X.Y' and 'release-X.Y' branches are supported"
           exit 2
         fi
 
@@ -211,14 +251,17 @@ runs:
         echo "$OUTPUTS_SUMMARY" >>"$GITHUB_STEP_SUMMARY"
 
         # Outputs
-        echo "current-version=${CURRENT_VERSION}" >>$GITHUB_OUTPUT
-        echo "next-version=${NEXT_VERSION}" >>$GITHUB_OUTPUT
-        echo "next-version-without-hyphens=${NEXT_VERSION_WITHOUT_HYPHENS}" >>$GITHUB_OUTPUT
-        echo "latest-stable-tag=${LATEST_STABLE_TAG}" >>$GITHUB_OUTPUT
-        echo "is-release-candidate=${IS_RELEASE_CANDIDATE}" >>$GITHUB_OUTPUT
-        echo "is-release=${IS_RELEASE}" >>$GITHUB_OUTPUT
-        echo "is-latest=${IS_LATEST}" >>$GITHUB_OUTPUT
-        echo "release-line=${RELEASE_LINE:-}" >>$GITHUB_OUTPUT
-        echo "changelog-mode=${CHANGELOG_MODE}" >>$GITHUB_OUTPUT
+        cat <<EOF >>"${GITHUB_OUTPUT}"
+        current-version=${CURRENT_VERSION}
+        next-version=${NEXT_VERSION}
+        next-version-without-hyphens=${NEXT_VERSION_WITHOUT_HYPHENS}
+        latest-stable-tag=${LATEST_STABLE_TAG}
+        is-release-candidate=${IS_RELEASE_CANDIDATE}
+        is-release=${IS_RELEASE}
+        is-latest=${IS_LATEST}
+        release-line=${RELEASE_LINE}
+        changelog-mode=${CHANGELOG_MODE}
+        EOF
       env:
+        INPUT_FILTER_VERSION: ${{ inputs.filter-version }}
         INPUT_PROMOTE: ${{ inputs.promote }}
