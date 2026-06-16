@@ -75,6 +75,18 @@ on:
         type: string
         description: Docker build platforms
         default: "linux/amd64"
+      filter-version:
+        type: string
+        description: Operate within versions matched regex
+        default: '[0-9]+\.[0-9]+'
+      primary-branch-pattern:
+        type: string
+        description: Regex pattern for the primary branch. Matching branch uses development flow
+        default: '^development$'
+      release-branch-pattern:
+        type: string
+        description: Regex pattern for release branches. Branch name must end with X.Y to extract release line
+        default: '^release-[0-9]+\.[0-9]+$'
 
 jobs:
   test:
@@ -98,10 +110,13 @@ jobs:
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.5.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.6.0
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
+          filter-version: ${{ inputs.filter-version }}
+          primary-branch-pattern: ${{ inputs.primary-branch-pattern }}
+          release-branch-pattern: ${{ inputs.release-branch-pattern }}
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
@@ -138,7 +153,7 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.5.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.6.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -146,7 +161,7 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/build_docker@4.5.0
+      - uses: epam/ai-dial-ci/actions/build_docker@4.6.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -168,7 +183,7 @@ jobs:
         env:
           IMAGE_NAME: ${{ github.repository }}
 
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.5.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.6.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}
