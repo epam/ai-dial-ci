@@ -95,6 +95,14 @@ on:
         type: string
         description: Operate within versions matched regex
         default: '[0-9]+\.[0-9]+'
+      primary-branch-pattern:
+        type: string
+        description: Regex pattern for the primary branch. Matching branch uses development flow
+        default: '^development$'
+      release-branch-pattern:
+        type: string
+        description: Regex pattern for release branches. Branch name must end with X.Y to extract release line
+        default: '^release-[0-9]+\.[0-9]+$'
 
 jobs:
   test:
@@ -129,6 +137,8 @@ jobs:
         with:
           promote: ${{ inputs.promote }}
           filter-version: ${{ inputs.filter-version }}
+          primary-branch-pattern: ${{ inputs.primary-branch-pattern }}
+          release-branch-pattern: ${{ inputs.release-branch-pattern }}
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
