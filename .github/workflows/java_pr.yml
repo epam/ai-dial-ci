@@ -116,7 +116,7 @@ jobs:
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
-      - uses: gradle/actions/dependency-submission@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
+      - uses: gradle/actions/dependency-submission@5e2ebd065dc2488b7a6ad670704656cbbe1e8f60 # v6.1.1
         with:
           dependency-graph: generate-and-upload
           artifact-retention-days: 1
