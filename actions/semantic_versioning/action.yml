@@ -114,17 +114,21 @@ runs:
 
           DEV_SOURCE=""  # "stable", "rc", or ""
           if [[ -n "${LATEST_STABLE_LINE}" && -n "${LATEST_RC_LINE}" ]]; then
-            if semver "${LATEST_STABLE_LINE}.0" --range "<${INITIAL_BRANCH_VERSION}" >/dev/null 2>&1 && semver "${LATEST_RC_LINE}.0" --range "<${INITIAL_BRANCH_VERSION}" >/dev/null 2>&1; then
+            if semver --include-prerelease "${LATEST_STABLE_LINE}.0" --range "<${INITIAL_BRANCH_VERSION}" >/dev/null 2>&1 && semver --include-prerelease "${LATEST_RC_LINE}.0" --range "<${INITIAL_BRANCH_VERSION}" >/dev/null 2>&1; then
               DEV_SOURCE="branch"
-            elif semver "${LATEST_STABLE_LINE}.0" --range ">=${LATEST_RC_LINE}.0" >/dev/null 2>&1; then
+            elif semver --include-prerelease "${LATEST_STABLE_LINE}.0" --range ">=${LATEST_RC_LINE}.0" >/dev/null 2>&1; then
               DEV_SOURCE="stable"
             else
               DEV_SOURCE="rc"
             fi
-          elif [[ -n "${BRANCH_LINE}" && -z "${LATEST_STABLE_LINE}" && -n "${LATEST_STABLE_TAG_WITHOUT_FILTER}" ]] && semver "${LATEST_STABLE_TAG_WITHOUT_FILTER}" --range "<${INITIAL_BRANCH_VERSION}"; then
-            LATEST_STABLE_TAG="${LATEST_STABLE_TAG_WITHOUT_FILTER}"
-            DEV_SOURCE="branch"
-          elif [[ -n "${BRANCH_LINE}" && -z "${LATEST_RC_LINE}" && -n "${LATEST_RC_TAG_WITHOUT_FILTER}" ]] && semver "${LATEST_RC_TAG_WITHOUT_FILTER}" --range "<${INITIAL_BRANCH_VERSION}"; then
+          elif [[ -n "${BRANCH_LINE}" && -z "${LATEST_STABLE_LINE}" && -n "${LATEST_STABLE_TAG_WITHOUT_FILTER}" ]] && semver --include-prerelease "${LATEST_STABLE_TAG_WITHOUT_FILTER}" --range "<${INITIAL_BRANCH_VERSION}" >/dev/null 2>&1; then
+            if [[ -n "${LATEST_RC_TAG}" && -n "${LATEST_STABLE_TAG_WITHOUT_FILTER}" ]] && semver --include-prerelease "${LATEST_RC_TAG}" --range ">${LATEST_STABLE_TAG_WITHOUT_FILTER}"; then
+              DEV_SOURCE=rc
+            else
+              LATEST_STABLE_TAG="${LATEST_STABLE_TAG_WITHOUT_FILTER}"
+              DEV_SOURCE="branch"
+            fi
+          elif [[ -n "${BRANCH_LINE}" && -z "${LATEST_RC_LINE}" && -n "${LATEST_RC_TAG_WITHOUT_FILTER}" ]] && semver --include-prerelease "${LATEST_RC_TAG_WITHOUT_FILTER}" --range "<${INITIAL_BRANCH_VERSION}" >/dev/null 2>&1; then
             LATEST_RC_TAG="${LATEST_RC_TAG_WITHOUT_FILTER}"
             DEV_SOURCE=branch
           elif [[ -n "${LATEST_STABLE_LINE}" ]]; then
@@ -146,7 +150,7 @@ runs:
               ;;
             branch)
               if [[ -n "${LATEST_STABLE_TAG}" && -n "${LATEST_RC_TAG}" ]]; then
-                if semver "${LATEST_STABLE_TAG}" --range ">${LATEST_RC_TAG}" >/dev/null 2>&1; then
+                if semver --include-prerelease "${LATEST_STABLE_TAG}" --range ">${LATEST_RC_TAG}" >/dev/null 2>&1; then
                   DEV_N=$(git rev-list --count "${LATEST_STABLE_TAG}..HEAD")
                 else
                   DEV_N=$(git rev-list --count "${LATEST_RC_TAG}..HEAD")
@@ -182,7 +186,7 @@ runs:
             CURRENT_VERSION="${STABLE_TAG}"
             NEXT_VERSION=$(semver "${CURRENT_VERSION}" --increment patch)
             IS_RELEASE="true"
-            if [[ -z "${LATEST_STABLE_TAG_WITHOUT_FILTER}" ]] || semver "${NEXT_VERSION}" --range ">${LATEST_STABLE_TAG_WITHOUT_FILTER}" >/dev/null 2>&1; then
+            if [[ -z "${LATEST_STABLE_TAG_WITHOUT_FILTER}" ]] || semver --include-prerelease "${NEXT_VERSION}" --range ">${LATEST_STABLE_TAG_WITHOUT_FILTER}" >/dev/null 2>&1; then
               IS_LATEST="true"
             fi
 
@@ -192,7 +196,7 @@ runs:
             NEXT_VERSION="${RELEASE_LINE}.0"
             CHANGELOG_MODE="merge-base"
             IS_RELEASE="true"
-            if [[ -z "${LATEST_STABLE_TAG_WITHOUT_FILTER}" ]] || semver "${NEXT_VERSION}" --range ">${LATEST_STABLE_TAG_WITHOUT_FILTER}" >/dev/null 2>&1; then
+            if [[ -z "${LATEST_STABLE_TAG_WITHOUT_FILTER}" ]] || semver --include-prerelease "${NEXT_VERSION}" --range ">${LATEST_STABLE_TAG_WITHOUT_FILTER}" >/dev/null 2>&1; then
               IS_LATEST="true"
             fi
 
@@ -204,11 +208,13 @@ runs:
             if [[ -n "${LATEST_RC}" ]]; then
               CURRENT_VERSION="${LATEST_RC}"
               NEXT_VERSION=$(semver "${LATEST_RC}" --increment prerelease --preid rc)
-
             else
               CURRENT_VERSION=""
               NEXT_VERSION="${RELEASE_LINE}.0-rc.0"
             fi
+          fi
+          if [[ -z "${LATEST_STABLE_TAG}" && -n "${LATEST_STABLE_TAG_WITHOUT_FILTER}" ]] && semver --include-prerelease "${LATEST_STABLE_TAG_WITHOUT_FILTER}" --range "<${RELEASE_LINE}.0" >/dev/null 2>&1; then
+            LATEST_STABLE_TAG="${LATEST_STABLE_TAG_WITHOUT_FILTER}"
           fi
 
         else

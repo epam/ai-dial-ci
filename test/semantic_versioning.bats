@@ -684,7 +684,18 @@ assert_calc() {
   assert_calc "S7" "release-1.0" "[0-9]+\.[0-9]+" "false" "^development-1\.x$" "^release-[0-9]+\.[0-9]+$" "1.0.0-rc.0" "true" "false" "false" "1.0" "tag"
   git tag 1.0.0-rc.0
 
-  assert_calc "S8" "release-1.0" "[0-9]+\.[0-9]+" "true" "^development-1\.x$" "^release-[0-9]+\.[0-9]+$" "1.0.0" "false" "true" "true" "1.0" "merge-base"
+  git checkout -q development-1.x
+  commit_msg "fix: 4"
+  local sha_fix4="${LAST_COMMIT_SHA}"
+  assert_calc "S8" "development-1.x" "[0-9]+\.[0-9]+" "false" "^development-1\.x$" "^release-[0-9]+\.[0-9]+$" "1.1.0-dev.1" "false" "false" "false" "" "tag"
+
+  git checkout -q release-1.0
+  cherry_pick_commit "${sha_fix4}"
+  assert_calc "S9" "release-1.0" "[0-9]+\.[0-9]+" "false" "^development-1\.x$" "^release-[0-9]+\.[0-9]+$" "1.0.0-rc.1" "true" "false" "false" "1.0" "tag"
+  commit_msg "[skip ci] Update version"
+  git tag 1.0.0-rc.1
+
+  assert_calc "S10" "release-1.0" "[0-9]+\.[0-9]+" "true" "^development-1\.x$" "^release-[0-9]+\.[0-9]+$" "1.0.0" "false" "true" "true" "1.0" "merge-base"
   commit_msg "[skip ci] Update version"
   git tag 1.0.0
 }
@@ -722,7 +733,18 @@ assert_calc() {
   assert_calc "S7" "release-1.0" "1\.[0-9]+" "false" "^development-1\.x$" "^release-1\.[0-9]+$" "1.0.0-rc.0" "true" "false" "false" "1.0" "tag"
   git tag 1.0.0-rc.0
 
-  assert_calc "S8" "release-1.0" "1\.[0-9]+" "true" "^development-1\.x$" "^release-1\.[0-9]+$" "1.0.0" "false" "true" "true" "1.0" "merge-base"
+  git checkout -q development-1.x
+  commit_msg "fix: 4"
+  local sha_fix4="${LAST_COMMIT_SHA}"
+  assert_calc "S8" "development-1.x" "1\.[0-9]+" "false" "^development-1\.x$" "^release-[0-9]+\.[0-9]+$" "1.1.0-dev.1" "false" "false" "false" "" "tag"
+
+  git checkout -q release-1.0
+  cherry_pick_commit "${sha_fix4}"
+  assert_calc "S9" "release-1.0" "1\.[0-9]+" "false" "^development-1\.x$" "^release-[0-9]+\.[0-9]+$" "1.0.0-rc.1" "true" "false" "false" "1.0" "tag"
+  commit_msg "[skip ci] Update version"
+  git tag 1.0.0-rc.1
+
+  assert_calc "S10" "release-1.0" "1\.[0-9]+" "true" "^development-1\.x$" "^release-[0-9]+\.[0-9]+$" "1.0.0" "false" "true" "true" "1.0" "merge-base"
   commit_msg "[skip ci] Update version"
   git tag 1.0.0
 }
