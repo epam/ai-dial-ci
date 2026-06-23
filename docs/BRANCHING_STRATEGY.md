@@ -23,12 +23,12 @@
   - [Multiple Development Branches](#multiple-development-branches)
 
 1. A `development` is the branch for all new work
-2. A `development-N.x` is the branch for the next major version (`N.x.x`) which is developed in parallel with code in `development` branch
-3. All code changes are merged from feature branches to `development` or `development-N.x` via pull requests
-4. When there's enough changes in `development` or `development-N.x` for a new release, maintainer cuts `release-X.Y` branch. Release enters stabilization phase, the branch produce numbered RC artifacts (`X.Y.0-rc.N`)
-5. Once the maintainer decides the release is stable, he manually (`workflow_dispatch`) triggers `Release Workflow` for `release-X.Y` branch with `promote` option set. Stable `X.Y.0` is published
-6. Since that moment, `release-X.Y` enters maintenance phase, and any subsequent pushes to that branch produce patches (`X.Y.1`, `X.Y.2`, ...)
-7. Fixes to maintenance branches must be backported from `development` or `development-N.x` branch via cherry-picks
+1. A `development-N.x` is the branch for the next major version (`N.x.x`) which is developed in parallel with code in `development` branch
+1. All code changes are merged from feature branches to `development` or `development-N.x` via pull requests
+1. When there's enough changes in `development` or `development-N.x` for a new release, maintainer cuts `release-X.Y` branch. Release enters stabilization phase, the branch produce numbered RC artifacts (`X.Y.0-rc.N`)
+1. Once the maintainer decides the release is stable, he manually (`workflow_dispatch`) triggers `Release Workflow` for `release-X.Y` branch with `promote` option set. Stable `X.Y.0` is published
+1. Since that moment, `release-X.Y` enters maintenance phase, and any subsequent pushes to that branch produce patches (`X.Y.1`, `X.Y.2`, ...)
+1. Fixes to maintenance branches must be backported from `development` or `development-N.x` branch via cherry-picks
 
 > **IMPORTANT!** For `development-N.x` branches initial version will be forced to `N.0.0`. Before creating `release-N.0` branch repository maintainer should set version filter (`filter-version`) on "legacy" branches (ex. `development`). The most recent development branch does not require version filter.
 
