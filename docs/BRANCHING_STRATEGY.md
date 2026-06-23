@@ -1,11 +1,36 @@
 # Branching Strategy
 
+- [Branching Strategy](#branching-strategy)
+  - [Version Scheme](#version-scheme)
+  - [Example Repository Lifecycle](#example-repository-lifecycle)
+    - [Scenario 0 - First push to `development` (repo is empty)](#scenario-0---first-push-to-development-repo-is-empty)
+    - [Scenario 1 - Second push to `development`](#scenario-1---second-push-to-development)
+    - [Scenario 2 - `release-1.0` creation (no tags or other release branches exist)](#scenario-2---release-10-creation-no-tags-or-other-release-branches-exist)
+    - [Scenario 3 - push to `development` when `release-1.0` exists with RC tags (no stable yet)](#scenario-3---push-to-development-when-release-10-exists-with-rc-tags-no-stable-yet)
+    - [Scenario 4 - pick fix onto `release-1.0` while RC tags exist, but no stable yet](#scenario-4---pick-fix-onto-release-10-while-rc-tags-exist-but-no-stable-yet)
+    - [Scenario 5 - `workflow_dispatch promote=true` on `release-1.0`](#scenario-5---workflow_dispatch-promotetrue-on-release-10)
+    - [Scenario 6 - Sequential push of 2 commits to `development` after stable `1.0.0` exists](#scenario-6---sequential-push-of-2-commits-to-development-after-stable-100-exists)
+    - [Scenario 7 - Backport fix to `release-1.0` after stable `1.0.0` exists (first patch)](#scenario-7---backport-fix-to-release-10-after-stable-100-exists-first-patch)
+    - [Scenario 8 - Cutting `release-1.1`](#scenario-8---cutting-release-11)
+    - [Scenario 9 - Promote `release-1.1` to stable](#scenario-9---promote-release-11-to-stable)
+    - [Scenario 10 - Push to `development` after stable `1.1.0` exists](#scenario-10---push-to-development-after-stable-110-exists)
+    - [Scenario 11 - Cutting `release-1.2`](#scenario-11---cutting-release-12)
+    - [Scenario 12 - Promote `release-1.2` to stable](#scenario-12---promote-release-12-to-stable)
+    - [Scenario 13 - Push more commits to `development` as regular repo lifecycle continues](#scenario-13---push-more-commits-to-development-as-regular-repo-lifecycle-continues)
+    - [Scenario 14 - Backport fix to `release-1.1` (patch on middle release line)](#scenario-14---backport-fix-to-release-11-patch-on-middle-release-line)
+    - [Scenario 15 - Backport fix to `release-1.2` (patch on highest release line)](#scenario-15---backport-fix-to-release-12-patch-on-highest-release-line)
+    - [Scenario 16 - Backport fix to `release-1.0` (patch on oldest release line)](#scenario-16---backport-fix-to-release-10-patch-on-oldest-release-line)
+  - [Multiple Development Branches](#multiple-development-branches)
+
 1. A `development` is the branch for all new work
-1. All code changes are merged from feature branches to `development` via pull requests
-1. When there's enough changes in `development` for a new release, maintainer cuts `release-X.Y` branch. Release enters stabilization phase, the branch produce numbered RC artifacts (`X.Y.0-rc.N`)
-1. Once the maintainer decides the release is stable, he manually (`workflow_dispatch`) triggers `Release Workflow` for `release-X.Y` branch with `promote` option set. Stable `X.Y.0` is published
-1. Since that moment, `release-X.Y` enters maintenance phase, and any subsequent pushes to that branch produce patches (`X.Y.1`, `X.Y.2`, ...)
-1. Fixes to maintenance branches must be backported from `development` branch via cherry-picks
+2. A `development-N.x` is the branch for the next major version (`N.x.x`) which is developed in parallel with code in `development` branch
+3. All code changes are merged from feature branches to `development` or `development-N.x` via pull requests
+4. When there's enough changes in `development` or `development-N.x` for a new release, maintainer cuts `release-X.Y` branch. Release enters stabilization phase, the branch produce numbered RC artifacts (`X.Y.0-rc.N`)
+5. Once the maintainer decides the release is stable, he manually (`workflow_dispatch`) triggers `Release Workflow` for `release-X.Y` branch with `promote` option set. Stable `X.Y.0` is published
+6. Since that moment, `release-X.Y` enters maintenance phase, and any subsequent pushes to that branch produce patches (`X.Y.1`, `X.Y.2`, ...)
+7. Fixes to maintenance branches must be backported from `development` or `development-N.x` branch via cherry-picks
+
+> **IMPORTANT!** For `development-N.x` branches initial version will be forced to `N.0.0`. Before creating `release-N.0` branch repository maintainer should set version filter (`filter-version`) on "legacy" branches (ex. `development`). The most recent development branch does not require version filter.
 
 ## Version Scheme
 
@@ -1211,3 +1236,16 @@ gh release view 1.0.2 --json isPrerelease
 gh release view 1.0.2 --json body | jq -r '.body'
 # --> fix: 5
 ```
+
+## Multiple Development Branches
+
+>**IMPORTANT!** The main difference is requirement to limit versions for "legacy" branches **before** the first release from `development-N.x` branch.
+
+1. Create `development` branch and start coding
+1. Release `1.X.Y` versions by creating `release-1.X` branches
+1. Create `development-2.x` branch from `development` branch
+1. Limit `development` branch to `1.X.Y` versions by setting `version-filter: '1\.[0-9]+'` in `development` branch (use regex to match major and minor version only)
+1. Release `2.X.Y` versions by creating `release-2.X` release branch
+1. At some point rename `development` branch to `development-1.x` and `development-2.x` branch to `development`, correct branch filter in workflows accordingly.
+
+RC promotion and fixes should be done as for regular `development` branch.
