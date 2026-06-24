@@ -1236,7 +1236,7 @@ gh release view 1.0.2 --json body | jq -r '.body'
 
 ## Multiple Development Branches
 
-> **IMPORTANT!** Multiple development branches workflow should be treated as available workaround and not recommended for every repository.
+> **IMPORTANT!** Multiple development branches workflow should be treated as workaround and not recommended for every repository.
 
 1. A `development` is the branch for all new work
 1. A `development-X.x` is the branch for the next major version (`X.0.0`) which is developed in parallel with code in `development` branch
