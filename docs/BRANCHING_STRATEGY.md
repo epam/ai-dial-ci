@@ -23,14 +23,11 @@
   - [Multiple Development Branches](#multiple-development-branches)
 
 1. A `development` is the branch for all new work
-1. A `development-N.x` is the branch for the next major version (`N.x.x`) which is developed in parallel with code in `development` branch
-1. All code changes are merged from feature branches to `development` or `development-N.x` via pull requests
-1. When there's enough changes in `development` or `development-N.x` for a new release, maintainer cuts `release-X.Y` branch. Release enters stabilization phase, the branch produce numbered RC artifacts (`X.Y.0-rc.N`)
+1. All code changes are merged from feature branches to `development` via pull requests
+1. When there's enough changes in `development` for a new release, maintainer cuts `release-X.Y` branch. Release enters stabilization phase, the branch produce numbered RC artifacts (`X.Y.0-rc.N`)
 1. Once the maintainer decides the release is stable, he manually (`workflow_dispatch`) triggers `Release Workflow` for `release-X.Y` branch with `promote` option set. Stable `X.Y.0` is published
 1. Since that moment, `release-X.Y` enters maintenance phase, and any subsequent pushes to that branch produce patches (`X.Y.1`, `X.Y.2`, ...)
-1. Fixes to maintenance branches must be backported from `development` or `development-N.x` branch via cherry-picks
-
-> **IMPORTANT!** For `development-N.x` branches initial version will be forced to `N.0.0`. Before creating `release-N.0` branch repository maintainer should set version filter (`filter-version`) on "legacy" branches (ex. `development`). The most recent development branch does not require version filter.
+1. Fixes to maintenance branches must be backported from `development` branch via cherry-picks
 
 ## Version Scheme
 
@@ -1239,13 +1236,62 @@ gh release view 1.0.2 --json body | jq -r '.body'
 
 ## Multiple Development Branches
 
->**IMPORTANT!** The main difference is requirement to limit versions for "legacy" branches **before** the first release from `development-N.x` branch.
+> **IMPORTANT!** Multiple development branches workflow should be treated as available workaround and not recommended for every repository.
 
-1. Create `development` branch and start coding
-1. Release `1.X.Y` versions by creating `release-1.X` branches
-1. Create `development-2.x` branch from `development` branch
-1. Limit `development` branch to `1.X.Y` versions by setting `version-filter: '1\.[0-9]+'` in `development` branch (use regex to match major and minor version only)
-1. Release `2.X.Y` versions by creating `release-2.X` release branch
-1. At some point rename `development` branch to `development-1.x` and `development-2.x` branch to `development`, correct branch filter in workflows accordingly.
+1. A `development` is the branch for all new work
+1. A `development-X.x` is the branch for the next major version (`X.0.0`) which is developed in parallel with code in `development` branch
+1. All code changes are merged from feature branches to `development` or `development-X.x` via pull requests
+1. When there's enough changes in `development` or `development-X.x` for a new release, maintainer cuts `release-X.Y` branch. Release enters stabilization phase, the branch produce numbered RC artifacts (`X.Y.0-rc.N`)
+1. Once the maintainer decides the release is stable, he manually (`workflow_dispatch`) triggers `Release Workflow` for `release-X.Y` branch with `promote` option set. Stable `X.Y.0` is published
+1. Since that moment, `release-X.Y` enters maintenance phase, and any subsequent pushes to that branch produce patches (`X.Y.1`, `X.Y.2`, ...)
+1. Fixes to maintenance branches must be backported from `development` or `development-X.x` branch via cherry-picks
 
-RC promotion and fixes should be done as for regular `development` branch.
+> **IMPORTANT!** For `development-X.x` branches initial version will be forced to `X.0.0`. Do not create branches like `development-1.5`, `development-2.4`, etc. Before creating `release-X.0` branch repository maintainer should set version filter (`filter-version`) on "legacy" branches (ex. `development`). The most recent development branch does not require version filter.
+
+```mermaid
+---
+config:
+  gitGraph:
+    mainBranchName: "development"
+---
+gitGraph
+    commit id: "chore: initial commit"
+    commit id: "feat: 1"
+    branch release-1.0
+    commit id: "\[skip ci\] Update version (1.0.0-rc.0)" tag: "1.0.0-rc.0"
+    checkout development
+    commit id: "fix: 1"
+    checkout release-1.0
+    cherry-pick id: "fix: 1"
+    commit id: "\[skip ci\] Update version (1.0.0-rc.1)" tag: "1.0.0-rc.1"
+    commit id: "\[skip ci\] Update version (1.0.0)" type: HIGHLIGHT tag: "1.0.0"
+    checkout development
+    commit id: "feat: 2"
+    commit id: "fix: 2"
+    checkout release-1.0
+    cherry-pick id: "fix: 2"
+    commit id: "\[skip ci\] Update version (1.0.1)" tag: "1.0.1"
+    checkout development
+    branch release-1.1
+    commit id: "\[skip ci\] Update version (1.1.0-rc.0)" tag: "1.1.0-rc.0"
+    commit id: "\[skip ci\] Update version (1.1.0)" type: HIGHLIGHT tag: "1.1.0"
+    branch development-2.x
+    commit id: "feat: 3"
+    commit id: "feat: 4"
+    checkout development
+    commit id: "set filter version '1\.[0-9]+'"
+    checkout development-2.x
+    branch release-2.0
+    commit id: "\[skip ci\] Update version (2.0.0-rc.0)" tag: "2.0.0-rc.0"
+    commit id: "\[skip ci\] Update version (2.0.0)" type: HIGHLIGHT tag: "2.0.0"
+    checkout development
+    commit id: "feat: 6"
+    branch release-1.2
+    commit id: "\[skip ci\] Update version (1.2.0-rc.0)" tag: "1.2.0-rc.0"
+    checkout development
+    commit id: "fix: 6"
+    checkout release-1.2
+    cherry-pick id: "fix: 6"
+    commit id: "\[skip ci\] Update version (1.2.0-rc.1)" tag: "1.2.0-rc.1"
+    commit id: "\[skip ci\] Update version (1.2.0)" type: HIGHLIGHT tag: "1.2.0"
+```
