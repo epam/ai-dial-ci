@@ -34,7 +34,7 @@ runs:
 
         ${{ inputs.extra-commit-command }}
 
-        git tag -a "${{ inputs.tag-version }}" -m "$(cat ${{ inputs.changelog-file }})"
+        git tag -a "${{ inputs.tag-version }}" -F "${{ inputs.changelog-file }}"
 
         git push
         git push --tags
