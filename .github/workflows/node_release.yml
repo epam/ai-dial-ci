@@ -119,6 +119,10 @@ on:
         type: string
         description: Regex pattern for release branches. Branch name must end with X.Y to extract release line
         default: '^release-[0-9]+\.[0-9]+$'
+      docker-development-tag:
+        type: string
+        description: Development tag for docker images
+        default: 'development'
 
 jobs:
   test:
@@ -150,7 +154,7 @@ jobs:
       release-line: ${{ steps.semantic_versioning.outputs.release-line }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.6.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.7.0
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
@@ -194,7 +198,7 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.6.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.7.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -202,7 +206,7 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@4.6.1
+      - uses: epam/ai-dial-ci/actions/node_prepare@4.7.0
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -213,7 +217,7 @@ jobs:
           npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version --allow-same-version
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ inputs.docker-build-enabled && (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@4.6.1
+        uses: epam/ai-dial-ci/actions/build_docker@4.7.0
         with:
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -223,7 +227,7 @@ jobs:
             ${{ env.IMAGE_NAME }}
             ghcr.io/${{ env.IMAGE_NAME }}
           image-tags: |
-            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || inputs.docker-development-tag }}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
           push-enabled: true
           trivy-enabled: ${{ inputs.trivy-enabled }}
@@ -286,7 +290,7 @@ jobs:
           IS_RELEASE: ${{ needs.calculate_version.outputs.is-release == 'true' }}
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           RELEASE_LINE: ${{ needs.calculate_version.outputs.release-line }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.6.1
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.7.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}
