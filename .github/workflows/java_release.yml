@@ -103,6 +103,10 @@ on:
         type: string
         description: Regex pattern for release branches. Branch name must end with X.Y to extract release line
         default: '^release-[0-9]+\.[0-9]+$'
+      docker-development-tag:
+        type: string
+        description: Development tag for docker images
+        default: 'development'
 
 jobs:
   test:
@@ -221,7 +225,7 @@ jobs:
             ${{ env.IMAGE_NAME }}
             ghcr.io/${{ env.IMAGE_NAME }}
           image-tags: |
-            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || 'development' }}
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || inputs.docker-development-tag }}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
           push-enabled: true
           trivy-enabled: ${{ inputs.trivy-enabled }}
