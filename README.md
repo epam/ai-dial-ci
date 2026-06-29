@@ -938,7 +938,7 @@ jobs:
 
 #### Trigger deployment of development environment in GitLab
 
-A common case is to trigger development environment(s) update from GitHub to GitLab, e.g. each time a `development` branch produces a new artifact. Also, it could be not single, but several environments, representing different configuration presets of a single app. To use the example below:
+A common case is to trigger development environment(s) update from GitHub to GitLab, e.g. after a successful release workflow produces a new artifact. Also, it could be not single, but several environments, representing different configuration presets of a single app. To use the example below:
 
 1. add a new [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets) with name `DEPLOY_HOST` and value of the gitlab host, e.g. `gitlab.example.com`
 1. create a new [environment](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment#creating-an-environment), e.g. `development`
@@ -952,8 +952,7 @@ name: Deploy development
 
 on:
   workflow_dispatch: # manual run
-  registry_package: # on new package version (main path)
-  workflow_run: # HACK: redundant trigger to mitigate GitHub's huge delays in registry_package event processing
+  workflow_run:
     workflows: ["Release Workflow"]
     types:
       - completed
@@ -962,7 +961,6 @@ jobs:
   gitlab-dev-deploy:
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.registry_package.package_version.container_metadata.tag.name == 'development' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
     uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@main
     with:
@@ -982,8 +980,7 @@ name: Deploy development
 
 on:
   workflow_dispatch: # manual run
-  registry_package: # on new package version (main path)
-  workflow_run: # HACK: redundant trigger to mitigate GitHub's huge delays in registry_package event processing
+  workflow_run:
     workflows: ["Release Workflow"]
     types:
       - completed
@@ -992,7 +989,6 @@ jobs:
   trigger:
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.registry_package.package_version.container_metadata.tag.name == 'development' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
     strategy:
       fail-fast: false
