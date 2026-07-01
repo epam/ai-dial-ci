@@ -1,0 +1,28 @@
+{
+  "name": "ai-dial-ci (isolated)",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude.json,target=/home/vscode/.claude.json,type=bind",
+    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
+    "source=${localEnv:HOME}/.config/gh,target=/home/vscode/.config/gh,type=bind",
+    "source=${localEnv:HOME}/.ssh/known_hosts,target=/tmp/known_hosts.seed,type=bind,readonly"
+  ],
+
+  "remoteEnv": {
+    "SSH_AUTH_SOCK": "/ssh-agent"
+  },
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "postCreateCommand": "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cp /tmp/known_hosts.seed ~/.ssh/known_hosts && chmod 600 ~/.ssh/known_hosts && sudo apt-get update && sudo apt-get install -y --no-install-recommends bats shellcheck && sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq && npm install -g semver @anthropic-ai/claude-code",
+
+  "remoteUser": "vscode"
+}
