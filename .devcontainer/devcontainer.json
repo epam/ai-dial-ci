@@ -16,10 +16,11 @@
 
   "features": {
     "ghcr.io/devcontainers/features/node:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers-extra/features/claude-code:1": {}
   },
 
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends bats shellcheck && sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq && curl -sLo /tmp/glab.deb https://gitlab.com/gitlab-org/cli/-/releases/v1.106.0/downloads/glab_1.106.0_linux_amd64.deb && sudo apt-get install -y /tmp/glab.deb && rm /tmp/glab.deb && npm install -g semver @anthropic-ai/claude-code && gh auth setup-git && git config --global credential.https://gitlab.deltixhub.com.helper '' && git config --global --add credential.https://gitlab.deltixhub.com.helper '!glab auth git-credential'",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends bats shellcheck && sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq && curl -sLo /tmp/glab.deb https://gitlab.com/gitlab-org/cli/-/releases/v1.106.0/downloads/glab_1.106.0_linux_amd64.deb && sudo apt-get install -y /tmp/glab.deb && rm /tmp/glab.deb && npm install -g semver && gh auth setup-git && git config --global credential.https://gitlab.deltixhub.com.helper '' && git config --global --add credential.https://gitlab.deltixhub.com.helper '!glab auth git-credential'",
 
   "remoteUser": "vscode"
 }
