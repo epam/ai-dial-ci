@@ -5,13 +5,10 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
-  "initializeCommand": "mkdir -p ${localEnv:HOME}/.config/gh ${localEnv:HOME}/.config/glab-cli",
-
   "mounts": [
+    "source=ai-dial-ci-home,target=/home/vscode,type=volume",
     "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
-    "source=${localEnv:HOME}/.claude.json,target=/home/vscode/.claude.json,type=bind",
-    "source=${localEnv:HOME}/.config/gh,target=/home/vscode/.config/gh,type=bind",
-    "source=${localEnv:HOME}/.config/glab-cli,target=/home/vscode/.config/glab-cli,type=bind"
+    "source=${localEnv:HOME}/.claude.json,target=/home/vscode/.claude.json,type=bind"
   ],
 
   "features": {
@@ -20,7 +17,7 @@
     "ghcr.io/devcontainers-extra/features/claude-code:1": {}
   },
 
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends bats shellcheck && sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq && curl -sLo /tmp/glab.deb https://gitlab.com/gitlab-org/cli/-/releases/v1.106.0/downloads/glab_1.106.0_linux_amd64.deb && sudo apt-get install -y /tmp/glab.deb && rm /tmp/glab.deb && npm install -g semver && gh auth setup-git && git config --global credential.https://gitlab.deltixhub.com.helper '' && git config --global --add credential.https://gitlab.deltixhub.com.helper '!glab auth git-credential'",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
 
   "remoteUser": "vscode"
 }
