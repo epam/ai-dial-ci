@@ -51,6 +51,16 @@ on:
         type: string
         description: ORT config revision to use
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
+      ort-allow-dynamic-versions:
+        type: string
+        description: |
+          Whether ORT may resolve dependency version ranges dynamically instead of using lock files.
+          Set to 'false' when the project has a lock file (e.g. package-lock.json).
+        default: "true"
+      ort-report-formats:
+        type: string
+        description: Comma-separated list of ORT reporters to run (e.g. CycloneDx,SpdxDocument,WebApp)
+        default: "CycloneDx,SpdxDocument,WebApp"
       node-version:
         type: string
         description: NodeJS version to use
@@ -124,7 +134,8 @@ jobs:
           CONTINUE_ON_ERROR: ${{ inputs.bypass-checks || inputs.ort-bypassed }} # Hack to use the input below as a boolean
         with:
           image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
-          allow-dynamic-versions: "true"
+          allow-dynamic-versions: ${{ inputs.ort-allow-dynamic-versions }}
+          report-formats: ${{ inputs.ort-report-formats }}
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=NPM"
           ort-config-repository: ${{ inputs.ort-config-repository }}
