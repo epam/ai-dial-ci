@@ -43,6 +43,10 @@ on:
         type: string
         description: ORT config revision to use
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
+      ort-report-formats:
+        type: string
+        description: Comma-separated list of ORT reporters to run (e.g. CycloneDx,SpdxDocument,WebApp)
+        default: "CycloneDx,SpdxDocument,WebApp"
       python-version:
         type: string
         description: Python version to use
@@ -160,6 +164,7 @@ jobs:
         with:
           image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
           allow-dynamic-versions: "true"
+          report-formats: ${{ inputs.ort-report-formats }}
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
           ort-config-repository: ${{ inputs.ort-config-repository }}

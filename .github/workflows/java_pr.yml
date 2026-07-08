@@ -43,6 +43,10 @@ on:
         type: string
         default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
         description: ORT config revision to use
+      ort-report-formats:
+        type: string
+        default: "CycloneDx,SpdxDocument,WebApp"
+        description: Comma-separated list of ORT reporters to run (e.g. CycloneDx,SpdxDocument,WebApp)
       trivy-enabled:
         type: boolean
         default: true
@@ -98,6 +102,7 @@ jobs:
       ort-version: ${{ inputs.ort-version }}
       ort-config-repository: ${{ inputs.ort-config-repository }}
       ort-config-revision: ${{ inputs.ort-config-revision }}
+      ort-report-formats: ${{ inputs.ort-report-formats }}
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       runs-on: ${{ inputs.runs-on }}

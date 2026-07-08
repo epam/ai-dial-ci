@@ -47,6 +47,10 @@ on:
         type: string
         description: ORT config revision to use
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
+      ort-report-formats:
+        type: string
+        default: "CycloneDx,SpdxDocument,WebApp"
+        description: Comma-separated list of ORT reporters to run (e.g. CycloneDx,SpdxDocument,WebApp)
       java-version:
         type: string
         default: "17"
@@ -131,6 +135,7 @@ jobs:
         with:
           image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
           allow-dynamic-versions: "true"
+          report-formats: ${{ inputs.ort-report-formats }}
           fail-on: "violations"
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Gradle"
           ort-config-repository: ${{ inputs.ort-config-repository }}
