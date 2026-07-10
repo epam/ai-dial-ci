@@ -270,7 +270,7 @@ jobs:
         shell: bash
         env:
           ENVIRONMENT_URL: ${{ env.ENVIRONMENT_URL }}
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: ${{ matrix.test-repository }}
           sparse-checkout: |
@@ -307,7 +307,7 @@ jobs:
     environment:
       name: ${{ github.event.client_payload.slash_command.args.named.environment || 'dial-review' }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
       - uses: ./actions/monitor
