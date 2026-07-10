@@ -254,6 +254,12 @@ jobs:
           #    - stable version
           #      - `latest` distribution tag if it's semantically latest stable version
           #      - `release-{release-line}` distribution tag (e.g. `release-1.0`) for other stable versions. HACK: we have to use this tag, otherwise npm will create `latest` by default
+          CURRENT_BRANCH="${GITHUB_REF#refs/heads/}"
+          if [[ "${CURRENT_BRANCH}" =~ ${PRIMARY_BRANCH_PATTERN} ]]; then
+            IS_DEVELOPMENT="true"
+          else
+            IS_DEVELOPMENT="false"
+          fi
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" &>/dev/null; then
@@ -285,7 +291,7 @@ jobs:
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          IS_DEVELOPMENT: ${{ github.ref == 'refs/heads/development' }}
+          PRIMARY_BRANCH_PATTERN: ${{ inputs.primary-branch-pattern }}
           IS_RELEASE_CANDIDATE: ${{ needs.calculate_version.outputs.is-release-candidate == 'true' }}
           IS_RELEASE: ${{ needs.calculate_version.outputs.is-release == 'true' }}
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
