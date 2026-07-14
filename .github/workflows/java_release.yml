@@ -246,6 +246,7 @@ jobs:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
           draft-stable-releases: ${{ inputs.draft-stable-releases }}
+          make-latest: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           extra-commit-command: |
             git add build.gradle
             git commit -m '[skip ci] Update version' || true # upstream branch may already be updated

@@ -130,6 +130,7 @@ jobs:
       next-version: ${{ steps.semantic_versioning.outputs.next-version }}
       next-version-without-hyphens: ${{ steps.semantic_versioning.outputs.next-version-without-hyphens }}
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
+      is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
       - uses: epam/ai-dial-ci/actions/semantic_versioning@4.7.1
@@ -180,6 +181,7 @@ jobs:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
           draft-stable-releases: ${{ inputs.draft-stable-releases }}
+          make-latest: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           artifacts: "dist/*"
           extra-commit-command: |
             git add pyproject.toml
