@@ -133,7 +133,7 @@ jobs:
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.7.1
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.7.2
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
@@ -150,7 +150,7 @@ jobs:
       - calculate_version
       - test
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.7.1
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.7.2
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -158,7 +158,7 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/python_prepare@4.7.1
+      - uses: epam/ai-dial-ci/actions/python_prepare@4.7.2
         with:
           python-version: ${{ inputs.python-version }}
           poetry-version: ${{ inputs.poetry-version }}
@@ -173,7 +173,7 @@ jobs:
           make publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.7.1
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.7.2
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}
