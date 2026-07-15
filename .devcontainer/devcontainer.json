@@ -1,5 +1,5 @@
 {
-  "name": "ai-dial-ci (isolated)",
+  "name": "ai-dial-ci",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
