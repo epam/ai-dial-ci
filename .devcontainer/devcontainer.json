@@ -1,23 +1,19 @@
 {
-  "name": "ai-dial-ci",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "name": "ai-dial-ci (docker)",
+
+  "build": {
+    // Path is relative to the devcontainer.json file.
+    "dockerfile": "Dockerfile"
+  },
 
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
   "mounts": [
-    "source=ai-dial-ci-home,target=/home/vscode,type=volume",
-    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
-    "source=${localEnv:HOME}/.claude.json,target=/home/vscode/.claude.json,type=bind"
+    "source=ai-dial-ci-home,target=/home/node,type=volume",
+    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind"
   ],
 
-  "features": {
-    "ghcr.io/devcontainers/features/node:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers-extra/features/claude-code:1": {}
-  },
-
-  "postCreateCommand": "bash .devcontainer/post-create.sh",
-
-  "remoteUser": "vscode"
+  "remoteUser": "node"
 }
