@@ -11,8 +11,14 @@ inputs:
   poetry-version:
     description: Poetry version to use
     default: "latest"
+  uv-install:
+    description: Install UV
+    default: false
+  uv-version:
+    description: UV version to use
+    default: "latest"
   cache:
-    description: Cache Poetry dependencies (venv) and Poetry installation
+    description: Cache Poetry/UV dependencies (venv) and Poetry/UV installation
     default: "true"
 
 runs:
@@ -30,8 +36,15 @@ runs:
       with:
         path: ~/.local
         key: poetry-${{ inputs.poetry-version }}-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}
-    - name: Configure cached Poetry installation
-      if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry.outputs.cache-hit == 'true' }}
+    - name: Load cached UV installation
+      id: cached-uv
+      if: ${{ fromJSON(inputs.uv-install) && fromJSON(inputs.cache) && inputs.uv-version != 'latest' }}
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ~/.local
+        key: uv-${{ inputs.uv-version }}-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}
+    - name: Configure cached Poetry/UV installation
+      if: ${{ (fromJSON(inputs.poetry-install) || fromJSON(inputs.uv-install)) && (steps.cached-poetry.outputs.cache-hit == 'true' || steps.cached-uv.outputs.cache-hit == 'true' ) }}
       # When the cache is hit, and Poetry is restored, installation will run with default settings.
       # To make things work the same as when Poetry is installed by snok/install-poetry action, this step is needed.
       run: |
@@ -52,14 +65,31 @@ runs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         version: ${{ inputs.poetry-version }}
-    - name: Load cached venv
+    - name: Install UV
+      if: ${{ fromJSON(inputs.uv-install) && steps.cached-uv.outputs.cache-hit != 'true' }}
+      uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+      with:
+        version: ${{ inputs.uv-version }}
+        python-version: ${{ inputs.python-version }}
+    - name: Load cached Poetry venv
       id: cached-poetry-dependencies
       if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }}
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-poetry-${{ hashFiles('**/poetry.lock') }} # inspired by setup-python action
-    - name: Install dependencies
+    - name: Install dependencies with Poetry
       if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry-dependencies.outputs.cache-hit != 'true' }}
       run: poetry install --no-interaction --no-root
+      shell: bash
+    - name: Load cached UV venv
+      id: cached-uv-dependencies
+      if: ${{ fromJSON(inputs.uv-install) && fromJSON(inputs.cache) }}
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-uv-${{ hashFiles('**/uv.lock') }} # inspired by setup-python action
+    - name: Install dependencies with UV
+      if: ${{ fromJSON(inputs.uv-install) && steps.cached-uv-dependencies.outputs.cache-hit != 'true' }}
+      run: uv sync --quiet --all-extras
       shell: bash

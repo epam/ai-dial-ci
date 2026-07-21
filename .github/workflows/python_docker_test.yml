@@ -47,9 +47,17 @@ on:
         type: string
         description: Python version to use
         default: "3.11"
+      python-package-manager:
+        type: string
+        description: Python package manager to use
+        default: "poetry"
       poetry-version:
         type: string
         description: Poetry version to use
+        default: "latest"
+      uv-version:
+        type: string
+        description: UV version to use
         default: "latest"
       runs-on:
         type: string
@@ -97,7 +105,10 @@ jobs:
       - uses: epam/ai-dial-ci/actions/python_prepare@4.7.2
         with:
           python-version: ${{ inputs.python-version }}
+          poetry-install: ${{ inputs.python-package-manager == 'poetry' }}
           poetry-version: ${{ inputs.poetry-version }}
+          uv-install: ${{ inputs.python-package-manager == 'uv' }}
+          uv-version: ${{ inputs.uv-version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass-checks || inputs.style-checks-bypassed }}
         shell: bash
@@ -140,7 +151,10 @@ jobs:
       - uses: epam/ai-dial-ci/actions/python_prepare@4.7.2
         with:
           python-version: ${{ inputs.python-version }}
+          poetry-install: ${{ inputs.python-package-manager == 'poetry' }}
           poetry-version: ${{ inputs.poetry-version }}
+          uv-install: ${{ inputs.python-package-manager == 'uv' }}
+          uv-version: ${{ inputs.uv-version }}
       - name: Test
         continue-on-error: ${{ inputs.bypass-checks || inputs.code-checks-bypassed }}
         shell: bash
@@ -161,7 +175,7 @@ jobs:
           image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
           allow-dynamic-versions: "true"
           fail-on: "violations"
-          ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry"
+          ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry" # ORT analyzer doesn't support UV
           ort-config-repository: ${{ inputs.ort-config-repository }}
           ort-config-revision: ${{ inputs.ort-config-revision }}
         continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
