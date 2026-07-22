@@ -55,6 +55,10 @@ on:
         type: string
         description: ORT config revision to use
         default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
+      ort-report-formats:
+        type: string
+        description: Comma-separated list of ORT reporters to run (e.g. CycloneDx,SpdxDocument,WebApp)
+        default: "CycloneDx,SpdxDocument,WebApp"
       trivy-enabled:
         type: boolean
         description: Enable Trivy scanning
@@ -115,6 +119,7 @@ jobs:
       ort-version: ${{ inputs.ort-version }}
       ort-config-repository: ${{ inputs.ort-config-repository }}
       ort-config-revision: ${{ inputs.ort-config-revision }}
+      ort-report-formats: ${{ inputs.ort-report-formats }}
       trivy-enabled: ${{ inputs.trivy-enabled }}
       trivy-bypassed: ${{ inputs.trivy-bypassed }}
       trivy-severity: ${{ inputs.trivy-severity }}
