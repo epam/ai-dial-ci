@@ -109,9 +109,8 @@ jobs:
       trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
       trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
       python-version: ${{ inputs.python-version }}
-      install-poetry: ${{ inputs.python-package-manager == 'poetry' }}
+      python-package-manager: ${{ inputs.python-package-manager }}
       poetry-version: ${{ inputs.poetry-version }}
-      install-uv: ${{ inputs.python-package-manager == 'uv' }}
       uv-version: ${{ inputs.uv-version }}
       runs-on: ${{ inputs.runs-on }}
 
