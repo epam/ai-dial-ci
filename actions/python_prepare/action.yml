@@ -97,3 +97,12 @@ runs:
       if: ${{ fromJSON(inputs.uv-install) && steps.cached-uv-dependencies.outputs.cache-hit != 'true' }}
       run: uv sync --quiet --all-extras
       shell: bash
+    - name: Export VENV environment variable for UV
+      if: ${{ fromJSON(inputs.uv-install) }}
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          echo "VENV=.venv/scripts/activate" >> "$GITHUB_ENV"
+        else
+          echo "VENV=.venv/bin/activate" >> "$GITHUB_ENV"
+        fi
+      shell: bash
