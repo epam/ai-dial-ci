@@ -618,6 +618,9 @@ jobs:
 > [!note]
 > UV support is enabled by setting the `python-package-manager` workflow input to `uv` (defaults to `poetry`). All workflow snippets below assume this input is set
 
+> [!note]
+> [ORT](https://github.com/oss-review-toolkit/ort) doesn't support analyzing UV projects directly. When `python-package-manager` is set to `uv`, the `ort` job automatically exports `uv.lock` to a `requirements.txt` file (via `uv export --frozen`) before running ORT, and analyzes it as a PIP project instead. This is transparent and requires no changes to the consumer repository, aside from having `uv.lock` committed (see [Requirements](#requirements-3) below)
+
 #### Requirements
 
 Consumer repository **must** have:

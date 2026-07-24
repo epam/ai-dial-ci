@@ -168,6 +168,23 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
+      # ORT analyzer doesn't support UV directly, so for UV projects export uv.lock to a
+      # requirements.txt and let ORT analyze it as a PIP project instead.
+      - name: Set up Python
+        if: ${{ inputs.python-package-manager == 'uv' }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Set up UV
+        if: ${{ inputs.python-package-manager == 'uv' }}
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          version: ${{ inputs.uv-version }}
+          python-version: ${{ inputs.python-version }}
+      - name: Export UV dependencies to requirements.txt
+        if: ${{ inputs.python-package-manager == 'uv' }}
+        run: uv export --frozen --format requirements.txt --output-file requirements.txt
+        shell: bash
       - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
         env:
           CONTINUE_ON_ERROR: ${{ inputs.bypass-checks || inputs.ort-bypassed }} # Hack to use the input below as a boolean
@@ -175,7 +192,7 @@ jobs:
           image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
           allow-dynamic-versions: "true"
           fail-on: "violations"
-          ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=Poetry" # ORT analyzer doesn't support UV
+          ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=${{ inputs.python-package-manager == 'uv' && 'PIP' || 'Poetry' }}"
           ort-config-repository: ${{ inputs.ort-config-repository }}
           ort-config-revision: ${{ inputs.ort-config-revision }}
         continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
