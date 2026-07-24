@@ -174,7 +174,7 @@ jobs:
           python-version: ${{ inputs.python-version }}
       - name: Export UV dependencies to requirements.txt
         if: ${{ inputs.python-package-manager == 'uv' }}
-        run: uv export --frozen --format requirements.txt --output-file requirements.txt
+        run: uv export --frozen --all-extras --format requirements.txt --output-file requirements.txt
         shell: bash
       - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
         env:

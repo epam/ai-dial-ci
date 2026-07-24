@@ -95,7 +95,7 @@ runs:
         key: venv-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-uv-${{ hashFiles('**/uv.lock') }} # inspired by setup-python action
     - name: Install dependencies with UV
       if: ${{ fromJSON(inputs.uv-install) && steps.cached-uv-dependencies.outputs.cache-hit != 'true' }}
-      run: uv sync --quiet --all-extras
+      run: uv sync --quiet --frozen --all-extras
       shell: bash
     - name: Export VENV environment variable for UV
       if: ${{ fromJSON(inputs.uv-install) }}
