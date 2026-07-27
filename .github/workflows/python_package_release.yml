@@ -79,10 +79,18 @@ on:
         type: string
         description: Python version to use
         default: "3.11"
+      python-package-manager:
+        type: string
+        description: Python package manager to use
+        default: "poetry"
       poetry-version:
         type: string
         description: Poetry version to use
         default: "1.8.5"
+      uv-version:
+        type: string
+        description: UV version to use
+        default: "0.11.30"
       runs-on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
@@ -121,7 +129,9 @@ jobs:
       trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
       trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
       python-version: ${{ inputs.python-version }}
+      python-package-manager: ${{ inputs.python-package-manager }}
       poetry-version: ${{ inputs.poetry-version }}
+      uv-version: ${{ inputs.uv-version }}
       runs-on: ${{ inputs.runs-on }}
 
   calculate_version:
@@ -133,7 +143,7 @@ jobs:
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.7.2
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.8.0
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
@@ -150,7 +160,7 @@ jobs:
       - calculate_version
       - test
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.7.2
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.8.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -158,10 +168,13 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/python_prepare@4.7.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@4.8.0
         with:
           python-version: ${{ inputs.python-version }}
+          poetry-install: ${{ inputs.python-package-manager == 'poetry' }}
           poetry-version: ${{ inputs.poetry-version }}
+          uv-install: ${{ inputs.python-package-manager == 'uv' }}
+          uv-version: ${{ inputs.uv-version }}
       - name: Set version
         shell: bash
         run: |
@@ -173,7 +186,7 @@ jobs:
           make publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.7.2
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.8.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}

@@ -11,8 +11,14 @@ inputs:
   poetry-version:
     description: Poetry version to use
     default: "latest"
+  uv-install:
+    description: Install UV
+    default: false
+  uv-version:
+    description: UV version to use
+    default: "latest"
   cache:
-    description: Cache Poetry dependencies (venv) and Poetry installation
+    description: Cache Poetry/UV dependencies (venv) and Poetry/UV installation
     default: "true"
 
 runs:
@@ -30,6 +36,17 @@ runs:
       with:
         path: ~/.local
         key: poetry-${{ inputs.poetry-version }}-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}
+    - name: Load cached UV installation
+      id: cached-uv
+      if: ${{ fromJSON(inputs.uv-install) && fromJSON(inputs.cache) && inputs.uv-version != 'latest' }}
+      # astral-sh/setup-uv installs the uv binary into the GitHub Actions tool-cache
+      # (RUNNER_TOOL_CACHE), not ~/.local, so that's what needs to be persisted across runs.
+      # setup-uv itself still runs on cache hit (it detects the cached binary via tool-cache
+      # and skips the download), so PATH/env setup done by the action is not lost.
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ${{ runner.tool_cache }}/uv
+        key: uv-${{ inputs.uv-version }}-${{ runner.os }}-${{ runner.arch }}
     - name: Configure cached Poetry installation
       if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry.outputs.cache-hit == 'true' }}
       # When the cache is hit, and Poetry is restored, installation will run with default settings.
@@ -52,14 +69,40 @@ runs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         version: ${{ inputs.poetry-version }}
-    - name: Load cached venv
+    - name: Install UV
+      if: ${{ fromJSON(inputs.uv-install) }}
+      uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+      with:
+        version: ${{ inputs.uv-version }}
+        python-version: ${{ inputs.python-version }}
+    - name: Load cached Poetry venv
       id: cached-poetry-dependencies
       if: ${{ fromJSON(inputs.poetry-install) && fromJSON(inputs.cache) }}
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-poetry-${{ hashFiles('**/poetry.lock') }} # inspired by setup-python action
-    - name: Install dependencies
+    - name: Install dependencies with Poetry
       if: ${{ fromJSON(inputs.poetry-install) && steps.cached-poetry-dependencies.outputs.cache-hit != 'true' }}
       run: poetry install --no-interaction --no-root
+      shell: bash
+    - name: Load cached UV venv
+      id: cached-uv-dependencies
+      if: ${{ fromJSON(inputs.uv-install) && fromJSON(inputs.cache) }}
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-uv-${{ hashFiles('**/uv.lock') }} # inspired by setup-python action
+    - name: Install dependencies with UV
+      if: ${{ fromJSON(inputs.uv-install) && steps.cached-uv-dependencies.outputs.cache-hit != 'true' }}
+      run: uv sync --quiet --frozen --all-extras
+      shell: bash
+    - name: Export VENV environment variable for UV
+      if: ${{ fromJSON(inputs.uv-install) }}
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          echo "VENV=.venv/scripts/activate" >> "$GITHUB_ENV"
+        else
+          echo "VENV=.venv/bin/activate" >> "$GITHUB_ENV"
+        fi
       shell: bash

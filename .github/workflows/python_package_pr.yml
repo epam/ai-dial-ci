@@ -71,10 +71,18 @@ on:
         type: string
         description: Python version to use
         default: "3.11"
+      python-package-manager:
+        type: string
+        description: Python package manager to use
+        default: "poetry"
       poetry-version:
         type: string
         description: Poetry version to use
         default: "1.8.5"
+      uv-version:
+        type: string
+        description: UV version to use
+        default: "0.11.30"
       runs-on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
@@ -101,7 +109,9 @@ jobs:
       trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
       trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
       python-version: ${{ inputs.python-version }}
+      python-package-manager: ${{ inputs.python-package-manager }}
       poetry-version: ${{ inputs.poetry-version }}
+      uv-version: ${{ inputs.uv-version }}
       runs-on: ${{ inputs.runs-on }}
 
   build:
@@ -110,8 +120,11 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@4.7.2
+      - uses: epam/ai-dial-ci/actions/python_prepare@4.8.0
         with:
           python-version: ${{ inputs.python-version }}
+          poetry-install: ${{ inputs.python-package-manager == 'poetry' }}
           poetry-version: ${{ inputs.poetry-version }}
+          uv-install: ${{ inputs.python-package-manager == 'uv' }}
+          uv-version: ${{ inputs.uv-version }}
       - run: make build
