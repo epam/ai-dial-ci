@@ -21,33 +21,39 @@ jobs:
           GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN_TEST_DESTROY }}
         shell: bash  
         run: |
-          # remove "epam/" prefix from the repository name to match the GitLab environment name
+          # Remove "epam/" prefix from the repository name to match the GitLab environment name
           GITHUB_REPO=${GITHUB_REPO:5}
 
-          # check if the review environment is already stopped
-          CURRENT_ENV_STATE=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_ACCESS_TOKEN" \
-            --url "https://gitlab.deltixhub.com/api/v4/projects/1779/environments?name=$GITHUB_REPO/pr-$GITHUB_PR_ID" \
-            | jq -r '.[0].state')
+          # Get environment data
+          ENV_DATA=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_ACCESS_TOKEN" \
+            --url "https://gitlab.deltixhub.com/api/v4/projects/1779/environments?name=$GITHUB_REPO/pr-$GITHUB_PR_ID")
             
+          # Get environment current state
+          CURRENT_ENV_STATE=$(echo "$ENV_DATA" | jq -r '.[0].state')   
           echo "Current review environment status is ${CURRENT_ENV_STATE}"
           
-          if [ "$CURRENT_ENV_STATE" == "stopped" ]; then
+          if [ "$CURRENT_ENV_STATE" = "stopped" ]; then
             exit 0 
           else
-            #get the environment id base on the environment name
-            GITLAB_ENV_ID=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_ACCESS_TOKEN" \
-              --url "https://gitlab.deltixhub.com/api/v4/projects/1779/environments?name=$GITHUB_REPO/pr-$GITHUB_PR_ID" \
-              | jq -r '.[0].id')
-
+            # Get the environment id base on the environment name
+            GITLAB_ENV_ID=$(echo "$ENV_DATA" | jq -r '.[0].id')
             echo "Gitlab review environment id: ${GITLAB_ENV_ID}" 
 
             echo "Stopping review environment... " 
 
             #stop the environment based on the environment id
-            STATE=$(curl -s --request POST \
+            curl -s --request POST \
               --header "PRIVATE-TOKEN: $GITLAB_ACCESS_TOKEN" \
-              --url "https://gitlab.deltixhub.com/api/v4/projects/1779/environments/${GITLAB_ENV_ID}/stop" \
-              | jq -r '.state')
-
-            echo "Review environment for repostory epam/$GITHUB_REPO pr-$GITHUB_PR_ID has been $STATE"
+              --url "https://gitlab.deltixhub.com/api/v4/projects/1779/environments/${GITLAB_ENV_ID}/stop" 
+              
+            #Confirm is review environment is stopped
+            while [ "$CURRENT_ENV_STATE" != "stopped" ]
+            do
+                echo "Waiting for environment to stop..."
+                sleep 60
+                CURRENT_ENV_STATE=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_ACCESS_TOKEN" \
+                  --url "https://gitlab.deltixhub.com/api/v4/projects/1779/environments/${GITLAB_ENV_ID}" \
+                  | jq -r '.[0].state')
+            done
+                echo "Environment stopped successfully."            
           fi
