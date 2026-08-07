@@ -38,7 +38,7 @@ jobs:
           else
             #get the environment id base on the environment name
             GITLAB_ENV_ID=$(curl --header "PRIVATE-TOKEN: $GITLAB_ACCESS_TOKEN" \
-              --url "https://gitlab.deltixhub.com/api/v4/projects//environments?name=$GITHUB_REPO/pr-$GITHUB_PR_ID" \
+              --url "https://gitlab.deltixhub.com/api/v4/projects/1779/environments?name=$GITHUB_REPO/pr-$GITHUB_PR_ID" \
               | jq -r '.[0].id')
 
             echo "Gitlab review environment id: ${GITLAB_ENV_ID}" 
