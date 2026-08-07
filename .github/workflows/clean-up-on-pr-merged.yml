@@ -1,9 +1,7 @@
 name: Destroy Review Environment on PR Merge
 
 on:
-  pull_request:
-    types:
-      - closed
+  workflow_call:
     inputs:
       runs-on:
         type: string
