@@ -25,7 +25,7 @@ jobs:
         run: |
           echo "$GITHUB_PR_ID"
           # remove "epam/" prefix from the repository name to match the GitLab environment name
-          $GITHUB_REPO=${GITHUB_REPO:5}
+          GITHUB_REPO=${GITHUB_REPO:5}
           echo "$GITHUB_REPO"
 
           # check if the review environment is already stopped
