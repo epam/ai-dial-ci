@@ -31,7 +31,7 @@ jobs:
             --url "https://gitlab.deltixhub.com/api/v4/projects/1779/environments?name=$GITHUB_REPO/pr-$GITHUB_PR_ID" \
             | jq -r '.[0].state')
             
-          echo "Current review environment status is ${CURRENT_ENV_STATE}
+          echo "Current review environment status is ${CURRENT_ENV_STATE}"
           
           if [ "$CURRENT_ENV_STATE" == "stopped" ]; then
             echo "Review environment for repository epam/$GITHUB_REPO pr-$GITHUB_PR_ID is already stopped."
