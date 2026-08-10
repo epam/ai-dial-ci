@@ -27,14 +27,20 @@ jobs:
           # Get environment data
           ENV_DATA=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_ACCESS_TOKEN" \
             --url "https://gitlab.deltixhub.com/api/v4/projects/1779/environments?name=$GITHUB_REPO/pr-$GITHUB_PR_ID")
-            
+
+          # Check if review environment exists
+          if [ -z "$ENV_DATA" ]; then
+            echo "Review environment hasn't been created"
+            exit 0 
+          fi
+          
           # Get environment current state
           CURRENT_ENV_STATE=$(echo "$ENV_DATA" | jq -r '.[0].state')   
           echo "Current review environment status is ${CURRENT_ENV_STATE}"
           
           if [ "$CURRENT_ENV_STATE" = "stopped" ]; then
             exit 0 
-          else
+          elif [ "$CURRENT_ENV_STATE" = "available" ]; then
             # Get the environment id base on the environment name
             GITLAB_ENV_ID=$(echo "$ENV_DATA" | jq -r '.[0].id')
             echo "Gitlab review environment id: ${GITLAB_ENV_ID}" 
