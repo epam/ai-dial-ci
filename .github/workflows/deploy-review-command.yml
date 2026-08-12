@@ -37,8 +37,6 @@
 #     - AUTH0_DOMAIN:                         Auth0 domain for ai-dial-admin-perf authentication
 #     - DIAL_ADMIN_CLIENT_ID:                 Auth0 client ID for ai-dial-admin-perf tests
 #     - DIAL_ADMIN_NEXTAUTH_SECRET:           NextAuth secret for ai-dial-admin-perf tests
-#     - DIAL_CORE_BASE_URL:                   DIAL Core API base URL for ai-dial-admin-perf tests
-#     - URL_DEPLOY_SERVICE:                   Deployment-manager API base URL for ai-dial-admin-perf tests
 # - GitHub environment `review`:
 #   - Variables:
 #     - REVIEW_BASE_DOMAIN                    Base domain for review environment (e.g. example.com)
@@ -289,8 +287,8 @@ jobs:
           # If the request dispatched from the repository with tests, pass the PR branch, otherwise we don't care
           # This is requested by QA team to verify changes in tests before rolling them out for everyone
           test-branch: ${{ matrix.test-repository == github.event.client_payload.pull_request.head.repo.full_name && github.event.client_payload.pull_request.head.ref || '' }}
-          dial-core-base-url: ${{ secrets.DIAL_CORE_BASE_URL }}
-          url-deploy-service: ${{ secrets.URL_DEPLOY_SERVICE }}
+          dial-core-base-url: "https://core-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
+          url-deploy-service: "https://admin-dm-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
         env:
           # ai-dial-chat
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
