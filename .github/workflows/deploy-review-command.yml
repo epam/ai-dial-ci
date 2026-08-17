@@ -31,7 +31,8 @@
 #     - E2E_USERNAME:                         Name(s) of application user(s) for ai-dial-chat tests
 #     - E2E_PASSWORD:                         Password for the application users
 #     - NEXT_PUBLIC_OVERLAY_USER_BUCKET:      A blob storage prefix for specific application user
-#     - DIAL_ADMIN_USERS_FILE:                Users data file for ai-dial-admin-perf tests
+#     - ADMIN_LOGIN:                           Login for ai-dial-admin-perf tests
+#     - ADMIN_PASSWORD:                        Password for ai-dial-admin-perf tests
 #     - INFLUX_HOST:                          InfluxDB host for ai-dial-admin-perf tests
 #     - INFLUX_TOKEN:                         InfluxDB token for ai-dial-admin-perf tests
 #     - AUTH0_DOMAIN:                         Auth0 domain for ai-dial-admin-perf authentication
@@ -295,7 +296,8 @@ jobs:
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
           # ai-dial-admin-perf
-          DIAL_ADMIN_USERS_FILE: ${{ secrets.DIAL_ADMIN_USERS_FILE }}
+          ADMIN_LOGIN: ${{ secrets.ADMIN_LOGIN }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           INFLUX_HOST: ${{ secrets.INFLUX_HOST }}
           INFLUX_TOKEN: ${{ secrets.INFLUX_TOKEN }}
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}

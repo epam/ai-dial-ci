@@ -1006,7 +1006,8 @@ Besides inputs, the action will have access to environment variables:
 - `E2E_PASSWORD`
 - `E2E_USERNAME`
 - `NEXT_PUBLIC_OVERLAY_USER_BUCKET`
-- `DIAL_ADMIN_USERS_FILE`
+- `ADMIN_LOGIN`
+- `ADMIN_PASSWORD`
 - `INFLUX_HOST`
 - `INFLUX_TOKEN`
 - `AUTH0_DOMAIN`
