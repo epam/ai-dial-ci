@@ -284,6 +284,7 @@ jobs:
       - uses: ./.github/actions/test
         with:
           environment-url: ${{ env.ENVIRONMENT_URL }}
+          base-url-postfix: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
           report-prefix: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}
           # If the request dispatched from the repository with tests, pass the PR branch, otherwise we don't care
           # This is requested by QA team to verify changes in tests before rolling them out for everyone
@@ -303,8 +304,6 @@ jobs:
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
           DIAL_ADMIN_CLIENT_ID: ${{ secrets.DIAL_ADMIN_CLIENT_ID }}
           DIAL_ADMIN_NEXTAUTH_SECRET: ${{ secrets.DIAL_ADMIN_NEXTAUTH_SECRET }}
-          DIAL_CORE_BASE_URL: "https://core-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
-          URL_DEPLOY_SERVICE: "https://admin-dm-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
   monitor:
     runs-on: ubuntu-latest
     if: always()
