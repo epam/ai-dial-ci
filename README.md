@@ -996,6 +996,7 @@ A test repository must provide [composite actions](https://docs.github.com/en/ac
 The action must have inputs:
 
 - `environment-url`: URL of the deployed review environment. Points to specific application, e.g. `https://chat-example.com`, `https://admin-example.com`, etc
+- `base-url-postfix`: Shared host postfix for the review environment (application + PR number + base domain, without protocol or application-specific prefix), e.g. `admin-pr-456.example.com`. Allows the action to build multiple application URLs (e.g. core, deploy service) with different prefixes
 - `report-prefix`: Environment identifier that can be used (but not limited) to prefix test reports, e.g. `chat-pr-123`, `admin-pr-456`, etc
 - `test-branch`: Branch name of GitHub repository with tests source code. If tests are triggered from the test repository itself, `test-branch` equals PR source branch, e.g. `feat-something-new`, otherwise empty. This behavior allows QA team to verify changes in tests before rolling them out
 
