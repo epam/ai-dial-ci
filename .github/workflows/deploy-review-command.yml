@@ -185,7 +185,7 @@ jobs:
         include: ${{ fromJson(needs.deploy-review.outputs.test-applications) }}
       fail-fast: false
     env:
-      ENVIRONMENT_URL: "https://${{ matrix.application }}-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
+      APPLICATION_URL: "https://${{ matrix.application }}-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
     steps:
       - name: Wait for environment
         run: |
@@ -265,12 +265,12 @@ jobs:
               return 1
           }
 
-          printf "Environment URL is '%s', waiting to be available...\n" "$ENVIRONMENT_URL"
-          wait_for_dns "${ENVIRONMENT_URL}"
-          wait_for_http "${ENVIRONMENT_URL}"
+          printf "Environment URL is '%s', waiting to be available...\n" "$APPLICATION_URL"
+          wait_for_dns "${APPLICATION_URL}"
+          wait_for_http "${APPLICATION_URL}"
         shell: bash
         env:
-          ENVIRONMENT_URL: ${{ env.ENVIRONMENT_URL }}
+          APPLICATION_URL: ${{ env.APPLICATION_URL }}
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: ${{ matrix.test-repository }}
@@ -283,8 +283,8 @@ jobs:
           cp -r .github/actions/test-${{ matrix.application }}/. .github/actions/test/
       - uses: ./.github/actions/test
         with:
-          environment-url: ${{ env.ENVIRONMENT_URL }}
-          base-url-postfix: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}
+          application-url: ${{ env.APPLICATION_URL }}
+          environment-url: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}
           report-prefix: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}
           # If the request dispatched from the repository with tests, pass the PR branch, otherwise we don't care
           # This is requested by QA team to verify changes in tests before rolling them out for everyone
