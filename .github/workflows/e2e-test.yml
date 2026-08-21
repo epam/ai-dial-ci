@@ -48,6 +48,7 @@ jobs:
       e2e-host: "https://chat-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.${{ vars.E2E_BASE_DOMAIN }}"
       next-public-overlay-host: "https://overlay-${{ needs.deploy-env.outputs.github-app }}-${{ needs.deploy-env.outputs.github-sha }}.${{ vars.E2E_BASE_DOMAIN }}"
       environment-name: e2e-test
+      test-branch: ${{ github.event.client_payload.test-branch || "development" }}
     secrets:
       E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
       E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
