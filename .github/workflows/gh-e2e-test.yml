@@ -18,7 +18,7 @@ on:
       test-branch:
         type: string
         description: E2E tests Git branch
-        default: "development"
+        default: "development-0.x"
       dotenv-file:
         type: string
         description: Path to dotenv file with E2E test variables
