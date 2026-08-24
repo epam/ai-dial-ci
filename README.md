@@ -46,6 +46,11 @@
       - [Trivy additional configuration](#trivy-additional-configuration)
       - [Dependabot](#dependabot)
         - [Dependabot Pull Requests Automation](#dependabot-pull-requests-automation)
+      - [ORT](#ort)
+        - [Control switches](#control-switches)
+        - [Configuration](#configuration)
+          - [Global config repository](#global-config-repository)
+          - [.ort.yml](#ortyml)
   - [Contributing](#contributing)
 
 ## Overview
@@ -616,7 +621,7 @@ jobs:
 ### Python (UV)
 
 > [!note]
-> UV support is enabled by setting the `python-package-manager` workflow input to `uv` (defaults to `poetry`). All workflow snippets below assume this input is set
+> UV support is enabled by setting the `python-package-manager` workflow input to `uv` (defaults to `poetry`)
 
 > [!note]
 > [ORT](https://github.com/oss-review-toolkit/ort) doesn't support analyzing UV projects directly. When `python-package-manager` is set to `uv`, the `ort` job automatically exports `uv.lock` to a `requirements.txt` file (via `uv export --frozen`) before running ORT, and analyzes it as a PIP project instead. This is transparent and requires no changes to the consumer repository, aside from having `uv.lock` committed (see [Requirements](#requirements-3) below)
@@ -1197,7 +1202,9 @@ jobs:
 
 #### Trivy additional configuration
 
-To change predefined Trivy parameters or set up additional configuration options, create `trivy.yaml` file in root of your repository. Use example below to add fallback repositories for vulnerabilities and checks DB and thus mitigate rate limit issues.
+We use [Trivy](https://trivy.dev/) for vulnerability scanning of container images and packages.
+
+To change predefined Trivy parameters or set up additional [configuration options](https://trivy.dev/docs/latest/guide/references/configuration/config-file/), create `trivy.yaml` file in root of your repository. E.g., use the configuration below to add fallback sources for Trivy databases, thus mitigate rate limit issues.
 
 `trivy.yaml`
 
@@ -1307,6 +1314,195 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
+
+#### ORT
+
+We use [OSS Review Toolkit (ORT)](https://oss-review-toolkit.org/ort/) to analyze dependencies and flag potential license compliance issues.
+
+##### Control switches
+
+Edit workflows inputs to control ORT behavior:
+
+| Input          | Default | Effect                                             |
+| -------------- | ------- | -------------------------------------------------- |
+| `ort-enabled`  | `true`  | If set to `false`, the scan will be skipped        |
+| `ort-bypassed` | `false` | If set to `true`, findings won't fail the pipeline |
+
+<details>
+  <summary>Example</summary>
+
+```yml
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/generic_docker_pr.yml@main
+    with:
+      ort-bypassed: true
+    secrets: inherit
+```
+
+</details>
+
+Alternatively, while working with PRs it's may be more convenient to set `ort-bypassed` label - same effect as `ort-bypassed: true`.
+
+> [!tip]
+> Prefer bypassing over disabling to keep visibility into compliance issues
+
+##### Configuration
+
+ORT is configured on two levels: a shared **global config repository** and a per-repository **`.ort.yml`**
+
+###### Global config repository
+
+Holds org-wide policy rules, license classifications, curations and resolutions shared across all repositories. Controlled via workflow inputs (or repository variables):
+
+| Workflow Input          | Repository variable       | Default                                                |
+| ----------------------- | ------------------------- | ------------------------------------------------------ |
+| `ort-config-repository` | `ORT_CONFIG_VCS_URL`      | `https://github.com/oss-review-toolkit/ort-config.git` |
+| `ort-config-revision`   | `ORT_CONFIG_VCS_REVISION` | Git SHA matching the pinned `ort-version`              |
+
+> [!important]
+> `ort-config-revision` must point to a SHA where `org.ossreviewtoolkit:version-catalog` version matches `ort-version` in use - the config schema evolves with ORT, so a mismatched revision can break the scan. When bumping one, bump the other too.
+
+###### .ort.yml
+
+Add an `.ort.yml` to the repository root for [project-specific configuration](https://oss-review-toolkit.org/ort/docs/configuration/ort-yml). For example:
+
+- exclude dev/test dependencies and build tooling scopes, which are not included in distributed build:
+
+  <details>
+    <summary>Node (npm)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    skip_excluded: true
+  excludes:
+    paths:
+      - pattern: "package-lock.json"
+        reason: "BUILD_TOOL_OF"
+    scopes:
+      - pattern: "devDependencies"
+        reason: "DEV_DEPENDENCY_OF"
+        comment: "Packages for development only."
+  ```
+
+  </details>
+
+  <details>
+    <summary>Python (Poetry)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    skip_excluded: true
+  excludes:
+    scopes:
+    - pattern: "dev"
+      reason: "DEV_DEPENDENCY_OF"
+      comment: "Packages for development only."
+    - pattern: "lint"
+      reason: "DEV_DEPENDENCY_OF"
+      comment: "Packages for static code analysis only."
+    - pattern: "test"
+      reason: "TEST_DEPENDENCY_OF"
+      comment: "Packages for testing only."
+  ```
+
+  </details>
+
+  <details>
+    <summary>Java (Gradle)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    skip_excluded: true
+  excludes:
+    scopes:
+      - pattern: "annotationProcessor"
+        reason: "BUILD_DEPENDENCY_OF"
+        comment: "Packages to process code annotations only."
+      - pattern: "checkstyle"
+        reason: "DEV_DEPENDENCY_OF"
+        comment: "Packages for static code analysis only."
+      - pattern: "lombok"
+        reason: "DEV_DEPENDENCY_OF"
+        comment: "Packages from Project Lombok only."
+      - pattern: "test.*"
+        reason: "TEST_DEPENDENCY_OF"
+        comment: "Packages for testing only."
+  ```
+
+  </details>
+
+- [resolve policy rule violations](https://oss-review-toolkit.org/ort/docs/configuration/ort-yml#resolving-policy-rule-violations) that can't be fixed, matching the violation `message` with a regular expression:
+
+  <details>
+    <summary>Python (Poetry)</summary>
+
+  ```yml
+  ---
+  resolutions:
+    rule_violations:
+      # NVIDIA CUDA runtime libraries are distributed under the proprietary "NVIDIA Proprietary Software" / CUDA EULA license. There is no SPDX
+      # identifier for it that is covered by the policy rules, and it is not possible to conclude a custom LicenseRef- without it being flagged as an
+      # unhandled license. These are therefore resolved as can't-fix exceptions.
+      - message: ".*PyPI::nvidia-cu.*"
+        reason: "CANT_FIX_EXCEPTION"
+        comment: "NVIDIA Proprietary Software, see https://docs.nvidia.com/cuda/eula/index.html"
+  ```
+
+  </details>
+
+  > [!tip]
+  > Prefer adding [package curations](https://oss-review-toolkit.org/ort/docs/configuration/package-curations) over resolving violations when `NO_LICENSE_IN_DEPENDENCY` is reported
+
+- set [package-manager-specific](https://oss-review-toolkit.org/ort/docs/category/package-managers) options. Each package manager defines its own options, e.g.:
+
+  <details>
+    <summary>Node (npm)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    package_managers:
+      NPM:
+        options:
+          # https://oss-review-toolkit.org/ort/docs/plugins/package-managers/NPM
+          legacyPeerDeps: false
+  ```
+
+  </details>
+
+  <details>
+    <summary>Python (Poetry)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    package_managers:
+      Poetry:
+        options:
+          # https://oss-review-toolkit.org/ort/docs/plugins/package-managers/Poetry
+          operatingSystem: "linux"
+  ```
+
+  </details>
+
+  <details>
+    <summary>Java (Gradle)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    package_managers:
+      Gradle:
+        options:
+          # https://oss-review-toolkit.org/ort/docs/plugins/package-managers/Gradle
+          gradleVersion: "10.3"
+  ```
+
+  </details>
 
 ## Contributing
 
