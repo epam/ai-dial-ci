@@ -33,7 +33,7 @@ on:
         description: Do not fail pipeline if ORT scan failed
       ort-version:
         type: string
-        default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+        default: "92.3.0"
         description: ORT version to use
       ort-config-repository:
         type: string
@@ -41,7 +41,7 @@ on:
         description: ORT config repository to use
       ort-config-revision:
         type: string
-        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '53e06979539eb49f4be39db6bd605cfbe74bc98d' }} # v92.3.0
         description: ORT config revision to use
       trivy-enabled:
         type: boolean
