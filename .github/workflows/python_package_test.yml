@@ -74,11 +74,11 @@ on:
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
+        default: "https://github.com/oss-review-toolkit/ort-config.git"
       ort-config-revision:
         type: string
         description: ORT config revision to use
-        default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
+        default: "main"
       python-version:
         type: string
         description: Python version to use

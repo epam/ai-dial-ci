@@ -50,7 +50,7 @@ on:
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: "https://github.com/oss-review-toolkit/ort-config.git"
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
       ort-config-revision:
         type: string
         description: ORT config revision to use
