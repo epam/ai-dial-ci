@@ -128,6 +128,11 @@ jobs:
           # Provide more RAM; Only applies to GitHub hosted runners for public repositories
           # https://docs.github.com/en/actions/reference/runners/github-hosted-runners
           ort-jdk-java-options: "-Xmx${{ github.event.repository.private && '5' || '12' }}g"
+          ort-cli-args: >-
+            -P ort.forceOverwrite=true
+            --stacktrace
+            -P ort.analyzer.enabledPackageManagers=NPM
+            -P ort.analyzer.packageManagers.NPM.options.nodeVersion=${{ inputs.node-version }}
           ort-config-repository: ${{ inputs.ort-config-repository }}
           ort-config-revision: ${{ inputs.ort-config-revision }}
       - name: Fail on ORT Analyzer errors
