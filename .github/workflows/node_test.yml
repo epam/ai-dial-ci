@@ -127,4 +127,18 @@ jobs:
           ort-cli-args: "-P ort.forceOverwrite=true --stacktrace -P ort.analyzer.enabledPackageManagers=NPM"
           ort-config-repository: ${{ inputs.ort-config-repository }}
           ort-config-revision: ${{ inputs.ort-config-revision }}
-        continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
+      - name: Fail on ORT Analyzer errors
+        run: |
+          result="$HOME/.ort/ort-results/analyzer-result.json"
+          [ -f "$result" ] || { echo "::error::Analyzer result not found: $result"; exit 1; }
+          # Recursively collect every object with a severity+message under `analyzer`,
+          # so this works regardless of layout (top-level issues map, dependency nodes, etc.)
+          # and across all package managers (NPM, Gradle, ...).
+          filter='[.analyzer | .. | objects | select(has("severity") and has("message")) | select(.severity == "ERROR")]'
+          count=$(jq "$filter | length" "$result")
+          echo "Analyzer ERROR issues: $count"
+          if [ "$count" -gt 0 ]; then
+            jq -r "$filter[] | \"[\(.severity)] \(.source // \"unknown\"): \(.message)\"" "$result"
+            echo "::error::ORT Analyzer reported $count error(s). Check the report to address them."
+            exit 1
+          fi
