@@ -128,6 +128,9 @@ jobs:
       - uses: oss-review-toolkit/ort-ci-github-action@086d928d24ef1653dc0777296b312fda5faaaf52 # v1.2.0
         with:
           image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
+          docker-cli-args: >-
+            -e GPR_USERNAME=${{ github.actor }}
+            -e GPR_PASSWORD=${{ secrets.GITHUB_TOKEN }}
           allow-dynamic-versions: "true"
           fail-on: "violations"
           run: "cache-dependencies, labels, analyzer, evaluator, reporter, upload-results"
