@@ -99,7 +99,7 @@ jobs:
       code-checks-bypassed: ${{ inputs.code-checks-bypassed }}
       code-checks-python-versions: ${{ inputs.code-checks-python-versions }}
       ort-enabled: ${{ inputs.ort-enabled }}
-      ort-bypassed: ${{ inputs.ort-bypassed }}
+      ort-bypassed: ${{ inputs.ort-bypassed || contains(github.event.pull_request.labels.*.name, 'ort-bypassed') }}
       ort-version: ${{ inputs.ort-version }}
       ort-config-repository: ${{ inputs.ort-config-repository }}
       ort-config-revision: ${{ inputs.ort-config-revision }}
