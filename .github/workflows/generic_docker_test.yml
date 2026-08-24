@@ -67,7 +67,8 @@ jobs:
           image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
           allow-dynamic-versions: "true"
           fail-on: "violations"
-          ort-cli-args: "-P ort.forceOverwrite=true --stacktrace"
+          run: "cache-dependencies, labels, analyzer, evaluator, reporter, upload-results"
+          # Provide more RAM; Only applies to GitHub hosted runners for public repositories
           ort-config-repository: ${{ inputs.ort-config-repository }}
           ort-config-revision: ${{ inputs.ort-config-revision }}
       - name: Fail on ORT Analyzer errors
