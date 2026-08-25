@@ -996,7 +996,7 @@ A test repository must provide [composite actions](https://docs.github.com/en/ac
 The action must have inputs:
 
 - `application-url`: URL of the deployed review environment. Points to specific test application, e.g. chat - `https://chat-ai-dial-core-pr-123.example.com`, admin - `https://admin-ai-dial-core-pr-123.example.com`, etc
-- `environment-fqdn`: FQDN of the deployed review environment (formed of repository + PR number + base domain, without protocol or application-specific prefix), e.g. `ai-dial-core-pr-123.example.com`. Useful to build additional application URLs on the spot besides the main one provided in `application-url`
+- `environment-fqdn`: FQDN of the deployed review environment (formed of repository + PR number + base domain, without protocol or application-specific prefix), e.g. `ai-dial-core-pr-123.example.com`. Useful to build additional application URLs (by prepending with protocol and well-known application prefix) on the spot besides the main one provided in `application-url`
 - `report-prefix`: Environment identifier that can be used (but not limited) to prefix test reports, e.g. `ai-dial-core-pr-123`, etc
 - `test-branch`: Branch name of GitHub repository with tests source code. If tests are triggered from the test repository itself, `test-branch` equals PR source branch, e.g. `feat-something-new`, otherwise empty. This behavior allows QA team to verify changes in tests before rolling them out
 
