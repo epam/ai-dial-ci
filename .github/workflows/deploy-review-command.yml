@@ -265,7 +265,7 @@ jobs:
               return 1
           }
 
-          printf "Environment URL is '%s', waiting to be available...\n" "$APPLICATION_URL"
+          printf "APPLICATION_URL is '%s', waiting to be available...\n" "$APPLICATION_URL"
           wait_for_dns "${APPLICATION_URL}"
           wait_for_http "${APPLICATION_URL}"
         shell: bash
@@ -284,7 +284,7 @@ jobs:
       - uses: ./.github/actions/test
         with:
           application-url: ${{ env.APPLICATION_URL }}
-          environment-url: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}
+          environment-fqdn: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}
           report-prefix: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}
           # If the request dispatched from the repository with tests, pass the PR branch, otherwise we don't care
           # This is requested by QA team to verify changes in tests before rolling them out for everyone
