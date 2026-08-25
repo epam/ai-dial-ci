@@ -38,15 +38,15 @@ on:
       ort-version:
         type: string
         description: ORT version to use
-        default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+        default: "92.3.0"
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: "https://github.com/oss-review-toolkit/ort-config.git"
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
       ort-config-revision:
         type: string
         description: ORT config revision to use
-        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '53e06979539eb49f4be39db6bd605cfbe74bc98d' }} # v92.3.0
       trivy-enabled:
         type: boolean
         description: Enable Trivy scanning
@@ -99,7 +99,7 @@ jobs:
       code-checks-bypassed: ${{ inputs.code-checks-bypassed }}
       code-checks-python-versions: ${{ inputs.code-checks-python-versions }}
       ort-enabled: ${{ inputs.ort-enabled }}
-      ort-bypassed: ${{ inputs.ort-bypassed }}
+      ort-bypassed: ${{ inputs.ort-bypassed || contains(github.event.pull_request.labels.*.name, 'ort-bypassed') }}
       ort-version: ${{ inputs.ort-version }}
       ort-config-repository: ${{ inputs.ort-config-repository }}
       ort-config-revision: ${{ inputs.ort-config-revision }}
@@ -120,7 +120,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@4.9.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@4.10.0
         with:
           python-version: ${{ inputs.python-version }}
           poetry-install: ${{ inputs.python-package-manager == 'poetry' }}

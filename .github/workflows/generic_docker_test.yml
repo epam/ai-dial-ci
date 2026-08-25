@@ -13,7 +13,7 @@ on:
         default: true
       style-checks-bypassed:
         type: boolean
-        description: Do not fail pipeline if style_check failed
+        description: Do not fail pipeline if style_checks failed
         default: false
       ort-enabled:
         type: boolean
@@ -30,11 +30,11 @@ on:
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
+        default: "https://github.com/oss-review-toolkit/ort-config.git"
       ort-config-revision:
         type: string
         description: ORT config revision to use
-        default: ${{ vars.ORT_CONFIG_VCS_REVISION || 'main' }}
+        default: "main"
       runs-on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
@@ -58,18 +58,39 @@ jobs:
   ort:
     if: ${{ inputs.ort-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
+    continue-on-error: ${{ inputs.bypass-checks || inputs.ort-bypassed }}
     steps:
+      - name: Use HTTPS instead of SSH for Git cloning # recommended by ort-ci-github-action doc but not *actually* required until we'll run downloader/scanner tools
+        run: git config --global url.https://github.com/.insteadOf ssh://git@github.com/
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: oss-review-toolkit/ort-ci-github-action@9acdf1e56f1b42972b12274ae56c35bf70a5f65b # v1.0.1
-        env:
-          CONTINUE_ON_ERROR: ${{ inputs.bypass-checks || inputs.ort-bypassed }} # Hack to use the input below as a boolean
+      - uses: oss-review-toolkit/ort-ci-github-action@086d928d24ef1653dc0777296b312fda5faaaf52 # v1.2.0
         with:
           image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
           allow-dynamic-versions: "true"
           fail-on: "violations"
-          ort-cli-args: "-P ort.forceOverwrite=true --stacktrace"
+          run: "cache-dependencies, labels, analyzer, evaluator, reporter, upload-results"
+          # Provide more RAM; Only applies to GitHub hosted runners for public repositories
+          # https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+          ort-jdk-java-options: "-Xmx${{ github.event.repository.private && '5' || '12' }}g"
+          ort-cli-args: >-
+            -P ort.forceOverwrite=true
+            --stacktrace
           ort-config-repository: ${{ inputs.ort-config-repository }}
           ort-config-revision: ${{ inputs.ort-config-revision }}
-        continue-on-error: ${{ fromJSON(env.CONTINUE_ON_ERROR) }}
+      - name: Fail on ORT Analyzer errors
+        run: |
+          result="$HOME/.ort/ort-results/analyzer-result.json"
+          [ -f "$result" ] || { echo "::error::Analyzer result not found: $result"; exit 1; }
+          # Recursively collect every object with a severity+message under `analyzer`,
+          # so this works regardless of layout (top-level issues map, dependency nodes, etc.)
+          # and across all package managers (NPM, Gradle, ...).
+          filter='[.analyzer | .. | objects | select(has("severity") and has("message")) | select(.severity == "ERROR")]'
+          count=$(jq "$filter | length" "$result")
+          echo "Analyzer ERROR issues: $count"
+          if [ "$count" -gt 0 ]; then
+            jq -r "$filter[] | \"[\(.severity)] \(.source // \"unknown\"): \(.message)\"" "$result"
+            echo "::error::ORT Analyzer reported $count error(s). Check the report to address them."
+            exit 1
+          fi

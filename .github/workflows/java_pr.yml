@@ -33,15 +33,15 @@ on:
         description: Do not fail pipeline if ORT scan failed
       ort-version:
         type: string
-        default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+        default: "92.3.0"
         description: ORT version to use
       ort-config-repository:
         type: string
-        default: "https://github.com/oss-review-toolkit/ort-config.git"
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
         description: ORT config repository to use
       ort-config-revision:
         type: string
-        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '53e06979539eb49f4be39db6bd605cfbe74bc98d' }} # v92.3.0
         description: ORT config revision to use
       trivy-enabled:
         type: boolean
@@ -94,7 +94,7 @@ jobs:
       code-checks-enabled: ${{ inputs.code-checks-enabled }}
       code-checks-bypassed: ${{ inputs.code-checks-bypassed }}
       ort-enabled: ${{ inputs.ort-enabled }}
-      ort-bypassed: ${{ inputs.ort-bypassed }}
+      ort-bypassed: ${{ inputs.ort-bypassed || contains(github.event.pull_request.labels.*.name, 'ort-bypassed') }}
       ort-version: ${{ inputs.ort-version }}
       ort-config-repository: ${{ inputs.ort-config-repository }}
       ort-config-revision: ${{ inputs.ort-config-revision }}
@@ -112,7 +112,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.9.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.10.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -130,7 +130,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.9.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@4.10.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -172,7 +172,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@4.9.0
+      - uses: epam/ai-dial-ci/actions/build_docker@4.10.0
         with:
           image-names: ghcr.io/${{ env.IMAGE_NAME }}
           image-tags: test
