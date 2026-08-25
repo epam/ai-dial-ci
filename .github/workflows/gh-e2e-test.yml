@@ -119,8 +119,8 @@ jobs:
       - name: Wait for environment
         run: |
           #!/bin/bash
-          echo "Expected environment URL ${ENVIRONMENT_URL}, waiting to be available..."
-          env_hostname=$(echo "$ENVIRONMENT_URL" | awk -F/ '{print $3}')
+          echo "Expected environment URL ${APPLICATION_URL}, waiting to be available..."
+          env_hostname=$(echo "$APPLICATION_URL" | awk -F/ '{print $3}')
           env_overlay_hostname=$(echo "$NEXT_PUBLIC_OVERLAY_HOST" | awk -F/ '{print $3}')
 
           wait_for_dns() {
@@ -173,11 +173,11 @@ jobs:
           wait_for_dns ${env_hostname}
           wait_for_dns ${env_overlay_hostname}
 
-          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${ENVIRONMENT_URL}"/api/health
+          curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${APPLICATION_URL}"/api/health
           curl --retry 30 --retry-delay 10 --retry-all-errors --fail --insecure --no-progress-meter --location --head -o /dev/null -w "%{http_code}\n" -X GET "${NEXT_PUBLIC_OVERLAY_HOST}"/api/health
         shell: bash
         env:
-          ENVIRONMENT_URL: ${{ inputs.e2e-host }}
+          APPLICATION_URL: ${{ inputs.e2e-host }}
           NEXT_PUBLIC_OVERLAY_HOST: ${{ inputs.next-public-overlay-host }}
       - name: Run tests
         run: |
