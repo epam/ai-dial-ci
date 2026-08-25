@@ -105,7 +105,7 @@ jobs:
     if: ${{ inputs.style-checks-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/python_prepare@4.9.0
@@ -129,7 +129,7 @@ jobs:
       matrix:
         python-version: ${{ fromJSON(inputs.code-checks-python-versions) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/python_prepare@4.9.0
@@ -156,7 +156,7 @@ jobs:
     if: ${{ inputs.ort-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
       # ORT analyzer doesn't support UV directly, so for UV projects export uv.lock to a
@@ -192,7 +192,7 @@ jobs:
     if: ${{ inputs.trivy-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
       - name: Run Trivy vulnerability scanner (JSON output, no fail)
