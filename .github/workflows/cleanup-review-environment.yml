@@ -1,17 +1,18 @@
 name: Destroy Review Environment on PR Merge
 
 on:
-  workflow_call:
-    inputs:
-      runs-on:
-        type: string
-        description: Overrides jobs runs-on settings (json-encoded list)
-        default: '["ubuntu-24.04"]'
+  repository_dispatch:
+    types: [cleanup-review-environment]
 
 jobs:
   destroy-gitlab-environment:
     name: Destroy GitLab Review Environment
-    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    runs-on: ubuntu-latest
+    environment:
+      name: e2e-test
+    outputs:
+      github-app: ${{ github.event.client_payload.github-app }}
+      github-pr: ${{ github.event.client_payload.github-pr }}
 
     steps:
       - name: Destroy review environment on PR merge
