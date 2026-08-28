@@ -9,7 +9,7 @@ jobs:
     name: Destroy GitLab Review Environment
     runs-on: ubuntu-latest
     environment:
-      name: e2e-test
+      name: dial-review
     outputs:
       github-app: ${{ github.event.client_payload.github-app }}
       github-pr: ${{ github.event.client_payload.github-pr }}
