@@ -17,9 +17,9 @@ jobs:
     steps:
       - name: Destroy review environment on PR merge
         env:
-          GITHUB_PR_ID: ${{ github.event.pull_request.number }}
-          GITHUB_REPO: ${{ github.repository }}
-          GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN_TEST_DESTROY }}
+          APP: ${{ github.event.client_payload.github-app }}
+          PR_ID: ${{ github.event.pull_request.number }}
+          DESTROY_TOKEN: ${{ secrets.DESTROY_ACCESS_TOKEN }}
         shell: bash  
         run: |
           # Remove "epam/" prefix from the repository name to match the GitLab environment name
