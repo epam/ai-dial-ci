@@ -42,7 +42,7 @@ on:
       ort-version:
         type: string
         description: ORT version to use
-        default: "92.3.0"
+        default: "92.5.0"
       ort-config-repository:
         type: string
         description: ORT config repository to use
@@ -50,7 +50,7 @@ on:
       ort-config-revision:
         type: string
         description: ORT config revision to use
-        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '53e06979539eb49f4be39db6bd605cfbe74bc98d' }} # v92.3.0
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
       trivy-enabled:
         type: boolean
         description: Enable Trivy scanning
