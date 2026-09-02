@@ -37,7 +37,7 @@ on:
         description: ORT version to use
       ort-config-repository:
         type: string
-        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/epam/ai-dial-ort-config.git' }}
         description: ORT config repository to use
       ort-config-revision:
         type: string

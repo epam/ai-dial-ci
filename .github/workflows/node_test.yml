@@ -46,7 +46,7 @@ on:
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: "https://github.com/oss-review-toolkit/ort-config.git"
+        default: "https://github.com/epam/ai-dial-ort-config.git"
       ort-config-revision:
         type: string
         description: ORT config revision to use
