@@ -42,15 +42,15 @@ on:
       ort-version:
         type: string
         description: ORT version to use
-        default: "92.3.0"
+        default: "92.5.0"
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/oss-review-toolkit/ort-config.git' }}
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/epam/ai-dial-ort-config.git' }}
       ort-config-revision:
         type: string
         description: ORT config revision to use
-        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '53e06979539eb49f4be39db6bd605cfbe74bc98d' }} # v92.3.0
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
       docker-build-enabled:
         type: boolean
         description: "Enable Docker build"
@@ -150,7 +150,7 @@ jobs:
           lfs: true
       # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
       - if: ${{ (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@4.10.0
+        uses: epam/ai-dial-ci/actions/build_docker@4.11.0
         with:
           image-names: ghcr.io/${{ env.IMAGE_NAME }}
           image-tags: test

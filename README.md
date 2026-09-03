@@ -1357,21 +1357,26 @@ ORT is configured on two levels: a shared **global config repository** and a per
 
 ###### Global config repository
 
-Holds org-wide policy rules, license classifications, curations and resolutions shared across all repositories. Controlled via workflow inputs (or repository variables):
+Holds org-wide policy rules, license classifications, curations and resolutions shared across all repositories.
 
-| Workflow Input          | Repository variable       | Default                                                |
-| ----------------------- | ------------------------- | ------------------------------------------------------ |
-| `ort-config-repository` | `ORT_CONFIG_VCS_URL`      | `https://github.com/oss-review-toolkit/ort-config.git` |
-| `ort-config-revision`   | `ORT_CONFIG_VCS_REVISION` | Git SHA matching the pinned `ort-version`              |
+> [!note]
+> We've forked [the upstream](https://github.com/oss-review-toolkit/ort-config) at [epam/ai-dial-ort-config](https://github.com/epam/ai-dial-ort-config) and maintain it with our own policy rules and additional curations.
+
+ Controlled via workflow inputs (or repository variables):
+
+| Workflow Input          | Repository variable       | Default                                          |
+| ----------------------- | ------------------------- | ------------------------------------------------ |
+| `ort-config-repository` | `ORT_CONFIG_VCS_URL`      | `https://github.com/epam/ai-dial-ort-config.git` |
+| `ort-config-revision`   | `ORT_CONFIG_VCS_REVISION` | Git tag matching the pinned `ort-version`        |
 
 > [!important]
-> `ort-config-revision` must point to a SHA where `org.ossreviewtoolkit:version-catalog` version matches `ort-version` in use - the config schema evolves with ORT, so a mismatched revision can break the scan. When bumping one, bump the other too.
+> `ort-config-revision` must point to a git reference (SHA/tag/branch) where `org.ossreviewtoolkit:version-catalog` version matches `ort-version` in use - the config schema evolves with ORT, so a mismatched revision can break the scan. When bumping one, bump the other too.
 
 ###### .ort.yml
 
 Add an `.ort.yml` to the repository root for [project-specific configuration](https://oss-review-toolkit.org/ort/docs/configuration/ort-yml). For example:
 
-- exclude dev/test dependencies and build tooling scopes, which are not included in distributed build:
+- to exclude dev/test dependencies and build tooling scopes, which are not included in distributed build, thus not relevant for license compliance checks:
 
   <details>
     <summary>Node (npm)</summary>
@@ -1439,7 +1444,7 @@ Add an `.ort.yml` to the repository root for [project-specific configuration](ht
 
   </details>
 
-- [resolve policy rule violations](https://oss-review-toolkit.org/ort/docs/configuration/ort-yml#resolving-policy-rule-violations) that can't be fixed, matching the violation `message` with a regular expression:
+- to resolve [policy rule violations](https://oss-review-toolkit.org/ort/docs/configuration/ort-yml#resolving-policy-rule-violations) that can't be fixed, by matching the violation `message` with a regular expression:
 
   <details>
     <summary>Python (Poetry)</summary>
@@ -1448,20 +1453,17 @@ Add an `.ort.yml` to the repository root for [project-specific configuration](ht
   ---
   resolutions:
     rule_violations:
-      # NVIDIA CUDA runtime libraries are distributed under the proprietary "NVIDIA Proprietary Software" / CUDA EULA license. There is no SPDX
-      # identifier for it that is covered by the policy rules, and it is not possible to conclude a custom LicenseRef- without it being flagged as an
-      # unhandled license. These are therefore resolved as can't-fix exceptions.
-      - message: ".*PyPI::nvidia-cu.*"
-        reason: "CANT_FIX_EXCEPTION"
-        comment: "NVIDIA Proprietary Software, see https://docs.nvidia.com/cuda/eula/index.html"
+      - message: ".*LicenseRef-scancode-nvidia-cuda-supplement-2020.*"
+        reason: "LICENSE_ACQUIRED_EXCEPTION"
+        comment: "NVIDIA CUDA supplemental license reviewed and approved for use in this project."
   ```
 
   </details>
 
   > [!tip]
-  > Prefer adding [package curations](https://oss-review-toolkit.org/ort/docs/configuration/package-curations) over resolving violations when `NO_LICENSE_IN_DEPENDENCY` is reported
+  > Prefer adding [package curations](https://oss-review-toolkit.org/ort/docs/configuration/package-curations) over resolving violations when `NO_LICENSE_IN_DEPENDENCY` (or other fixable) findings are reported. To do that, create a new issue in [epam/ai-dial-ort-config](https://github.com/epam/ai-dial-ort-config) repository with error message(s) from the ORT scan report.
 
-- set [package-manager-specific](https://oss-review-toolkit.org/ort/docs/category/package-managers) options. Each package manager defines its own options, e.g.:
+- to set [package-manager-specific](https://oss-review-toolkit.org/ort/docs/category/package-managers) options. Each package manager defines its own options, e.g.:
 
   <details>
     <summary>Node (npm)</summary>

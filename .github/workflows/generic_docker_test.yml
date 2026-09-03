@@ -30,7 +30,7 @@ on:
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: "https://github.com/oss-review-toolkit/ort-config.git"
+        default: "https://github.com/epam/ai-dial-ort-config.git"
       ort-config-revision:
         type: string
         description: ORT config revision to use
@@ -67,7 +67,7 @@ jobs:
           lfs: true
       - uses: oss-review-toolkit/ort-ci-github-action@086d928d24ef1653dc0777296b312fda5faaaf52 # v1.2.0
         with:
-          image: "ghcr.io/oss-review-toolkit/ort:${{ inputs.ort-version }}"
+          image: "ghcr.io/oss-review-toolkit/ort-minimal:${{ inputs.ort-version }}"
           allow-dynamic-versions: "true"
           fail-on: "violations"
           run: "cache-dependencies, labels, analyzer, evaluator, reporter, upload-results"
