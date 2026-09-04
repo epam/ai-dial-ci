@@ -1,8 +1,12 @@
-name: Destroy Review Environment on PR Merge
+name: Destroy Review Environment on PR closure
 
 on:
   repository_dispatch:
     types: [cleanup-review-environment]
+
+concurrency:
+  group: cleanup-${{ github.event.client_payload.github-app }}-${{ github.event.client_payload.github-pr }}
+  cancel-in-progress: true
 
 jobs:
   destroy-gitlab-environment:
@@ -15,11 +19,14 @@ jobs:
         env:
           APP: ${{ github.event.client_payload.github-app }}
           PR_ID: ${{ github.event.client_payload.github-pr }}
-          GL_HOST: ${{ vars.DEPLOY_HOST }}
+          GL_HOST: https://${{ vars.DEPLOY_HOST }}
           DESTROY_TOKEN: ${{ secrets.DESTROY_ACCESS_TOKEN }}
           GL_PROJECT_ID: ${{ vars.DEPLOY_PROJECT_ID }}
         shell: bash  
         run: |
+          # Hack, pipeline to return the exit status of the last command to fail (instead of the last command). Exit immediately if any command returns a non-zero exit status.
+          set -euo pipefail
+
           # Get environment name to get gitlab environment ID
           ENV_NAME="$APP/pr-$PR_ID"
 
@@ -30,14 +37,15 @@ jobs:
           ENV_ID=$(curl_gl_api --get --url-query "name=$ENV_NAME" "$GL_API_URL" | jq -r '.[0].id // empty')
           [ -n "$ENV_ID" ] || { echo "::notice::No environment '$ENV_NAME'"; exit 0; }
 
-          # Get current environment state
+          # Stop environment state and get current state
           STATE=$(curl_gl_api -X POST "$GL_API_URL/$ENV_ID/stop" | jq -r '.state')
 
           # Check environment state
           DEADLINE=$((SECONDS + 600))
           while [ "$STATE" = "stopping" ]; do
             [ "$SECONDS" -lt "$DEADLINE" ] || { echo "::error::timed out in 'stopping'"; exit 1; }
+            echo "The environment is still stopping, checking again..."
             sleep 15
             STATE=$(curl_gl_api "$GL_API_URL/$ENV_ID" | jq -r '.state')
           done
-          [ "$STATE" = "stopped" ] || { echo "::error::unexpected state '$STATE'"; exit 1; }
+          [ "$STATE" = "stopped" ] && { echo "Environment ${ENV_NAME} is stopped"; exit 0; } || { echo "::error::unexpected state '$STATE'"; exit 1; }
