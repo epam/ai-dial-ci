@@ -1057,7 +1057,7 @@ runs:
   steps:
     # Checkout repository with test source code into a separate directory
     # Never use default path, otherwise you'll overwrite action code and parent workflow will fail to complete
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: ${{ inputs.test-repository }}
         ref: ${{ inputs.test-branch }}
