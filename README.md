@@ -41,7 +41,7 @@
         - [End-to-end tests](#end-to-end-tests)
           - [Test Repository Structure](#test-repository-structure)
           - [Skipping E2E Tests](#skipping-e2e-tests)
-      - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
+      - [Cleanup untagged images in GHCR](#cleanup-untagged-images-in-ghcr)
       - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
       - [Trivy additional configuration](#trivy-additional-configuration)
       - [Dependabot](#dependabot)
@@ -1099,7 +1099,12 @@ If you need to disable E2E tests execution:
 - for the **specific PR**: assign `skip-e2e` label to PR
 - **once**: use `/deploy-review skip-e2e` command in PR comment
 
-#### Cleanup for untagged images in GHCR
+#### Cleanup untagged images in GHCR
+
+When using "rolling" tags for container images, like `development` or `latest`, the GitHub Container Registry (GHCR) will accumulate untagged images over time. Since they're essentially useless, it's a good practice to clean them up periodically. The workflow below will delete untagged images from GHCR once a day.
+
+> [!important]
+> The workflow uses `GITHUB_TOKEN` to authenticate with GHCR by default, therefore requires **Admin** [package permissions](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#github-actions-access-for-packages-scoped-to-organizations) granted to the repository.
 
 `cleanup-untagged-images.yml`
 
@@ -1120,9 +1125,9 @@ jobs:
       - uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           delete-untagged: true
-          delete-ghost-images: true
-          delete-partial-images: true
-          delete-orphaned-images: true
+          delete-ghost-images: true # Delete indexes with no manifests
+          delete-partial-images: true # Delete indexes which refer to at least one non-existent manifest
+          delete-orphaned-images: true # Delete dangling referrers, e.g. SBOMs, signatures, etc. that refer to non-existent digest
 ```
 
 #### Trigger deployment of development environment in GitLab
