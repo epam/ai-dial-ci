@@ -95,6 +95,12 @@ on:
         type: string
         description: "Path to the Dockerfile (default: ./Dockerfile)"
         default: "Dockerfile"
+      build-args:
+        type: string
+        description: |
+          Docker build arguments (newline-separated list-like string)
+          ref: https://github.com/docker/build-push-action#inputs
+        default: ""
 
 jobs:
   test:
@@ -161,5 +167,6 @@ jobs:
           trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
           platforms: ${{ inputs.platforms }}
           dockerfile-path: ${{ inputs.dockerfile-path }}
+          build-args: ${{ inputs.build-args }}
         env:
           IMAGE_NAME: ${{ github.repository }}
