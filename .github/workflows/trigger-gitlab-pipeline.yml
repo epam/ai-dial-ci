@@ -1,20 +1,24 @@
-name: Deploy App to Environment
+name: Trigger GitLab CI/CD pipeline
 
 on:
   workflow_call:
     inputs:
       gitlab-project-id:
         type: string
-        description: The ID or path of the project owned by the authenticated user
+        description: The ID or path of the project owned by the authenticated user. You will find the Project ID in the General Settings of your GitLab project
         required: true
       gitlab-project-ref:
         type: string
-        description: The branch or tag to run the pipeline on
+        description: The GitLab project branch or tag to run the pipeline on
         default: "master"
       environment-name:
         type: string
-        description: The GitHub environment name to use for the deployment
+        description: The GitHub environment name to use secrets and variables from
         default: "development"
+      runs-on:
+        type: string
+        description: Overrides jobs runs-on settings (json-encoded list)
+        default: '["ubuntu-latest", "ubuntu-slim"]'
     secrets:
       DEPLOY_HOST:
         required: true
@@ -24,15 +28,13 @@ on:
         required: true
 
 jobs:
-  trigger-pipeline:
-    runs-on: ubuntu-latest
+  trigger:
+    runs-on: ${{ inputs.runs-on }}
     concurrency: ${{ inputs.environment-name }}
     environment:
       name: ${{ inputs.environment-name }}
     steps:
-      - name: Deploy environment
-        id: deploy
-        uses: digital-blueprint/gitlab-pipeline-trigger-action@9ce6377a88205c23d9978fd64b6fb0bef7320be4 # v1.4.3
+      - uses: digital-blueprint/gitlab-pipeline-trigger-action@c59b56e9d2688ab42c1304322ac8831a4ef6f7d2 # v1.4.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
