@@ -30,7 +30,7 @@ on:
 jobs:
   trigger:
     runs-on: ${{ inputs.runs-on }}
-    concurrency: ${{ inputs.environment-name }}
+    concurrency: ${{ inputs.gitlab-project-id }}-${{ inputs.gitlab-project-ref }}
     environment:
       name: ${{ inputs.environment-name }}
     steps:
