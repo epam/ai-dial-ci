@@ -51,6 +51,7 @@
         - [Configuration](#configuration)
           - [Global config repository](#global-config-repository)
           - [.ort.yml](#ortyml)
+      - [Docker Hub image visibility](#docker-hub-image-visibility)
   - [Contributing](#contributing)
 
 ## Overview
@@ -329,6 +330,9 @@ jobs:
     secrets: inherit
 ```
 
+> [!note]
+> See [Docker Hub image visibility](#docker-hub-image-visibility) for image visibility caveats.
+
 #### Dependency Review
 
 Without a dependency graph, GitHub has no visibility into what packages the Java project uses - so it can't warn when one of them has a known vulnerability (CVE).\
@@ -568,6 +572,9 @@ jobs:
     secrets: inherit
 ```
 
+> [!note]
+> See [Docker Hub image visibility](#docker-hub-image-visibility) for image visibility caveats.
+
 #### PR Workflow (package)
 
 `pr.yml`
@@ -735,6 +742,9 @@ jobs:
     secrets: inherit
 ```
 
+> [!note]
+> See [Docker Hub image visibility](#docker-hub-image-visibility) for image visibility caveats.
+
 #### PR Workflow (package)
 
 `pr.yml`
@@ -873,6 +883,9 @@ jobs:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
     secrets: inherit
 ```
+
+> [!note]
+> See [Docker Hub image visibility](#docker-hub-image-visibility) for image visibility caveats.
 
 ### Others
 
@@ -1518,6 +1531,11 @@ Add an `.ort.yml` to the repository root for [project-specific configuration](ht
   ```
 
   </details>
+
+#### Docker Hub image visibility
+
+> [!note]
+> Docker Hub repository visibility cannot be set during push. Thus, in contradiction to GitHub Container Registry (GHCR), image visibility is not synchronized with GitHub repository visibility. New repositories inherit the org default visibility (set to **private**). To make an image public, an org administrator [must change the repository visibility](https://docs.docker.com/docker-hub/repos/manage/access/) manually.
 
 ## Contributing
 

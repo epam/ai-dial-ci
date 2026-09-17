@@ -91,6 +91,14 @@ on:
         type: string
         description: Development tag for docker images
         default: 'development'
+      ghcr-enabled:
+        type: boolean
+        description: Publish the docker image to GitHub Container Registry (GHCR)
+        default: true
+      dockerhub-enabled:
+        type: boolean
+        description: Publish the docker image to Docker Hub
+        default: true
 
 jobs:
   test:
@@ -167,13 +175,15 @@ jobs:
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
       - uses: epam/ai-dial-ci/actions/build_docker@4.11.0
         with:
+          ghcr-enabled: ${{ inputs.ghcr-enabled }}
           ghcr-username: ${{ github.actor }}
           ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          dockerhub-enabled: ${{ inputs.dockerhub-enabled }}
           dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
           image-names: |
-            ${{ env.IMAGE_NAME }}
-            ghcr.io/${{ env.IMAGE_NAME }}
+            ${{ inputs.dockerhub-enabled && env.IMAGE_NAME || '' }}
+            ${{ inputs.ghcr-enabled && format('ghcr.io/{0}', env.IMAGE_NAME) || '' }}
           image-tags: |
             type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || inputs.docker-development-tag }}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
