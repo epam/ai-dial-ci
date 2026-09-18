@@ -113,9 +113,10 @@ runs:
         platforms: linux/amd64 # Default architecture for Trivy container scanning
         tags: ${{ steps.meta.outputs.tags }}
         build-args: ${{ inputs.build-args }}
+        # Pass secrets only when they're really provided to avoid buildx warnings
         secrets: |
-          GPR_USERNAME=${{ inputs.gpr-username }}
-          GPR_PASSWORD=${{ inputs.gpr-password }}
+          ${{ inputs.gpr-password != '' && format('GPR_USERNAME={0}', inputs.gpr-username) || '' }}
+          ${{ inputs.gpr-password != '' && format('GPR_PASSWORD={0}', inputs.gpr-password) || '' }}
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
     - name: Run Trivy scanner (JSON output, no fail)
@@ -180,8 +181,9 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
         build-args: ${{ inputs.build-args }}
+        # Pass secrets only when they're really provided to avoid buildx warnings
         secrets: |
-          GPR_USERNAME=${{ inputs.gpr-username }}
-          GPR_PASSWORD=${{ inputs.gpr-password }}
+          ${{ inputs.gpr-password != '' && format('GPR_USERNAME={0}', inputs.gpr-username) || '' }}
+          ${{ inputs.gpr-password != '' && format('GPR_PASSWORD={0}', inputs.gpr-password) || '' }}
       env:
         DOCKER_BUILD_RECORD_UPLOAD: false
