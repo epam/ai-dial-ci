@@ -40,7 +40,7 @@ git checkout -b your-new-branch
 
 Once ready, you can create a PR back from your feature branch to a repo's default branch.
 
-We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/). Make sure to prefix the title with one of the following: `fix:`, `feat:`, `feature:`, `chore:`, `hotfix:`. Breaking change pull requests may include `!` after the type/scope, e.g. `<type>!: <description>`.
+We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/). Make sure to prefix the title with one of the following: `fix:`, `feat:`, `docs:`, `test:`, `ci:`, `chore:`. Breaking change pull requests may include `!` after the type/scope, e.g. `<type>!: <description>`.
 
 ## Maintainers Workflow
 

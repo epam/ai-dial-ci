@@ -31,7 +31,8 @@
 #     - E2E_USERNAME:                         Name(s) of application user(s) for ai-dial-chat tests
 #     - E2E_PASSWORD:                         Password for the application users
 #     - NEXT_PUBLIC_OVERLAY_USER_BUCKET:      A blob storage prefix for specific application user
-#     - DIAL_ADMIN_USERS_FILE:                Users data file for ai-dial-admin-perf tests
+#     - ADMIN_LOGIN:                           Login for ai-dial-admin-perf tests
+#     - ADMIN_PASSWORD:                        Password for ai-dial-admin-perf tests
 #     - INFLUX_HOST:                          InfluxDB host for ai-dial-admin-perf tests
 #     - INFLUX_TOKEN:                         InfluxDB token for ai-dial-admin-perf tests
 #     - AUTH0_DOMAIN:                         Auth0 domain for ai-dial-admin-perf authentication
@@ -133,7 +134,7 @@ jobs:
           echo "All required values are present."
       - name: Deploy environment
         id: deploy
-        uses: digital-blueprint/gitlab-pipeline-trigger-action@c59b56e9d2688ab42c1304322ac8831a4ef6f7d2 # v1.4.0
+        uses: digital-blueprint/gitlab-pipeline-trigger-action@9ce6377a88205c23d9978fd64b6fb0bef7320be4 # v1.4.3
         with:
           host: ${{ vars.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
@@ -184,7 +185,7 @@ jobs:
         include: ${{ fromJson(needs.deploy-review.outputs.test-applications) }}
       fail-fast: false
     env:
-      ENVIRONMENT_URL: "https://${{ matrix.application }}-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
+      APPLICATION_URL: "https://${{ matrix.application }}-${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}"
     steps:
       - name: Wait for environment
         run: |
@@ -264,13 +265,13 @@ jobs:
               return 1
           }
 
-          printf "Environment URL is '%s', waiting to be available...\n" "$ENVIRONMENT_URL"
-          wait_for_dns "${ENVIRONMENT_URL}"
-          wait_for_http "${ENVIRONMENT_URL}"
+          printf "APPLICATION_URL is '%s', waiting to be available...\n" "$APPLICATION_URL"
+          wait_for_dns "${APPLICATION_URL}"
+          wait_for_http "${APPLICATION_URL}"
         shell: bash
         env:
-          ENVIRONMENT_URL: ${{ env.ENVIRONMENT_URL }}
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+          APPLICATION_URL: ${{ env.APPLICATION_URL }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ matrix.test-repository }}
           sparse-checkout: |
@@ -282,11 +283,12 @@ jobs:
           cp -r .github/actions/test-${{ matrix.application }}/. .github/actions/test/
       - uses: ./.github/actions/test
         with:
-          environment-url: ${{ env.ENVIRONMENT_URL }}
+          application-url: ${{ env.APPLICATION_URL }}
+          environment-fqdn: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}.${{ vars.REVIEW_BASE_DOMAIN }}
           report-prefix: ${{ github.event.client_payload.slash_command.args.named.application }}-pr-${{ github.event.client_payload.pull_request.number }}
           # If the request dispatched from the repository with tests, pass the PR branch, otherwise we don't care
           # This is requested by QA team to verify changes in tests before rolling them out for everyone
-          test-branch: ${{ matrix.test-repository == github.event.client_payload.pull_request.head.repo.full_name && github.event.client_payload.pull_request.head.ref || '' }}
+          test-branch: ${{ matrix.test-repository == github.event.client_payload.pull_request.head.repo.full_name && github.event.client_payload.pull_request.head.ref || 'development-0.x' }}
         env:
           # ai-dial-chat
           E2E_ADMIN: ${{ secrets.E2E_ADMIN }}
@@ -295,7 +297,8 @@ jobs:
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
           # ai-dial-admin-perf
-          DIAL_ADMIN_USERS_FILE: ${{ secrets.DIAL_ADMIN_USERS_FILE }}
+          ADMIN_LOGIN: ${{ secrets.ADMIN_LOGIN }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           INFLUX_HOST: ${{ secrets.INFLUX_HOST }}
           INFLUX_TOKEN: ${{ secrets.INFLUX_TOKEN }}
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
@@ -307,7 +310,7 @@ jobs:
     environment:
       name: ${{ github.event.client_payload.slash_command.args.named.environment || 'dial-review' }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./actions/monitor

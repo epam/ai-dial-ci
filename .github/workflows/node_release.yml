@@ -50,15 +50,15 @@ on:
       ort-version:
         type: string
         description: ORT version to use
-        default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+        default: "92.5.0"
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: "https://github.com/oss-review-toolkit/ort-config.git"
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/epam/ai-dial-ort-config.git' }}
       ort-config-revision:
         type: string
         description: ORT config revision to use
-        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
       docker-build-enabled:
         type: boolean
         description: "Enable Docker build"
@@ -208,7 +208,7 @@ jobs:
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
@@ -261,6 +261,12 @@ jobs:
           #    - stable version
           #      - `latest` distribution tag if it's semantically latest stable version
           #      - `release-{release-line}` distribution tag (e.g. `release-1.0`) for other stable versions. HACK: we have to use this tag, otherwise npm will create `latest` by default
+          CURRENT_BRANCH="${GITHUB_REF#refs/heads/}"
+          if [[ "${CURRENT_BRANCH}" =~ ${PRIMARY_BRANCH_PATTERN} ]]; then
+            IS_DEVELOPMENT="true"
+          else
+            IS_DEVELOPMENT="false"
+          fi
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" &>/dev/null; then
@@ -292,7 +298,7 @@ jobs:
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          IS_DEVELOPMENT: ${{ github.ref == 'refs/heads/development' }}
+          PRIMARY_BRANCH_PATTERN: ${{ inputs.primary-branch-pattern }}
           IS_RELEASE_CANDIDATE: ${{ needs.calculate_version.outputs.is-release-candidate == 'true' }}
           IS_RELEASE: ${{ needs.calculate_version.outputs.is-release == 'true' }}
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
@@ -305,6 +311,7 @@ jobs:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
           draft-stable-releases: ${{ inputs.draft-stable-releases }}
+          make-latest: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           extra-commit-command: |
             git add package.json package-lock.json
             git commit -m '[skip ci] Update version' || true # upstream branch may already be updated

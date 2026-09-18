@@ -25,8 +25,14 @@
       - [Release Workflow (Docker)](#release-workflow-docker-1)
       - [PR Workflow (package)](#pr-workflow-package)
       - [Release Workflow (package)](#release-workflow-package)
-    - [Generic Docker](#generic-docker)
+    - [Python (UV)](#python-uv)
       - [Requirements](#requirements-3)
+      - [PR Workflow (Docker)](#pr-workflow-docker-2)
+      - [Release Workflow (Docker)](#release-workflow-docker-2)
+      - [PR Workflow (package)](#pr-workflow-package-1)
+      - [Release Workflow (package)](#release-workflow-package-1)
+    - [Generic Docker](#generic-docker)
+      - [Requirements](#requirements-4)
       - [PR Workflow](#pr-workflow-1)
       - [Release Workflow](#release-workflow-1)
     - [Others](#others)
@@ -35,11 +41,16 @@
         - [End-to-end tests](#end-to-end-tests)
           - [Test Repository Structure](#test-repository-structure)
           - [Skipping E2E Tests](#skipping-e2e-tests)
-      - [Cleanup for untagged images in GHCR](#cleanup-for-untagged-images-in-ghcr)
+      - [Cleanup untagged images in GHCR](#cleanup-untagged-images-in-ghcr)
       - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
       - [Trivy additional configuration](#trivy-additional-configuration)
       - [Dependabot](#dependabot)
         - [Dependabot Pull Requests Automation](#dependabot-pull-requests-automation)
+      - [ORT](#ort)
+        - [Control switches](#control-switches)
+        - [Configuration](#configuration)
+          - [Global config repository](#global-config-repository)
+          - [.ort.yml](#ortyml)
   - [Contributing](#contributing)
 
 ## Overview
@@ -367,7 +378,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           disable-telemetry: true
           disable-sudo-and-containers: true
@@ -417,7 +428,7 @@ jobs:
         with:
           dependency-graph: download-and-submit
       - id: dependency-review
-        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 600 # let GitHub process both graphs up to 10 minutes
@@ -433,7 +444,7 @@ jobs:
           EOF
       - if: ${{ steps.dependency-review.outputs.comment-content != null }}
         # Use separate action to comment because the original one can't do it without PR context
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           number: ${{ steps.get-pr.outputs.number }}
           header: dependency-review
@@ -442,7 +453,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
       - if: failure()
         # If the review fails, we still want to "outdate" the comment to avoid stale information
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           number: ${{ steps.get-pr.outputs.number }}
           header: dependency-review
@@ -603,6 +614,176 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@main
     with:
+      promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
+    secrets: inherit
+```
+
+### Python (UV)
+
+> [!note]
+> UV support is enabled by setting the `python-package-manager` workflow input to `uv` (defaults to `poetry`)
+
+> [!note]
+> [ORT](https://github.com/oss-review-toolkit/ort) doesn't support analyzing UV projects directly. When `python-package-manager` is set to `uv`, the `ort` job automatically exports `uv.lock` to a `requirements.txt` file (via `uv export --frozen`) before running ORT, and analyzes it as a PIP project instead. This is transparent and requires no changes to the consumer repository, aside from having `uv.lock` committed (see [Requirements](#requirements-3) below)
+
+#### Requirements
+
+Consumer repository **must** have:
+
+- `Makefile` file with `lint`, `build` (only for Python packages), `test`, `publish` (only for Python packages) targets defined
+
+  <details>
+    <summary>Example</summary>
+
+  ```makefile
+  PORT ?= 5001
+
+  .PHONY: install lint build test publish
+
+  install:
+    uv sync --all-extras
+
+  lint: install
+    uv run ruff check .
+    uv run ruff format --check .
+
+  build: install # Required only for Python packages
+    uv build
+
+  test: install
+    if [ -n "$(PYTHON)" ]; then uv python pin "$(PYTHON)"; fi
+    uv run pytest
+
+  publish: # Required only for Python packages
+    uv publish --username __token__ --password $(PYPI_TOKEN)
+  ```
+
+  > [!note]
+  > `build` and `publish` Makefile targets are required only for repositories that produce Python packages as build artifacts
+
+  > [!tip]
+  > `test` target receives Python version, e.g. `make test PYTHON=<version>`, where `<version>` is the one defined in `code-checks-python-versions` workflow input. If multiple versions are defined, the workflow will run tests for each of them in parallel
+  </details>
+
+- `pyproject.toml` file with `name` and `version` defined
+
+  <details>
+    <summary>Example</summary>
+
+  ```toml
+  [project]
+  name = "my-package"
+  version = "0.0.0"
+  ```
+
+  > [!warning]
+  > The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
+  </details>
+
+- `uv.lock` file committed to the repository (generated by running `uv lock`/`uv sync` locally)
+
+#### PR Workflow (Docker)
+
+`pr.yml`
+
+```yml
+name: PR Workflow
+
+on:
+  pull_request:
+    branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
+    with:
+      python-package-manager: uv
+    secrets: inherit
+```
+
+#### Release Workflow (Docker)
+
+`release.yml`
+
+```yml
+name: Release Workflow
+
+on:
+  push:
+    branches: [development, release-*]
+  workflow_dispatch:
+    inputs:
+      promote:
+        type: boolean
+        default: false
+        description: Promote release to stable (for release-* branches only)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/python_docker_release.yml@main
+    with:
+      python-package-manager: uv
+      promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
+    secrets: inherit
+```
+
+#### PR Workflow (package)
+
+`pr.yml`
+
+```yml
+name: PR Workflow
+
+on:
+  pull_request:
+    branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/python_package_pr.yml@main
+    with:
+      python-package-manager: uv
+    secrets: inherit
+```
+
+#### Release Workflow (package)
+
+`release.yml`
+
+```yml
+name: Release Workflow
+
+on:
+  push:
+    branches: [development, release-*]
+  workflow_dispatch:
+    inputs:
+      promote:
+        type: boolean
+        default: false
+        description: Promote release to stable (for release-* branches only)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@main
+    with:
+      python-package-manager: uv
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
     secrets: inherit
 ```
@@ -819,8 +1000,9 @@ A test repository must provide [composite actions](https://docs.github.com/en/ac
 
 The action must have inputs:
 
-- `environment-url`: URL of the deployed review environment. Points to specific application, e.g. `https://chat-example.com`, `https://admin-example.com`, etc
-- `report-prefix`: Environment identifier that can be used (but not limited) to prefix test reports, e.g. `chat-pr-123`, `admin-pr-456`, etc
+- `application-url`: URL of the deployed review environment. Points to specific test application, e.g. chat - `https://chat-ai-dial-core-pr-123.example.com`, admin - `https://admin-ai-dial-core-pr-123.example.com`, etc
+- `environment-fqdn`: FQDN of the deployed review environment (formed of repository + PR number + base domain, without protocol or application-specific prefix), e.g. `ai-dial-core-pr-123.example.com`. Useful to build additional application URLs (by prepending with protocol and well-known application prefix) on the spot besides the main one provided in `application-url`
+- `report-prefix`: Environment identifier that can be used (but not limited) to prefix test reports, e.g. `ai-dial-core-pr-123`, etc
 - `test-branch`: Branch name of GitHub repository with tests source code. If tests are triggered from the test repository itself, `test-branch` equals PR source branch, e.g. `feat-something-new`, otherwise empty. This behavior allows QA team to verify changes in tests before rolling them out
 
 Besides inputs, the action will have access to environment variables:
@@ -830,7 +1012,8 @@ Besides inputs, the action will have access to environment variables:
 - `E2E_PASSWORD`
 - `E2E_USERNAME`
 - `NEXT_PUBLIC_OVERLAY_USER_BUCKET`
-- `DIAL_ADMIN_USERS_FILE`
+- `ADMIN_LOGIN`
+- `ADMIN_PASSWORD`
 - `INFLUX_HOST`
 - `INFLUX_TOKEN`
 - `AUTH0_DOMAIN`
@@ -849,8 +1032,11 @@ description: Dummy action to demonstrate how to work with review environment con
 
 inputs:
   # Required inputs
-  environment-url:
+  application-url:
     description: "URL of the deployed review environment (specific application)"
+    required: true
+  environment-fqdn:
+    description: "FQDN of the deployed review environment, useful to build additional application URLs"
     required: true
   report-prefix:
     description: "Prefix for report files generated by the action"
@@ -871,7 +1057,7 @@ runs:
   steps:
     # Checkout repository with test source code into a separate directory
     # Never use default path, otherwise you'll overwrite action code and parent workflow will fail to complete
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: ${{ inputs.test-repository }}
         ref: ${{ inputs.test-branch }}
@@ -881,13 +1067,13 @@ runs:
     # Dummy tests trigger
     - name: Running tests
       run: |
-        echo "Running tests against ${{ inputs.environment-url }}
+        echo "Running tests against ${{ inputs.application-url }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
     # Example of saving test artifacts
     - name: Upload test artifacts
       if: always()
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: ${{ inputs.report-prefix }}-test-artifacts
         path: |
@@ -913,7 +1099,12 @@ If you need to disable E2E tests execution:
 - for the **specific PR**: assign `skip-e2e` label to PR
 - **once**: use `/deploy-review skip-e2e` command in PR comment
 
-#### Cleanup for untagged images in GHCR
+#### Cleanup untagged images in GHCR
+
+When using "rolling" tags for container images, like `development` or `latest`, the GitHub Container Registry (GHCR) will accumulate untagged images over time. Since they're essentially useless, it's a good practice to clean them up periodically. The workflow below will delete untagged images from GHCR once a day.
+
+> [!important]
+> The workflow uses `GITHUB_TOKEN` to authenticate with GHCR by default, therefore requires **Admin** [package permissions](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#github-actions-access-for-packages-scoped-to-organizations) granted to the repository.
 
 `cleanup-untagged-images.yml`
 
@@ -931,9 +1122,12 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1.0.16
+      - uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           delete-untagged: true
+          delete-ghost-images: true # Delete indexes with no manifests
+          delete-partial-images: true # Delete indexes which refer to at least one non-existent manifest
+          delete-orphaned-images: true # Delete dangling referrers, e.g. SBOMs, signatures, etc. that refer to non-existent digest
 ```
 
 #### Trigger deployment of development environment in GitLab
@@ -1020,7 +1214,9 @@ jobs:
 
 #### Trivy additional configuration
 
-To change predefined Trivy parameters or set up additional configuration options, create `trivy.yaml` file in root of your repository. Use example below to add fallback repositories for vulnerabilities and checks DB and thus mitigate rate limit issues.
+We use [Trivy](https://trivy.dev/) for vulnerability scanning of container images and packages.
+
+To change predefined Trivy parameters or set up additional [configuration options](https://trivy.dev/docs/latest/guide/references/configuration/config-file/), create `trivy.yaml` file in root of your repository. E.g., use the configuration below to add fallback sources for Trivy databases, thus mitigate rate limit issues.
 
 `trivy.yaml`
 
@@ -1115,8 +1311,9 @@ jobs:
     steps:
       - name: Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@ffa630c65fa7e0ecfa0625b5ceda64399aea1b36 # v3.0.0
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
       - name: Approve PR
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
@@ -1130,6 +1327,197 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
 ```
+
+#### ORT
+
+We use [OSS Review Toolkit (ORT)](https://oss-review-toolkit.org/ort/) to analyze dependencies and flag potential license compliance issues.
+
+##### Control switches
+
+Edit workflows inputs to control ORT behavior:
+
+| Input          | Default | Effect                                             |
+| -------------- | ------- | -------------------------------------------------- |
+| `ort-enabled`  | `true`  | If set to `false`, the scan will be skipped        |
+| `ort-bypassed` | `false` | If set to `true`, findings won't fail the pipeline |
+
+<details>
+  <summary>Example</summary>
+
+```yml
+jobs:
+  run_tests:
+    uses: epam/ai-dial-ci/.github/workflows/generic_docker_pr.yml@main
+    with:
+      ort-bypassed: true
+    secrets: inherit
+```
+
+</details>
+
+Alternatively, while working with PRs it's may be more convenient to set `ort-bypassed` label - same effect as `ort-bypassed: true`.
+
+> [!tip]
+> Prefer bypassing over disabling to keep visibility into compliance issues
+
+##### Configuration
+
+ORT is configured on two levels: a shared **global config repository** and a per-repository **`.ort.yml`**
+
+###### Global config repository
+
+Holds org-wide policy rules, license classifications, curations and resolutions shared across all repositories.
+
+> [!note]
+> We've forked [the upstream](https://github.com/oss-review-toolkit/ort-config) at [epam/ai-dial-ort-config](https://github.com/epam/ai-dial-ort-config) and maintain it with our own policy rules and additional curations.
+
+ Controlled via workflow inputs (or repository variables):
+
+| Workflow Input          | Repository variable       | Default                                          |
+| ----------------------- | ------------------------- | ------------------------------------------------ |
+| `ort-config-repository` | `ORT_CONFIG_VCS_URL`      | `https://github.com/epam/ai-dial-ort-config.git` |
+| `ort-config-revision`   | `ORT_CONFIG_VCS_REVISION` | Git tag matching the pinned `ort-version`        |
+
+> [!important]
+> `ort-config-revision` must point to a git reference (SHA/tag/branch) where `org.ossreviewtoolkit:version-catalog` version matches `ort-version` in use - the config schema evolves with ORT, so a mismatched revision can break the scan. When bumping one, bump the other too.
+
+###### .ort.yml
+
+Add an `.ort.yml` to the repository root for [project-specific configuration](https://oss-review-toolkit.org/ort/docs/configuration/ort-yml). For example:
+
+- to exclude dev/test dependencies and build tooling scopes, which are not included in distributed build, thus not relevant for license compliance checks:
+
+  <details>
+    <summary>Node (npm)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    skip_excluded: true
+  excludes:
+    paths:
+      - pattern: "package-lock.json"
+        reason: "BUILD_TOOL_OF"
+    scopes:
+      - pattern: "devDependencies"
+        reason: "DEV_DEPENDENCY_OF"
+        comment: "Packages for development only."
+  ```
+
+  </details>
+
+  <details>
+    <summary>Python (Poetry)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    skip_excluded: true
+  excludes:
+    scopes:
+    - pattern: "dev"
+      reason: "DEV_DEPENDENCY_OF"
+      comment: "Packages for development only."
+    - pattern: "lint"
+      reason: "DEV_DEPENDENCY_OF"
+      comment: "Packages for static code analysis only."
+    - pattern: "test"
+      reason: "TEST_DEPENDENCY_OF"
+      comment: "Packages for testing only."
+  ```
+
+  </details>
+
+  <details>
+    <summary>Java (Gradle)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    skip_excluded: true
+  excludes:
+    scopes:
+      - pattern: "annotationProcessor"
+        reason: "BUILD_DEPENDENCY_OF"
+        comment: "Packages to process code annotations only."
+      - pattern: "checkstyle"
+        reason: "DEV_DEPENDENCY_OF"
+        comment: "Packages for static code analysis only."
+      - pattern: "lombok"
+        reason: "DEV_DEPENDENCY_OF"
+        comment: "Packages from Project Lombok only."
+      - pattern: "test.*"
+        reason: "TEST_DEPENDENCY_OF"
+        comment: "Packages for testing only."
+  ```
+
+  </details>
+
+- to resolve [policy rule violations](https://oss-review-toolkit.org/ort/docs/configuration/ort-yml#resolving-policy-rule-violations) that can't be fixed, by matching the violation `message` with a regular expression:
+
+  <details>
+    <summary>Python (Poetry)</summary>
+
+  ```yml
+  ---
+  resolutions:
+    rule_violations:
+      - message: ".*LicenseRef-scancode-nvidia-cuda-supplement-2020.*"
+        reason: "LICENSE_ACQUIRED_EXCEPTION"
+        comment: "NVIDIA CUDA supplemental license reviewed and approved for use in this project."
+  ```
+
+  </details>
+
+  > [!tip]
+  > Prefer adding [package curations](https://oss-review-toolkit.org/ort/docs/configuration/package-curations) over resolving violations when `NO_LICENSE_IN_DEPENDENCY` (or other fixable) findings are reported. To do that, create a new issue in [epam/ai-dial-ort-config](https://github.com/epam/ai-dial-ort-config) repository with error message(s) from the ORT scan report.
+
+- to set [package-manager-specific](https://oss-review-toolkit.org/ort/docs/category/package-managers) options. Each package manager defines its own options, e.g.:
+
+  <details>
+    <summary>Node (npm)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    package_managers:
+      NPM:
+        options:
+          # https://oss-review-toolkit.org/ort/docs/plugins/package-managers/NPM
+          legacyPeerDeps: false
+  ```
+
+  </details>
+
+  <details>
+    <summary>Python (Poetry)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    package_managers:
+      Poetry:
+        options:
+          # https://oss-review-toolkit.org/ort/docs/plugins/package-managers/Poetry
+          operatingSystem: "linux"
+  ```
+
+  </details>
+
+  <details>
+    <summary>Java (Gradle)</summary>
+
+  ```yml
+  ---
+  analyzer:
+    package_managers:
+      Gradle:
+        options:
+          # https://oss-review-toolkit.org/ort/docs/plugins/package-managers/Gradle
+          gradleVersion: "10.3"
+  ```
+
+  </details>
 
 ## Contributing
 

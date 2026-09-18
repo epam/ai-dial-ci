@@ -46,15 +46,15 @@ on:
       ort-version:
         type: string
         description: ORT version to use
-        default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+        default: "92.5.0"
       ort-config-repository:
         type: string
         description: ORT config repository to use
-        default: "https://github.com/oss-review-toolkit/ort-config.git"
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/epam/ai-dial-ort-config.git' }}
       ort-config-revision:
         type: string
         description: ORT config revision to use
-        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
       trivy-enabled:
         type: boolean
         description: Enable Trivy scanning
@@ -79,10 +79,18 @@ on:
         type: string
         description: Python version to use
         default: "3.11"
+      python-package-manager:
+        type: string
+        description: Python package manager to use
+        default: "poetry"
       poetry-version:
         type: string
         description: Poetry version to use
         default: "1.8.5"
+      uv-version:
+        type: string
+        description: UV version to use
+        default: "0.11.30"
       runs-on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
@@ -121,7 +129,9 @@ jobs:
       trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
       trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
       python-version: ${{ inputs.python-version }}
+      python-package-manager: ${{ inputs.python-package-manager }}
       poetry-version: ${{ inputs.poetry-version }}
+      uv-version: ${{ inputs.uv-version }}
       runs-on: ${{ inputs.runs-on }}
 
   calculate_version:
@@ -130,6 +140,7 @@ jobs:
       next-version: ${{ steps.semantic_versioning.outputs.next-version }}
       next-version-without-hyphens: ${{ steps.semantic_versioning.outputs.next-version-without-hyphens }}
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
+      is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
       - uses: epam/ai-dial-ci/actions/semantic_versioning@4.12.0
@@ -153,14 +164,17 @@ jobs:
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
       - uses: epam/ai-dial-ci/actions/python_prepare@4.12.0
         with:
           python-version: ${{ inputs.python-version }}
+          poetry-install: ${{ inputs.python-package-manager == 'poetry' }}
           poetry-version: ${{ inputs.poetry-version }}
+          uv-install: ${{ inputs.python-package-manager == 'uv' }}
+          uv-version: ${{ inputs.uv-version }}
       - name: Set version
         shell: bash
         run: |
@@ -180,6 +194,7 @@ jobs:
           tag-version: ${{ needs.calculate_version.outputs.next-version }}
           changelog-file: "/tmp/my_changelog" # comes from generate_release_notes step; TODO: beautify
           draft-stable-releases: ${{ inputs.draft-stable-releases }}
+          make-latest: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           artifacts: "dist/*"
           extra-commit-command: |
             git add pyproject.toml

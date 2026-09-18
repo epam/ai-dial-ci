@@ -33,15 +33,15 @@ on:
         description: Do not fail pipeline if ORT scan failed
       ort-version:
         type: string
-        default: "85.0.0" # HACK: pin ORT version due to java.util.NoSuchElementException in 85.1.0
+        default: "92.5.0"
         description: ORT version to use
       ort-config-repository:
         type: string
-        default: "https://github.com/oss-review-toolkit/ort-config.git"
+        default: ${{ vars.ORT_CONFIG_VCS_URL || 'https://github.com/epam/ai-dial-ort-config.git' }}
         description: ORT config repository to use
       ort-config-revision:
         type: string
-        default: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
+        default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
         description: ORT config revision to use
       trivy-enabled:
         type: boolean
@@ -100,7 +100,7 @@ jobs:
       code-checks-enabled: ${{ inputs.code-checks-enabled }}
       code-checks-bypassed: ${{ inputs.code-checks-bypassed }}
       ort-enabled: ${{ inputs.ort-enabled }}
-      ort-bypassed: ${{ inputs.ort-bypassed }}
+      ort-bypassed: ${{ inputs.ort-bypassed || contains(github.event.pull_request.labels.*.name, 'ort-bypassed') }}
       ort-version: ${{ inputs.ort-version }}
       ort-config-repository: ${{ inputs.ort-config-repository }}
       ort-config-revision: ${{ inputs.ort-config-revision }}
@@ -115,7 +115,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/java_prepare@4.12.0
@@ -133,7 +133,7 @@ jobs:
   build:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/java_prepare@4.12.0
@@ -175,7 +175,7 @@ jobs:
           remove-ruby: "true"
           docker-cleanup: "true"
           set-tmpdir: "true"
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
       - uses: epam/ai-dial-ci/actions/build_docker@4.12.0
