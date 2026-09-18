@@ -108,7 +108,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@4.11.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@4.12.0
         with:
           python-version: ${{ inputs.python-version }}
           poetry-install: ${{ inputs.python-package-manager == 'poetry' }}
@@ -132,7 +132,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/python_prepare@4.11.0
+      - uses: epam/ai-dial-ci/actions/python_prepare@4.12.0
         with:
           python-version: ${{ matrix.python-version }}
           poetry-install: ${{ inputs.python-package-manager == 'poetry' }}
