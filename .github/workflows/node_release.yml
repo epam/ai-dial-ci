@@ -129,8 +129,8 @@ on:
         default: true
       dockerhub-enabled:
         type: boolean
-        description: Publish the docker image to Docker Hub
-        default: true
+        description: Publish the docker image to Docker Hub (defaults to false for private repositories)
+        default: ${{ !github.event.repository.private }}
 
 jobs:
   test:
