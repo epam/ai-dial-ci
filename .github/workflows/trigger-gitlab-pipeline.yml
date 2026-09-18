@@ -18,7 +18,7 @@ on:
       runs-on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
-        default: '["ubuntu-latest", "ubuntu-slim"]'
+        default: '["ubuntu-latest"]'
     secrets:
       DEPLOY_HOST:
         required: true

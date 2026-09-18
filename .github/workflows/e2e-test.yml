@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy-env:
-    runs-on: ["ubuntu-latest", "ubuntu-slim"]
+    runs-on: ubuntu-latest
     environment:
       name: e2e-test
     outputs:
@@ -56,7 +56,7 @@ jobs:
       NEXT_PUBLIC_OVERLAY_USER_BUCKET: ${{ secrets.NEXT_PUBLIC_OVERLAY_USER_BUCKET }}
 
   destroy-env:
-    runs-on: ["ubuntu-latest", "ubuntu-slim"]
+    runs-on: ubuntu-latest
     environment:
       name: e2e-test
     needs:
