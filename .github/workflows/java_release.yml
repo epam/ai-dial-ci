@@ -249,4 +249,4 @@ jobs:
           make-latest: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           extra-commit-command: |
             git add build.gradle
-            git commit -m '[skip ci] Update version' || true # upstream branch may already be updated
+            git commit --no-verify -m '[skip ci] Update version' || true # upstream branch may already be updated
