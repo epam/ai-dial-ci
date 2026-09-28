@@ -66,6 +66,12 @@ jobs:
     outputs:
       test-applications: ${{ steps.test-applications.outputs.json }}
     steps:
+      - run: |
+          if [[ -n "$DISPATCH_COMMENT_URL" ]]; then
+            echo "Triggered by ${DISPATCH_COMMENT_URL}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+        env:
+          DISPATCH_COMMENT_URL: ${{ github.event.client_payload.github.payload.comment.html_url }}
       - name: Check dispatch repository ownership
         id: owner
         run: |
