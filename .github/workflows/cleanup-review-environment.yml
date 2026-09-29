@@ -1,0 +1,69 @@
+name: Cleanup Review Environment
+
+on:
+  repository_dispatch:
+    types: [cleanup-review-environment]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.client_payload.github-app }}-${{ github.event.client_payload.github-pr }}
+  cancel-in-progress: true
+
+jobs:
+  cleanup:
+    name: Cleanup Review Environment
+    runs-on: ["ubuntu-latest", "ubuntu-slim"]
+    environment:
+      name: ${{ github.event.client_payload.slash_command.args.named.environment || 'dial-review' }}
+    timeout-minutes: 15
+    steps:
+      - name: Destroy review environment on PR merge
+        run: |
+          #!/bin/bash
+          set -euo pipefail
+
+          gitlab_environment_api_url="${GITLAB_HOST}/api/v4/projects/${INPUT_PROJECT_ID}/environments"
+
+          curl_gitlab_api() {
+            local body
+            if ! body=$(curl --silent --show-error --fail-with-body --retry 5 --retry-delay 10 --retry-all-errors --location \
+              -H "PRIVATE-TOKEN: $GITLAB_TOKEN" "$@"); then
+              echo "::error::GitLab API call failed: $body"
+              exit 1
+            fi
+            printf '%s' "$body"
+          }
+
+          # Get environment ID
+          environment_id=$(curl_gitlab_api --get --url-query "name=$ENVIRONMENT_NAME" "$gitlab_environment_api_url" | jq -r '.[0].id // empty')
+          [ -n "$environment_id" ] || {
+            echo "::warning::No GitLab environment found: ${ENVIRONMENT_NAME}"
+            exit 0
+          }
+
+          # Send stop request and get the state
+          environment_state=$(curl_gitlab_api -X POST "$gitlab_environment_api_url/$environment_id/stop" | jq -r '.state')
+
+          # Wait the environment to be stopped
+          deadline=$((SECONDS + 600))
+          while [ "$environment_state" = "stopping" ]; do
+            [ "$SECONDS" -lt "$deadline" ] || {
+              echo "::error::Timeout while waiting GitLab environment to be stopped"
+              exit 1
+            }
+            echo "The GitLab environment is stopping..."
+            sleep 10
+            environment_state=$(curl_gitlab_api "$gitlab_environment_api_url/$environment_id" | jq -r '.state')
+          done
+
+          if [ "$environment_state" = "stopped" ]; then
+            echo "GitLab environment stopped: ${ENVIRONMENT_NAME}"
+          else
+            echo "::error::Unexpected GitLab environment state: ${environment_state}"
+            exit 1
+          fi
+        shell: bash
+        env:
+          GITLAB_HOST: https://${{ vars.DEPLOY_HOST }}
+          GITLAB_TOKEN: ${{ secrets.DESTROY_ACCESS_TOKEN }}
+          ENVIRONMENT_NAME: ${{ github.event.client_payload.github-app }}/pr-${{ github.event.client_payload.github-pr }}
+          INPUT_PROJECT_ID: ${{ vars.DEPLOY_PROJECT_ID }}
