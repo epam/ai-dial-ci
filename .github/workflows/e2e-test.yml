@@ -23,7 +23,7 @@ jobs:
           echo "SHA=${SOURCE_COMMIT_SHA:0:7}" >>$GITHUB_OUTPUT
       - name: Deploy environment
         id: deploy
-        uses: digital-blueprint/gitlab-pipeline-trigger-action@9ce6377a88205c23d9978fd64b6fb0bef7320be4 # v1.4.3
+        uses: digital-blueprint/gitlab-pipeline-trigger-action@1bbd622ab7b529eb806a34fe36299d9b33da354a # v1.4.4
         with:
           host: ${{ vars.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
@@ -66,7 +66,7 @@ jobs:
     steps:
       - name: Destroy environment
         id: destroy
-        uses: digital-blueprint/gitlab-pipeline-trigger-action@9ce6377a88205c23d9978fd64b6fb0bef7320be4 # v1.4.3
+        uses: digital-blueprint/gitlab-pipeline-trigger-action@1bbd622ab7b529eb806a34fe36299d9b33da354a # v1.4.4
         with:
           host: ${{ vars.DEPLOY_HOST }}
           trigger_token: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
