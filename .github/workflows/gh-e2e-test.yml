@@ -49,11 +49,11 @@ on:
         default: ${{ github.run_id }}
       timeout-minutes:
         type: number
-        description: The maximum number of minutes to let a job run before GitHub automatically cancels it.
+        description: The maximum number of minutes to let a job run before GitHub automatically cancels it
         default: 60
       environment-name:
         type: string
-        description: The GitHub environment name to use for the tests. An abstraction to conveniently store secrets and variables
+        description: The GitHub environment name to use secrets and variables from
         default: "e2e-test"
     secrets:
       E2E_ADMIN:
