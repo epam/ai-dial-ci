@@ -98,7 +98,7 @@ on:
       runs-on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
-        default: '["ubuntu-24.04"]'
+        default: '["ubuntu-26.04"]'
 
 jobs:
   style_checks:

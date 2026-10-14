@@ -2,13 +2,18 @@ name: Validate PR title
 
 on:
   workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        description: Overrides jobs runs-on settings (json-encoded list)
+        default: '["ubuntu-26.04"]'
     secrets:
       ACTIONS_BOT_TOKEN:
         required: true
 jobs:
   main:
     name: Validate PR title
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
         id: lint_pr_title
