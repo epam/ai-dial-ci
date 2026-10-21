@@ -1,0 +1,395 @@
+name: SCA scheduled scan
+
+on:
+  workflow_call:
+    inputs:
+      images:
+        type: string
+        description: Image names without registry, one per line (e.g. epam/ai-dial-chat). Empty means source scan only
+        default: ""
+      registry:
+        type: string
+        description: Container registry the images are pulled from
+        default: "ghcr.io"
+      repository:
+        type: string
+        description: Repository (owner/name) whose code is scanned and whose release is resolved. Defaults to the calling repository
+        default: ""
+      java-version:
+        type: string
+        description: Java version to use to generate lockfiles (Gradle repositories only)
+        default: "21"
+      java-distribution:
+        type: string
+        description: Java distribution to use
+        default: "temurin"
+      trivy-version:
+        type: string
+        description: Trivy version to use (release tag, e.g. v0.75.0)
+        default: "v0.75.0"
+      trivy-db-repository:
+        type: string
+        description: Trivy vulnerability DB repositories (comma-separated, tried in order)
+        default: "mirror.gcr.io/aquasec/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2,ghcr.io/aquasecurity/trivy-db:2"
+      trivy-java-db-repository:
+        type: string
+        description: Trivy Java DB repositories (comma-separated, tried in order)
+        default: "mirror.gcr.io/aquasec/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1,ghcr.io/aquasecurity/trivy-java-db:1"
+      retention-days:
+        type: number
+        description: Retention period (days) of the resulting `sca-report` artifact
+        default: 90
+      runs-on:
+        type: string
+        description: Overrides jobs runs-on settings (json-encoded list)
+        default: '["ubuntu-24.04"]'
+      osv-image-scan:
+        type: boolean
+        description: Whether the OSV job also runs the direct osv-scanner image scan for image targets (OS packages). Turn off per repository where the image does not fit the runner disk; the OSV BOM query runs either way
+        default: true
+      release-lines:
+        type: number
+        description: How many newest minor release lines are scanned (one latest patch each), plus the newest release candidate if any
+        default: 2
+      scan-tag:
+        type: string
+        description: Focus the run on this one git tag (its source and the tag in every image that publishes it) instead of the release set. A manual-run parameter
+        default: ""
+      force-image-scan:
+        type: boolean
+        description: On this one run, run the direct OSV image scan also where the repository has it off (osv-image-scan). A manual-run parameter; cannot disable what the repository has on
+        default: false
+
+jobs:
+  targets:
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    # The GitHub API and the registry (gh and oras retry on their own); the bound only stops a service that is up but crawling
+    timeout-minutes: 15
+    steps:
+      - uses: epam/ai-dial-sec-sca/actions/sca_resolve_targets@v0.4.1
+        id: targets
+        with:
+          repository: ${{ inputs.repository || github.repository }}
+          registry: ${{ inputs.registry }}
+          images: ${{ inputs.images }}
+          release-lines: ${{ inputs.release-lines }}
+          scan-tag: ${{ inputs.scan-tag }}
+          osv-image-scan: ${{ inputs.osv-image-scan }}
+          force-image-scan: ${{ inputs.force-image-scan }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sca-part-targets
+          path: ${{ steps.targets.outputs.targets-file }}
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: true # a re-run of the failed jobs uploads again
+
+  # One Trivy DB snapshot per run: all targets scan against the same DB versions, and the matrix jobs do not download
+  # the DB each. The snapshot (about 1 GiB) is an artifact of the run that expires after a day, not a cache entry: a
+  # cache entry of that size, unique per run, would evict the caches of the repositories from the 10 GiB quota
+  trivy-db:
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    permissions:
+      contents: read
+    outputs:
+      db-info: ${{ steps.info.outputs.db-info }}
+    # Two downloads from the mirrors (tried in order) and the upload of the snapshot, a few minutes in the pilot; the
+    # bound only stops a mirror that is up but crawling
+    timeout-minutes: 20
+    steps:
+      - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          version: ${{ inputs.trivy-version }}
+          cache: true # the binary is cached under a version key; this is the only job that saves it
+      - name: Download Trivy databases
+        env:
+          TRIVY_CACHE_DIR: ${{ runner.temp }}/trivy-cache
+          TRIVY_DB_REPOSITORY: ${{ inputs.trivy-db-repository }}
+          TRIVY_JAVA_DB_REPOSITORY: ${{ inputs.trivy-java-db-repository }}
+        run: |
+          trivy image --download-db-only
+          trivy image --download-java-db-only
+      - name: Describe Trivy databases
+        id: info
+        env:
+          TRIVY_CACHE_DIR: ${{ runner.temp }}/trivy-cache
+        run: |
+          trivy version --format json > "$RUNNER_TEMP/trivy-version.json"
+          jq . "$RUNNER_TEMP/trivy-version.json"
+          db_info="$(jq -c '{vulnerability_db_updated_at: .VulnerabilityDB.UpdatedAt, java_db_updated_at: .JavaDB.UpdatedAt}' "$RUNNER_TEMP/trivy-version.json")"
+          echo "db-info=$db_info" >> "$GITHUB_OUTPUT"
+          echo "Trivy DB snapshot: $db_info" >> "$GITHUB_STEP_SUMMARY"
+      # Artifacts are scoped to the run, so the name is the same for every run
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sca-trivy-db
+          path: ${{ runner.temp }}/trivy-cache
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: true # a re-run of the failed jobs uploads again
+
+  trivy:
+    needs: [targets, trivy-db]
+    # Runs even if trivy-db failed: the DB restore then fails and every target is reported as failed with a reason
+    if: ${{ !cancelled() && needs.targets.result == 'success' && needs.targets.outputs.matrix != '[]' }}
+    name: Trivy ${{ matrix.target.id }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    permissions:
+      contents: read
+      packages: read
+    # A target is a checkout, a scan and, for a Gradle repository, a Gradle run that resolves every configuration: the
+    # long part, up to about 30 minutes in the pilot (an image or a lockfile scan takes a few). 45 minutes leave room
+    # for a slow dependency registry and stop a build that hangs
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.targets.outputs.matrix) }}
+    env:
+      # Scan profile: exposure of the repository, not a gate, so nothing is ignored or filtered out.
+      # It is set via env rather than trivy-action inputs: the action exports an input to TRIVY_* only when it
+      # differs from the action's own default, so `ignore-unfixed: false` or the full severity list would not be
+      # exported and a repository's trivy.yaml would win. Environment variables take precedence over trivy.yaml.
+      # TRIVY_IGNOREFILE is /dev/null, not empty, because trivy treats an empty value as unset and reads .trivyignore
+      TRIVY_IGNOREFILE: /dev/null
+      TRIVY_IGNORE_UNFIXED: "false"
+      TRIVY_SEVERITY: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+      TRIVY_PKG_TYPES: os,library
+      TRIVY_SCANNERS: vuln
+      TRIVY_LIST_ALL_PKGS: "true" # trivy default for JSON, pinned so a repository trivy.yaml cannot disable the inventory behind packages_scanned
+      TRIVY_INCLUDE_DEV_DEPS: "true" # trivy skips dev dependencies by default; trivy-action has no input for it
+      TRIVY_EXIT_CODE: "0" # findings are the payload, not a failure
+      TRIVY_DISABLE_VEX_NOTICE: "true"
+      # All targets of the run use the snapshot restored from the trivy-db job
+      TRIVY_SKIP_DB_UPDATE: "true"
+      TRIVY_SKIP_JAVA_DB_UPDATE: "true"
+      TARGET_ID: ${{ matrix.target.id }}
+    steps:
+      - name: Prepare output directory
+        run: mkdir -p "$RUNNER_TEMP/sca-out/trivy"
+      # The DB snapshot of the trivy-db job; a missing artifact fails the target instead of silently downloading another DB
+      - name: Restore Trivy databases
+        id: db
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: sca-trivy-db
+          path: ${{ runner.temp }}/trivy-cache
+      - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        id: setup
+        with:
+          version: ${{ inputs.trivy-version }}
+          cache: true # hits the binary cache saved by trivy-db, so there is no save race between the matrix jobs
+      - name: Checkout
+        id: checkout
+        if: ${{ matrix.target.kind == 'fs' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.repository || github.repository }}
+          # The commit the targets job resolved for this target, not a moving branch
+          ref: ${{ matrix.target.commit_sha }}
+          persist-credentials: false
+          lfs: true
+      - name: Detect Gradle build
+        id: stack
+        if: ${{ matrix.target.kind == 'fs' }}
+        run: |
+          if [ -f gradlew ] && { [ -f build.gradle ] || [ -f build.gradle.kts ]; }; then
+            echo "java=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "java=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Prepare Java
+        id: java
+        if: ${{ steps.stack.outputs.java == 'true' }}
+        uses: epam/ai-dial-ci/actions/java_prepare@4.12.0
+        with:
+          java-version: ${{ inputs.java-version }}
+          java-distribution: ${{ inputs.java-distribution }}
+      - name: Generate Gradle lockfiles
+        id: lockfiles
+        if: ${{ steps.stack.outputs.java == 'true' }}
+        uses: epam/ai-dial-sec-sca/actions/generate_gradle_lockfiles@v0.4.1
+        with:
+          gpr-username: ${{ github.actor }}
+          gpr-password: ${{ secrets.GITHUB_TOKEN }}
+          # Lockfiles have no dependency graph: it travels in the part of the target for the merge, outside the workspace
+          graph-dir: ${{ runner.temp }}/sca-out/trivy/${{ matrix.target.id }}.gradle-graph
+      # Images in other registries are expected to be public and are pulled anonymously
+      - name: Login to GitHub Container Registry
+        id: login
+        if: ${{ matrix.target.kind == 'image' && inputs.registry == 'ghcr.io' }}
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # The trivy.yaml of the scanned repository applies as is, skip-dirs and skip-files included (they keep
+      # non-shipped paths out of the scan and of the inventory OSV is asked about). It needs no trivy-config input:
+      # Trivy reads ./trivy.yaml of its working directory when --config / TRIVY_CONFIG is not set, and trivy-action
+      # (checked at the pinned commit) sets TRIVY_CONFIG only from its trivy-config input and does not change the
+      # directory. The checkout above has no `path`, so the repository root is the workspace, which is the working
+      # directory of this step and the scan root (scan-ref: .); relative skip-dirs resolve against it
+      - name: Run Trivy scanner
+        id: trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: ${{ matrix.target.kind }}
+          scan-ref: .
+          image-ref: ${{ matrix.target.ref }}
+          format: json
+          output: ${{ runner.temp }}/sca-out/trivy/${{ matrix.target.id }}.json
+          # Outside the workspace, so that the cache is not scanned
+          cache-dir: ${{ runner.temp }}/trivy-cache
+          # Trivy and the DB are set up above; trivy-action must not set up or cache anything itself
+          skip-setup-trivy: true
+          cache: false
+      # The table is a convenience copy of the JSON the report is built from; a failure here is not a failed target
+      - name: Generate Trivy report (Table)
+        if: ${{ steps.trivy.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          trivy convert --format table --output "$RUNNER_TEMP/sca-out/trivy/$TARGET_ID.txt" "$RUNNER_TEMP/sca-out/trivy/$TARGET_ID.json"
+      # The status is written even if the scan failed: a failed target must not look like a clean one
+      - name: Write scan status
+        if: ${{ always() }}
+        env:
+          DB_OUTCOME: ${{ steps.db.outcome }}
+          DB_JOB_RESULT: ${{ needs.trivy-db.result }}
+          SETUP_OUTCOME: ${{ steps.setup.outcome }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          JAVA_OUTCOME: ${{ steps.java.outcome }}
+          LOCKFILES_OUTCOME: ${{ steps.lockfiles.outcome }}
+          LOGIN_OUTCOME: ${{ steps.login.outcome }}
+          TRIVY_OUTCOME: ${{ steps.trivy.outcome }}
+          LOCKFILES: ${{ steps.lockfiles.outputs.lockfiles }}
+        run: |
+          out="$RUNNER_TEMP/sca-out/trivy"
+          status=ok
+          reason=
+          for step in "trivy db restore:$DB_OUTCOME" "trivy setup:$SETUP_OUTCOME" "checkout:$CHECKOUT_OUTCOME" "java setup:$JAVA_OUTCOME" "lockfile generation:$LOCKFILES_OUTCOME" "registry login:$LOGIN_OUTCOME" "trivy scan:$TRIVY_OUTCOME"; do
+            outcome="${step#*:}"
+            if [ "$outcome" != "success" ] && [ "$outcome" != "skipped" ]; then
+              status=failed
+              reason="${step%%:*} $outcome"
+              if [ "${step%%:*}" = "trivy db restore" ]; then
+                reason="$reason (trivy-db job: $DB_JOB_RESULT)"
+              fi
+              break
+            fi
+          done
+          if [ "$status" = "ok" ] && [ "$TRIVY_OUTCOME" != "success" ]; then
+            status=failed
+            reason="scan did not complete"
+          fi
+          if [ "$status" = "ok" ] && ! jq -e . "$out/$TARGET_ID.json" > /dev/null 2>&1; then
+            status=failed
+            reason="trivy output is missing or is not valid JSON"
+          fi
+          jq -n --arg id "$TARGET_ID" --arg status "$status" --arg reason "$reason" --arg lockfiles "$LOCKFILES" \
+            '{id: $id, status: $status, reason: (if $reason == "" then null else $reason end), lockfiles: (if $lockfiles == "" then null else ($lockfiles | tonumber) end)}' \
+            > "$out/$TARGET_ID.status.json"
+          cat "$out/$TARGET_ID.status.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ always() }}
+        with:
+          name: sca-part-trivy-${{ matrix.target.id }}
+          path: ${{ runner.temp }}/sca-out/
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: true # a re-run of the failed jobs uploads again
+
+  # OSV is asked (by osv-scanner, over a BOM that Trivy converts from its result) about the packages Trivy found, and
+  # an image target also gets the direct osv-scanner image scan, which reads the image's own package database and so
+  # asks OSV about its OS packages correctly, so it runs after the Trivy matrix. A broken query is a failed target
+  # like a failed Trivy scan; its findings are merged into the report by sca_merge_results. Nothing to query, and so
+  # no job, if no Trivy target was scanned
+  osv:
+    needs: [targets, trivy]
+    if: ${{ !cancelled() && needs.targets.result == 'success' && needs.targets.outputs.matrix != '[]' }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    permissions:
+      contents: read
+      # the direct image scan pulls the image from ghcr.io through docker
+      packages: read
+    # BOM queries (a few minutes), plus pulling and scanning every image target sequentially; the bound only stops
+    # a service that is up but crawling
+    timeout-minutes: 60
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: sca-part-targets
+          path: ${{ runner.temp }}/sca-parts
+      # Trivy ran (the matrix is not empty), so at least one part is there; a failed Trivy target has its status part
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: sca-part-trivy-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/sca-parts
+      # The image scan of the osv targets pulls through docker; one login serves every target (the job has no matrix)
+      - name: Login to GitHub Container Registry
+        if: ${{ inputs.registry == 'ghcr.io' }}
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: epam/ai-dial-sec-sca/actions/sca_query_osv@v0.4.1
+        with:
+          targets-file: ${{ runner.temp }}/sca-parts/targets.json
+          parts-dir: ${{ runner.temp }}/sca-parts
+          output-dir: ${{ runner.temp }}/sca-out
+          trivy-version: ${{ inputs.trivy-version }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ always() }}
+        with:
+          name: sca-part-osv
+          path: ${{ runner.temp }}/sca-out/
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: true # a re-run of the failed jobs uploads again
+
+  report:
+    needs: [targets, trivy-db, trivy, osv]
+    # Without the targets result there is nothing to report on; the run is red anyway because the targets job failed
+    if: ${{ always() && needs.targets.result == 'success' }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    permissions:
+      contents: read
+    # Downloads the parts and merges them: a minute or two in the pilot
+    timeout-minutes: 20
+    steps:
+      # The targets part is always there, so the download does not fail when no target was scanned
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: sca-part-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/sca-parts
+      - uses: epam/ai-dial-sec-sca/actions/sca_merge_results@v0.4.1
+        id: merge
+        with:
+          targets-file: ${{ runner.temp }}/sca-parts/targets.json
+          parts-dir: ${{ runner.temp }}/sca-parts
+          output-dir: ${{ runner.temp }}/sca
+          trivy-db-info: ${{ needs.trivy-db.outputs.db-info }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ always() }}
+        with:
+          name: sca-report
+          path: ${{ runner.temp }}/sca/
+          retention-days: ${{ inputs.retention-days }}
+          if-no-files-found: error
+          overwrite: true # a re-run of the failed jobs uploads again
+      # After the upload, so that the report is available even if some targets failed
+      - name: Fail on failed targets
+        if: ${{ steps.merge.outputs.failed-count != '0' }}
+        env:
+          FAILED_COUNT: ${{ steps.merge.outputs.failed-count }}
+        run: |
+          # Per-target errors are annotated by the merge step; this one only fails the run
+          echo "::error::$FAILED_COUNT target(s) failed to be scanned, see the job summary or report.json of the sca-report artifact"
+          exit 1

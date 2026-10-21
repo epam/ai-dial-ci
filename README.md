@@ -44,6 +44,10 @@
       - [Cleanup untagged images in GHCR](#cleanup-untagged-images-in-ghcr)
       - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
       - [Trivy additional configuration](#trivy-additional-configuration)
+      - [SCA scheduled scan](#sca-scheduled-scan)
+        - [Excluding paths](#excluding-paths)
+        - [Outputs](#outputs)
+        - [Reading the results](#reading-the-results)
       - [Dependabot](#dependabot)
         - [Dependabot Pull Requests Automation](#dependabot-pull-requests-automation)
       - [ORT](#ort)
@@ -1236,6 +1240,127 @@ db:
 misconfiguration:
   checks-bundle-repository: mirror.gcr.io/aquasec/trivy-checks:1
 ```
+
+#### SCA scheduled scan
+
+The scan logic (the actions that resolve targets, query OSV and merge results) lives in [ai-dial-sec-sca](https://github.com/epam/ai-dial-sec-sca); this workflow only orchestrates it.
+
+`sca_scheduled.yml` looks for known vulnerabilities in what a repository publishes. It is a report, not a gate: nothing is ignored (no `.trivyignore`; unfixed vulnerabilities, all severities and dev dependencies are included) and findings never fail the run. The run fails only if a target could not be scanned.
+
+Targets:
+
+| Target id                 | What is scanned                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `source-<default branch>` | Source of the default branch                                                                                             |
+| `source-<release tag>`    | Source at the git tag of each release of the set: the newest patch of each of the `release-lines` newest minor lines, and the newest prerelease (candidate) |
+| `<image>-development`     | Image tag `development` of each image in `images`                                                                        |
+| `<image>-<release tag>`   | Image tag of each release of the set (the registry tag may lack the `v` of the git tag)                                  |
+
+The release set comes from the flags of the GitHub releases (the whole listing is read, up to 1000 releases; drafts are ignored). A stable is a release that is neither `prerelease` nor draft, with a tag `X.Y.Z`; its minor line is `X.Y`, and the patch of a line is the newest stable by version. `release-lines` is 2 by default. A stable with another tag name belongs to no line: it is left out of the set, with no target of its own, and the run prints one notice that counts them. The candidate is the newest prerelease (tag `X.Y.Z-pre`, by semver) whose `X.Y.Z` is greater than the newest stable; a prerelease of an already published version is not a candidate, and a prerelease tag of another form is ignored. If there is no stable, the newest prerelease is the candidate. An image that lacks a tag of the set gets a `not_applicable` target with the reason. A repository without releases gets the default branch targets and a `not_applicable` release target stating that there is no GitHub release; a repository whose releases are all stables outside `X.Y.Z` gets the default branch targets only. Images that share the last segment of their name get the full name in the target id.
+
+A manual run with `scan-tag` is a focus run: it scans only that git tag (its source and the tag in every image that publishes it), not `development` and not the release set. The report header and the run name state the narrowing. A tag that cannot be resolved fails the run. A tool that hangs fails its own target only (osv-scanner and docker commands time out after 10 minutes, the image scan after 20).
+
+[Trivy](https://trivy.dev/) scans every target. The language packages it found are then checked against [OSV](https://osv.dev/); an image target also gets a direct OSV image scan, which reads the image's own package database and so checks its OS packages against OSV too (a BOM cannot: OSV keys its records by the source package name). Both queries run for every image target, so a package either detector sees keeps its OSV check. The direct image scan is off where `osv-image-scan` is false, unless a manual run sets `force-image-scan` (it cannot turn off what the repository has on). For Gradle repositories (`gradlew` and `build.gradle(.kts)` in the root) lockfiles are generated on the fly, the repository files are not modified. All targets of a run use one Trivy DB snapshot.
+
+`schedule` and `workflow_dispatch` triggers work from the default branch only, so the calling workflow must be there. Pin the workflow to a release tag, and give each repository its own cron minute and hour so the scans do not all start at once.
+
+`sca-scan.yml`
+
+```yml
+name: SCA Scan
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+    inputs:
+      scan-tag:
+        description: "Focus the run on this one git tag instead of the release set; empty = the full set"
+        type: string
+        default: ""
+      force-image-scan:
+        description: "On this one run, run the direct OSV image scan also where it is off for this repository"
+        type: boolean
+        default: false
+
+run-name: >-
+  SCA - ${{ github.event_name == 'schedule' && 'scheduled' || format('manual by {0}', github.triggering_actor) }}${{ inputs.scan-tag && format(' - tag {0}', inputs.scan-tag) || '' }}
+
+concurrency:
+  group: sca-scan
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  sca:
+    uses: epam/ai-dial-ci/.github/workflows/sca_scheduled.yml@<version>
+    with:
+      images: |
+        epam/ai-dial-core
+      java-version: "21"
+      scan-tag: ${{ inputs.scan-tag }}
+      force-image-scan: ${{ inputs.force-image-scan || false }}
+```
+
+Inputs:
+
+| Input                      | Type   | Default                      | Description                                                                                                                          |
+| -------------------------- | ------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `images`                   | string | `""`                         | Image names without registry, one per line (e.g. `epam/ai-dial-chat`). Empty means source scan only                                  |
+| `registry`                 | string | `ghcr.io`                    | Registry the images are pulled from. Login with `GITHUB_TOKEN` is done for `ghcr.io` only; other registries are accessed anonymously |
+| `repository`               | string | calling repo                 | Repository (`owner/name`) to scan and to resolve the release of. Set it when the workflow runs in a fork                             |
+| `java-version`             | string | `21`                         | Java version for lockfile generation (Gradle repositories only)                                                                      |
+| `java-distribution`        | string | `temurin`                    | Java distribution                                                                                                                    |
+| `trivy-version`            | string | `v0.75.0`                    | Trivy release tag                                                                                                                    |
+| `trivy-db-repository`      | string | mirrors of `trivy-db:2`      | Trivy DB repositories, comma-separated, tried in order                                                                               |
+| `trivy-java-db-repository` | string | mirrors of `trivy-java-db:1` | Trivy Java DB repositories, comma-separated, tried in order                                                                          |
+| `retention-days`           | number | `90`                         | Retention of the `sca-report` artifact                                                                                               |
+| `osv-image-scan`           | boolean | `true`                       | Direct OSV image scan of image targets (their OS packages). Turn off for a repository whose image does not fit the runner disk (about 3x the image size is needed); the OSV BOM query runs either way and the report states the exclusion |
+| `release-lines`            | number | `2`                          | How many newest minor release lines are scanned (the newest patch of each), plus the candidate if any                                |
+| `scan-tag`                 | string | `""`                         | A manual-run parameter: scan only this git tag (its source and its image tags) instead of the release set                            |
+| `force-image-scan`         | boolean | `false`                     | A manual-run parameter: run the direct OSV image scan on this run also where `osv-image-scan` is off; it cannot turn off what the repository has on |
+| `runs-on`                  | string | `["ubuntu-24.04"]`           | JSON-encoded list of runner labels for all jobs. The default runners have docker; the OSV image scan needs it                      |
+
+A run scans every target of its set. To scan again after a failure, use "Re-run failed jobs".
+
+Permissions: `contents: read` and `packages: read` for the calling workflow, as in the example. No secrets are needed: the workflow uses `GITHUB_TOKEN` to read the repository, resolve the release and pull images from GHCR.
+
+##### Excluding paths
+
+The `trivy.yaml` in the root of the scanned repository is applied as is. To keep paths that are not shipped (tests, examples, build tooling) out of the scan, and so out of the OSV check, list them in it:
+
+```yml
+# trivy.yaml
+scan:
+  skip-dirs:
+    - test
+    - docs/examples
+```
+
+Paths are relative to the repository root. The scan profile (severity, ignore file, unfixed, dev dependencies) is set by the workflow with environment variables, and `trivy.yaml` cannot change it.
+
+##### Outputs
+
+The job summary (`summary.md`) has the run header (commit, Trivy and osv-scanner versions, DB dates), a results table with one row per target, then library and base image (OS) packages grouped by severity. One row is one package with its vulnerabilities, `Fixed` versions, dependency `Chain`, `Where` it is declared, the `Targets` it is in and the `Scanner` (T for Trivy, O for OSV). A library row is a package version; an OS package is one row whatever the scanners' version spellings (dpkg epochs and revisions differ between scanners, one spelling is shown). A summary over 1 MiB is cut at a line, with a note.
+
+The `sca-report` artifact holds:
+
+* `summary.md`;
+* `report.json` (`schema_version: 2`): `repo`, `commit_sha`, `default_branch`, `run_id`, `run_url`, `generated_utc`, the run marks `event` and `actor` (always) and `scan_ref` (present only in a `scan-tag` run) and `forced_image_scan` (present only in a forced image scan), `tools` (Trivy, DB and osv-scanner versions and dates), `targets[]` and `findings[]`. A target has `id`, `scanner`, `kind` (`fs`/`image`), `ref`, `commit_sha`, `image`, `image_digest`, `status`, `reason` and `packages_scanned`. A finding has `target`, `scanner`, `id`, `aliases`, `pkg`, `version`, `class` (`lang`/`os`), `severity`, `fixed_version`, `title`, `url`, `locations`, `chain`, `relationship` and `dev`;
+* `_native/trivy/` and `_native/osv/`: the unmodified per-target reports (JSON, and a table for Trivy).
+
+##### Reading the results
+
+Target status in `report.json` and in the `Scan` column of the summary:
+
+* `ok`: scanned. Zero vulnerabilities in an `ok` target is a clean result; check `packages_scanned` (a warning is printed if it is 0). An `ok` OSV target can carry a `reason`: an exclusion stated, not silence (the OSV image scan disabled for the repository - the OS packages of the image are then not checked by OSV, the language packages are). Shown as `ok · OSV ok (reason)`.
+* `failed`: not scanned, or the result is missing or invalid; `reason` says why. A failed target is never shown as clean (its counts are empty), the error is annotated, and the run fails after the artifact is uploaded. A failed OSV check of an `ok` Trivy target is shown as `ok · OSV failed: <reason>` (a failed OSV image scan fails the OSV target even though its BOM query succeeded).
+* `not_applicable`: nothing to scan, for example the repository has no release or the image has no `development` tag.
+
+`severity` and `fixed_version` are what the scanner reports, with no version comparison. For OSV the severity is the rating of the advisory database, else the CVSS bucket, else `UNKNOWN`. The `Fixed` column lists the fix versions the scanner knows, comma-separated and for every branch the advisory lists, so a version there may belong to another branch than the installed one. An empty `Fixed` means no fix is known. In the summary, findings of both scanners about one vulnerability (same id or a shared alias) are shown once, under the CVE id when known; `report.json` keeps one finding per target and scanner.
 
 #### Dependabot
 
