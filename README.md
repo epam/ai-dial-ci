@@ -45,7 +45,7 @@
       - [Trigger deployment of development environment in GitLab](#trigger-deployment-of-development-environment-in-gitlab)
       - [Trivy additional configuration](#trivy-additional-configuration)
       - [SCA scheduled scan](#sca-scheduled-scan)
-        - [Results](#results)
+        - [SCA scheduled scan results](#sca-scheduled-scan-results)
       - [Dependabot](#dependabot)
         - [Dependabot Pull Requests Automation](#dependabot-pull-requests-automation)
       - [ORT](#ort)
@@ -1245,12 +1245,12 @@ misconfiguration:
 
 What is scanned:
 
-* the default branch: source and the `development` tag of each image;
-* the latest releases: the newest patch of each of the last `release-lines` minor versions (2 by default) and a newer release candidate, if there is one. Source at the git tag and the image with the same tag.
+- the default branch: source and the `development` tag of each image;
+- the latest releases: the newest patch of each of the last `release-lines` minor versions (2 by default) and a newer release candidate, if there is one. Source at the git tag and the image with the same tag.
 
 [Trivy](https://trivy.dev/) scans every target; the packages it finds and the OS packages of the images are also checked against [OSV](https://osv.dev/). Nothing is filtered: all severities, unfixed vulnerabilities and dev dependencies are reported. Gradle projects get lockfiles generated during the scan.
 
-Add the workflow to the default branch of the repository (scheduled runs start only from there) and pick a cron time that differs from other repositories:
+Add the workflow to the default branch of the repository and pick a cron time that differs from other repositories:
 
 `sca-scan.yml`
 
@@ -1287,7 +1287,7 @@ jobs:
     uses: epam/ai-dial-ci/.github/workflows/sca_scheduled.yml@<version>
     with:
       images: |
-        epam/ai-dial-core
+        ${{ github.repository }}
       java-version: "21"
       scan-tag: ${{ inputs.scan-tag }}
       force-image-scan: ${{ inputs.force-image-scan || false }}
@@ -1297,22 +1297,22 @@ No secrets are needed: `GITHUB_TOKEN` is used to read the repository and its rel
 
 Inputs:
 
-| Input                      | Type    | Default                      | Description                                                                                       |
-| -------------------------- | ------- | ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| `images`                   | string  | `""`                         | Image names without registry, one per line. Empty: source only                                    |
-| `registry`                 | string  | `ghcr.io`                    | Registry of the images. Only `ghcr.io` is accessed with a login                                   |
-| `repository`               | string  | calling repository           | Repository to scan (`owner/name`), e.g. when the workflow runs in a fork                          |
-| `release-lines`            | number  | `2`                          | How many latest minor versions to scan                                                            |
-| `osv-image-scan`           | boolean | `true`                       | OSV scan of the image OS packages. Turn off if the image does not fit the runner disk             |
-| `scan-tag`                 | string  | `""`                         | Manual run: scan only this git tag                                                                |
-| `force-image-scan`         | boolean | `false`                      | Manual run: run the OSV image scan even if `osv-image-scan` is off                                |
-| `java-version`             | string  | `21`                         | Java version for Gradle projects                                                                  |
-| `java-distribution`        | string  | `temurin`                    | Java distribution for Gradle projects                                                             |
-| `trivy-version`            | string  | `v0.75.0`                    | Trivy version                                                                                     |
-| `trivy-db-repository`      | string  | mirrors of `trivy-db:2`      | Trivy DB repositories, comma-separated                                                            |
-| `trivy-java-db-repository` | string  | mirrors of `trivy-java-db:1` | Trivy Java DB repositories, comma-separated                                                       |
-| `retention-days`           | number  | `90`                         | Retention of the `sca-report` artifact                                                            |
-| `runs-on`                  | string  | `["ubuntu-24.04"]`           | JSON list of runner labels. The runner needs docker for the image scan                            |
+| Input                      | Type    | Default                      | Description                                                                           |
+| -------------------------- | ------- | ---------------------------- | ------------------------------------------------------------------------------------- |
+| `images`                   | string  | `""`                         | Image names without registry, one per line. Empty: source only                        |
+| `registry`                 | string  | `ghcr.io`                    | Registry of the images. Only `ghcr.io` is accessed with a login                       |
+| `repository`               | string  | calling repository           | Repository to scan (`owner/name`), e.g. when the workflow runs in a fork              |
+| `release-lines`            | number  | `2`                          | How many latest minor versions to scan                                                |
+| `osv-image-scan`           | boolean | `true`                       | OSV scan of the image OS packages. Turn off if the image does not fit the runner disk |
+| `scan-tag`                 | string  | `""`                         | Manual run: scan only this git tag                                                    |
+| `force-image-scan`         | boolean | `false`                      | Manual run: run the OSV image scan even if `osv-image-scan` is off                    |
+| `java-version`             | string  | `21`                         | Java version for Gradle projects                                                      |
+| `java-distribution`        | string  | `temurin`                    | Java distribution for Gradle projects                                                 |
+| `trivy-version`            | string  | `v0.75.0`                    | Trivy version                                                                         |
+| `trivy-db-repository`      | string  | mirrors of `trivy-db:2`      | Trivy DB repositories, comma-separated                                                |
+| `trivy-java-db-repository` | string  | mirrors of `trivy-java-db:1` | Trivy Java DB repositories, comma-separated                                           |
+| `retention-days`           | number  | `90`                         | Retention of the `sca-report` artifact                                                |
+| `runs-on`                  | string  | `["ubuntu-24.04"]`           | JSON list of runner labels. The runner needs docker for the image scan                |
 
 To keep paths that are not shipped (tests, examples) out of the scan, list them in `trivy.yaml` in the repository root:
 
@@ -1323,11 +1323,11 @@ scan:
     - docs/examples
 ```
 
-##### Results
+##### SCA scheduled scan results
 
-The run summary opens with two tables, one row per branch or tag: the unique vulnerabilities by severity and the vulnerable packages to update, each with how many have a fix. Below are the packages per version with the fixed versions, the dependency chain and where each was seen (source or image), collapsed. The `sca-report` artifact contains the same summary, `report.json` for tools and the raw scanner reports.
+To find the results, open the repository's **Actions** tab, select the **SCA Scan** workflow and open a run. The run summary opens with two tables, one row per branch or tag: the unique vulnerabilities by severity and the vulnerable packages to update, each with how many have a fix. Below are the packages per version with the fixed versions, the dependency chain and where each was seen (source or image), collapsed. The `sca-report` artifact contains the same summary, `report.json` for tools and the raw scanner reports.
 
-A target is `ok` (scanned), `failed` (not scanned, the reason is shown, the run fails) or `not_applicable` (nothing to scan, e.g. the image has no such tag). To retry failed targets, use "Re-run failed jobs".
+A target status in the report can be `ok` (scanned), `failed` (not scanned, the reason is shown, the run fails) or `not_applicable` (nothing to scan, e.g. the image has no such tag). To retry failed targets, use "Re-run failed jobs".
 
 #### Dependabot
 
