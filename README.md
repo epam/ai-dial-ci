@@ -1325,7 +1325,7 @@ scan:
 
 ##### Results
 
-The run summary has a table with one row per target and then the vulnerable packages grouped by severity, with the fixed versions and the dependency chain. The `sca-report` artifact contains the same summary, `report.json` for tools and the raw scanner reports.
+The run summary opens with two tables, one row per branch or tag: the unique vulnerabilities by severity and the vulnerable packages to update, each with how many have a fix. Below are the packages per version with the fixed versions, the dependency chain and where each was seen (source or image), collapsed. The `sca-report` artifact contains the same summary, `report.json` for tools and the raw scanner reports.
 
 A target is `ok` (scanned), `failed` (not scanned, the reason is shown, the run fails) or `not_applicable` (nothing to scan, e.g. the image has no such tag). To retry failed targets, use "Re-run failed jobs".
 
