@@ -71,7 +71,7 @@ jobs:
     # The GitHub API and the registry (gh and oras retry on their own); the bound only stops a service that is up but crawling
     timeout-minutes: 15
     steps:
-      - uses: epam/ai-dial-sec-sca/actions/sca_resolve_targets@v0.4.1
+      - uses: epam/ai-dial-sec-sca/actions/sca_resolve_targets@v0.5.0
         id: targets
         with:
           repository: ${{ inputs.repository || github.repository }}
@@ -213,7 +213,7 @@ jobs:
       - name: Generate Gradle lockfiles
         id: lockfiles
         if: ${{ steps.stack.outputs.java == 'true' }}
-        uses: epam/ai-dial-sec-sca/actions/generate_gradle_lockfiles@v0.4.1
+        uses: epam/ai-dial-sec-sca/actions/generate_gradle_lockfiles@v0.5.0
         with:
           gpr-username: ${{ github.actor }}
           gpr-password: ${{ secrets.GITHUB_TOKEN }}
@@ -338,7 +338,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: epam/ai-dial-sec-sca/actions/sca_query_osv@v0.4.1
+      - uses: epam/ai-dial-sec-sca/actions/sca_query_osv@v0.5.0
         with:
           targets-file: ${{ runner.temp }}/sca-parts/targets.json
           parts-dir: ${{ runner.temp }}/sca-parts
@@ -369,7 +369,7 @@ jobs:
           pattern: sca-part-*
           merge-multiple: true
           path: ${{ runner.temp }}/sca-parts
-      - uses: epam/ai-dial-sec-sca/actions/sca_merge_results@v0.4.1
+      - uses: epam/ai-dial-sec-sca/actions/sca_merge_results@v0.5.0
         id: merge
         with:
           targets-file: ${{ runner.temp }}/sca-parts/targets.json
