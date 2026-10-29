@@ -1327,6 +1327,8 @@ scan:
 
 To find the results, open the repository's **Actions** tab, select the **SCA Scan** workflow and open a run. The run summary opens with two tables, one row per branch or tag: the unique vulnerabilities by severity and the vulnerable packages to update, each with how many have a fix. Below are the packages per version with the fixed versions, the dependency chain and where each was seen (source or image), collapsed. The `sca-report` artifact contains the same summary, `report.json` for tools and the raw scanner reports.
 
+Risk acceptance: the scan reports every vulnerability, whatever `.trivyignore` says. A line of the default branch's `.trivyignore` with an expiry date (`CVE-2026-1234 exp:2026-12-31`) marks the vulnerability as accepted until that date in the report and the summary, for every scanned version; it is not removed. A line without `exp:` is not an acceptance; the summary lists it in the ignore audit, together with expired lines, lines with a bad date and lines that match nothing. A comment directly above a line is kept as its reason.
+
 A target status in the report can be `ok` (scanned), `failed` (not scanned, the reason is shown, the run fails) or `not_applicable` (nothing to scan, e.g. the image has no such tag). To retry failed targets, use "Re-run failed jobs".
 
 #### Dependabot
