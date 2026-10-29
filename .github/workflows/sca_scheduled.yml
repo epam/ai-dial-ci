@@ -71,7 +71,7 @@ jobs:
     # The GitHub API and the registry (gh and oras retry on their own); the bound only stops a service that is up but crawling
     timeout-minutes: 15
     steps:
-      - uses: epam/ai-dial-sec-sca/actions/sca_resolve_targets@v0.6.0
+      - uses: epam/ai-dial-sec-sca/actions/sca_resolve_targets@v0.7.0
         id: targets
         with:
           repository: ${{ inputs.repository || github.repository }}
@@ -194,6 +194,14 @@ jobs:
           ref: ${{ matrix.target.commit_sha }}
           persist-credentials: false
           lfs: true
+      # The .trivyignore of the default branch is the repository's risk acceptance: the scan ignores nothing, the merge
+      # marks the accepted vulnerabilities in the report. Copied for every source target, the merge picks its branch
+      - name: Copy the ignore file
+        if: ${{ matrix.target.kind == 'fs' && steps.checkout.outcome == 'success' }}
+        run: |
+          if [ -f .trivyignore ]; then
+            cp .trivyignore "$RUNNER_TEMP/sca-out/trivy/$TARGET_ID.trivyignore"
+          fi
       - name: Detect Gradle build
         id: stack
         if: ${{ matrix.target.kind == 'fs' }}
@@ -213,7 +221,7 @@ jobs:
       - name: Generate Gradle lockfiles
         id: lockfiles
         if: ${{ steps.stack.outputs.java == 'true' }}
-        uses: epam/ai-dial-sec-sca/actions/generate_gradle_lockfiles@v0.6.0
+        uses: epam/ai-dial-sec-sca/actions/generate_gradle_lockfiles@v0.7.0
         with:
           gpr-username: ${{ github.actor }}
           gpr-password: ${{ secrets.GITHUB_TOKEN }}
@@ -267,6 +275,7 @@ jobs:
           LOGIN_OUTCOME: ${{ steps.login.outcome }}
           TRIVY_OUTCOME: ${{ steps.trivy.outcome }}
           LOCKFILES: ${{ steps.lockfiles.outputs.lockfiles }}
+          TARGET_KIND: ${{ matrix.target.kind }}
         run: |
           out="$RUNNER_TEMP/sca-out/trivy"
           status=ok
@@ -290,8 +299,20 @@ jobs:
             status=failed
             reason="trivy output is missing or is not valid JSON"
           fi
-          jq -n --arg id "$TARGET_ID" --arg status "$status" --arg reason "$reason" --arg lockfiles "$LOCKFILES" \
-            '{id: $id, status: $status, reason: (if $reason == "" then null else $reason end), lockfiles: (if $lockfiles == "" then null else ($lockfiles | tonumber) end)}' \
+          # A source target tells the merge whether the ignore file exists: present, absent, or null when the checkout failed
+          ignorefile=
+          if [ "$TARGET_KIND" = fs ]; then
+            ignorefile=null
+            if [ "$CHECKOUT_OUTCOME" = success ]; then
+              ignorefile='"absent"'
+              if [ -f "$out/$TARGET_ID.trivyignore" ]; then
+                ignorefile='"present"'
+              fi
+            fi
+          fi
+          jq -n --arg id "$TARGET_ID" --arg status "$status" --arg reason "$reason" --arg lockfiles "$LOCKFILES" --arg ignorefile "$ignorefile" \
+            '{id: $id, status: $status, reason: (if $reason == "" then null else $reason end), lockfiles: (if $lockfiles == "" then null else ($lockfiles | tonumber) end)}
+            + (if $ignorefile == "" then {} else {ignorefile: ($ignorefile | fromjson)} end)' \
             > "$out/$TARGET_ID.status.json"
           cat "$out/$TARGET_ID.status.json"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -338,7 +359,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: epam/ai-dial-sec-sca/actions/sca_query_osv@v0.6.0
+      - uses: epam/ai-dial-sec-sca/actions/sca_query_osv@v0.7.0
         with:
           targets-file: ${{ runner.temp }}/sca-parts/targets.json
           parts-dir: ${{ runner.temp }}/sca-parts
@@ -369,7 +390,7 @@ jobs:
           pattern: sca-part-*
           merge-multiple: true
           path: ${{ runner.temp }}/sca-parts
-      - uses: epam/ai-dial-sec-sca/actions/sca_merge_results@v0.6.0
+      - uses: epam/ai-dial-sec-sca/actions/sca_merge_results@v0.7.0
         id: merge
         with:
           targets-file: ${{ runner.temp }}/sca-parts/targets.json
