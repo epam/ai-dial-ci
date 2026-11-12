@@ -89,7 +89,7 @@ on:
         default: '["ubuntu-24.04"]'
       platforms:
         type: string
-        description: Docker build platforms
+        description: Docker build platforms (comma-separated). Each platform is built on its own native runner (supported - linux/amd64, linux/arm64)
         default: "linux/amd64"
       build-args:
         type: string
@@ -119,8 +119,55 @@ jobs:
       runs-on: ${{ inputs.runs-on }}
       maximize-build-space: ${{ inputs.maximize-build-space }}
 
-  docker_build:
+  # Builds the per-platform matrix for the Docker build.
+  docker_plan:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - name: Plan Docker build
+        id: plan
+        shell: bash
+        env:
+          PLATFORMS: ${{ inputs.platforms }}
+          RUNS_ON: ${{ inputs.runs-on }}
+          REPO_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          set -euo pipefail
+          matrix='[]'
+          IFS=',' read -ra platforms <<< "$PLATFORMS"
+          for platform in "${platforms[@]}"; do
+            platform="$(echo "$platform" | xargs)"
+            case "$platform" in
+              linux/amd64) runner="$RUNS_ON" ;;
+              linux/arm64)
+                if [ "$REPO_PRIVATE" = "true" ]; then
+                  echo "::warning::linux/arm64 is not available for private repositories (no free native arm64 runners). Skipping it and building only the remaining platforms."
+                  continue
+                fi
+                runner='["ubuntu-24.04-arm"]'
+                ;;
+              *) echo "::error::Unsupported platform '$platform': only linux/amd64 and linux/arm64 have native runners"; exit 1 ;;
+            esac
+            matrix="$(jq -c --arg p "$platform" --arg r "$runner" '. + [{platform: $p, runner: $r, pair: ($p | gsub("/"; "-"))}]' <<< "$matrix")"
+          done
+          if [ "$matrix" = '[]' ]; then
+            echo "::error::No buildable platforms left in '$PLATFORMS' for this repository"
+            exit 1
+          fi
+          echo "matrix=$(jq -c '{include: .}' <<< "$matrix")" >> "$GITHUB_OUTPUT"
+
+  # One job per platform on a native runner: build -> Trivy. Validation only, nothing is pushed.
+  docker_build:
+    name: docker_build (${{ matrix.platform }})
+    needs: docker_plan
+    strategy:
+      fail-fast: false # report Trivy results for every platform even if another one failed
+      matrix: ${{ fromJSON(needs.docker_plan.outputs.matrix) }}
+    runs-on: ${{ fromJSON(matrix.runner) }}
+    permissions:
+      contents: read
+      security-events: write # upload Trivy SARIF
     steps:
       - name: Maximize build space
         uses: nepalevov/maximize-build-space@046c48361370e2f3fa758bd2f10c6ce29109ef62 # v1.1.0
@@ -136,7 +183,7 @@ jobs:
           remove-java: "true"
           remove-swift: "true"
           remove-julia: "true"
-          remove-browsers: "true"
+          remove-browsers: ${{ matrix.platform == 'linux/arm64' && 'false' || 'true' }}
           remove-cloud-tools: "true"
           remove-kubernetes-tools: "true"
           remove-powershell: "true"
@@ -151,16 +198,62 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@4.12.0
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      # --- Build for scanning (native platform, loaded into the local image store)
+      - name: Build and export to Docker
+        if: ${{ inputs.trivy-enabled }}
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
-          image-names: ghcr.io/${{ env.IMAGE_NAME }}
-          image-tags: test
-          trivy-enabled: ${{ inputs.trivy-enabled }}
-          bypass-checks: ${{ inputs.trivy-bypassed }}
-          trivy-severity: ${{ inputs.trivy-severity }}
-          trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
-          trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
-          platforms: ${{ inputs.platforms }}
+          context: .
+          load: true
+          platforms: ${{ matrix.platform }}
+          tags: scan/${{ matrix.pair }}:${{ github.sha }}
           build-args: ${{ inputs.build-args }}
         env:
-          IMAGE_NAME: ${{ github.repository }}
+          DOCKER_BUILD_RECORD_UPLOAD: false
+
+      - name: Run Trivy scanner (JSON output, no fail)
+        id: trivy
+        if: ${{ inputs.trivy-enabled }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: scan/${{ matrix.pair }}:${{ github.sha }}
+          format: json
+          exit-code: "0" # Findings are handled by the last "trivy convert" step
+          output: trivy-results.json
+          ignore-unfixed: "true"
+          vuln-type: os,library
+          scanners: vuln,secret
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
+        continue-on-error: ${{ inputs.trivy-bypassed || inputs.bypass-checks }}
+      - name: Generate Trivy report (SARIF)
+        id: trivy-generate-sarif
+        # Do not generate SARIF reports on private repos - GitHub Advanced Security is not enabled
+        # Do not generate SARIF reports for pull requests from forks
+        if: ${{ steps.trivy.outcome == 'success' && !github.event.repository.private && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) }}
+        shell: bash
+        run: trivy convert --format sarif --output trivy-results.sarif --exit-code 0 trivy-results.json
+        env:
+          TRIVY_SCANNERS: vuln,secret
+          TRIVY_SEVERITY: ${{ inputs.trivy-limit-severities-for-sarif && inputs.trivy-severity-for-sarif || '' }}
+          TRIVY_DISABLE_VEX_NOTICE: true
+        continue-on-error: ${{ inputs.trivy-bypassed || inputs.bypass-checks }}
+      - name: Upload Trivy report (SARIF)
+        if: ${{ steps.trivy-generate-sarif.outcome == 'success' }}
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-${{ matrix.pair }}
+        continue-on-error: ${{ inputs.trivy-bypassed || inputs.bypass-checks }}
+      - name: Generate Trivy report (Table, must fail on findings)
+        if: ${{ steps.trivy.outcome == 'success' }}
+        shell: bash
+        run: trivy convert --format table --exit-code 1 trivy-results.json
+        env:
+          TRIVY_SCANNERS: vuln,secret
+          TRIVY_SEVERITY: ${{ inputs.trivy-severity }}
+          TRIVY_DISABLE_VEX_NOTICE: true
+        continue-on-error: ${{ inputs.trivy-bypassed || inputs.bypass-checks }}
