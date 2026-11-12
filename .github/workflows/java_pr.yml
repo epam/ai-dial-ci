@@ -169,8 +169,8 @@ jobs:
               linux/amd64) runner="$RUNS_ON" ;;
               linux/arm64)
                 if [ "$REPO_PRIVATE" = "true" ]; then
-                  echo "::warning::linux/arm64 is not available for private repositories (no free native arm64 runners). Skipping it and building only the remaining platforms."
-                  continue
+                  echo "::warning::linux/arm64 is not available for private repositories (no free native arm64 runners)."
+                  exit 1
                 fi
                 runner='["ubuntu-24.04-arm"]'
                 ;;
