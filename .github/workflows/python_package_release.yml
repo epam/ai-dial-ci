@@ -198,4 +198,4 @@ jobs:
           artifacts: "dist/*"
           extra-commit-command: |
             git add pyproject.toml
-            git commit -m '[skip ci] Update version' || true # upstream branch may already be updated
+            git commit --no-verify -m '[skip ci] Update version' || true # upstream branch may already be updated

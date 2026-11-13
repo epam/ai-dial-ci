@@ -4,7 +4,7 @@ description: Commit changes back to git, apply tag and create release
 
 inputs:
   extra-commit-command:
-    description: Extra command to commit changes, e.g. `git add version.txt ; git commit -m "[skip ci] Update version" || true`
+    description: Extra command to commit changes, e.g. `git add version.txt ; git commit --no-verify -m "[skip ci] Update version" || true`
     default: ""
   tag-version:
     description: Tag version
@@ -39,8 +39,9 @@ runs:
 
         git tag -a "${{ inputs.tag-version }}" -F "${{ inputs.changelog-file }}"
 
-        git push
-        git push --tags
+        # Skip local git hooks (e.g. Husky) for these "system" commits/pushes
+        git push --no-verify
+        git push --no-verify --tags
       env:
         GIT_AUTHOR_NAME: ${{ inputs.git-user-name }}
         GIT_AUTHOR_EMAIL: ${{ inputs.git-user-email }}
