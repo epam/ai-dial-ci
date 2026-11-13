@@ -83,7 +83,7 @@ runs:
         remove-java: "true"
         remove-swift: "true"
         remove-julia: "true"
-        remove-browsers: ${{ inputs.platform == 'linux/arm64' && 'false' || 'true' }}
+        remove-browsers: ${{ inputs.platform == 'linux/arm64' && 'false' || 'true' }} # It will fail on linux/arm64 due to unavailable chrome and edge
         remove-cloud-tools: "true"
         remove-kubernetes-tools: "true"
         remove-powershell: "true"
