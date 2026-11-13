@@ -163,7 +163,7 @@ jobs:
       release-line: ${{ steps.semantic_versioning.outputs.release-line }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.12.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.14.0
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
@@ -180,7 +180,7 @@ jobs:
     steps:
       - name: Plan Docker build
         id: plan
-        uses: epam/ai-dial-ci/actions/docker_plan@4.12.0
+        uses: epam/ai-dial-ci/actions/docker_plan@4.14.0
         with:
           platforms: ${{ inputs.platforms }}
           runs-on: ${{ inputs.runs-on }}
@@ -202,7 +202,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@4.12.0
+      - uses: epam/ai-dial-ci/actions/node_prepare@4.14.0
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: false
@@ -211,7 +211,7 @@ jobs:
         shell: bash
         run: |
           npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version --allow-same-version
-      - uses: epam/ai-dial-ci/actions/docker_build@4.12.0
+      - uses: epam/ai-dial-ci/actions/docker_build@4.14.0
         with:
           maximize-build-space: ${{ inputs.maximize-build-space }}
           platform: ${{ matrix.platform }}
@@ -244,7 +244,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: epam/ai-dial-ci/actions/docker_merge@4.12.0
+      - uses: epam/ai-dial-ci/actions/docker_merge@4.14.0
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tags: |
@@ -269,7 +269,7 @@ jobs:
       - docker_merge
     if: ${{ !cancelled() && !failure() }}
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.12.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.14.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -277,7 +277,7 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@4.12.0
+      - uses: epam/ai-dial-ci/actions/node_prepare@4.14.0
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -343,7 +343,7 @@ jobs:
           IS_RELEASE: ${{ needs.calculate_version.outputs.is-release == 'true' }}
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           RELEASE_LINE: ${{ needs.calculate_version.outputs.release-line }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.12.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.14.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}

@@ -155,7 +155,7 @@ jobs:
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.12.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.14.0
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
@@ -171,7 +171,7 @@ jobs:
     steps:
       - name: Plan Docker build
         id: plan
-        uses: epam/ai-dial-ci/actions/docker_plan@4.12.0
+        uses: epam/ai-dial-ci/actions/docker_plan@4.14.0
         with:
           platforms: ${{ inputs.platforms }}
           runs-on: ${{ inputs.runs-on }}
@@ -196,7 +196,7 @@ jobs:
         shell: bash
         run: |
           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-without-hyphens }}\"/g" pyproject.toml
-      - uses: epam/ai-dial-ci/actions/docker_build@4.12.0
+      - uses: epam/ai-dial-ci/actions/docker_build@4.14.0
         with:
           maximize-build-space: ${{ inputs.maximize-build-space }}
           platform: ${{ matrix.platform }}
@@ -225,7 +225,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: epam/ai-dial-ci/actions/docker_merge@4.12.0
+      - uses: epam/ai-dial-ci/actions/docker_merge@4.14.0
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tags: |
@@ -246,7 +246,7 @@ jobs:
       - test
       - docker_merge
     steps:
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.12.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.14.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -258,7 +258,7 @@ jobs:
         shell: bash
         run: |
           sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-without-hyphens }}\"/g" pyproject.toml
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.12.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.14.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}
