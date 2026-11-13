@@ -101,7 +101,7 @@ on:
         default: '["ubuntu-24.04"]'
       platforms:
         type: string
-        description: Docker build platform
+        description: Docker build platforms (comma-separated). Each platform is built on its own native runner (supported - linux/amd64, linux/arm64)
         default: "linux/amd64"
       dockerfile-path:
         type: string
@@ -129,6 +129,9 @@ on:
           Docker build arguments (newline-separated list-like string)
           ref: https://github.com/docker/build-push-action#inputs
         default: ""
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   test:
@@ -160,51 +163,111 @@ jobs:
       release-line: ${{ steps.semantic_versioning.outputs.release-line }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
     steps:
-      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.12.0
+      - uses: epam/ai-dial-ci/actions/semantic_versioning@4.14.0
         id: semantic_versioning
         with:
           promote: ${{ inputs.promote }}
           filter-version: ${{ inputs.filter-version }}
           primary-branch-pattern: ${{ inputs.primary-branch-pattern }}
           release-branch-pattern: ${{ inputs.release-branch-pattern }}
+
+  # Builds the per-platform matrix for the Docker build.
+  docker_plan:
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    if: ${{ inputs.docker-build-enabled }}
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - name: Plan Docker build
+        id: plan
+        uses: epam/ai-dial-ci/actions/docker_plan@4.14.0
+        with:
+          platforms: ${{ inputs.platforms }}
+          runs-on: ${{ inputs.runs-on }}
+
+  # One job per platform on a native runner: build -> Trivy -> push by digest.
+  docker_build:
+    name: docker_build (${{ matrix.platform }})
+    needs: [test, calculate_version, docker_plan]
+    if: ${{ inputs.docker-build-enabled }}
+    strategy:
+      fail-fast: false # report Trivy results for every platform even if another one failed
+      matrix: ${{ fromJSON(needs.docker_plan.outputs.matrix) }}
+    runs-on: ${{ fromJSON(matrix.runner) }}
+    permissions:
+      contents: read
+      packages: write # push to GHCR
+      security-events: write # upload Trivy SARIF
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: true
+      - uses: epam/ai-dial-ci/actions/node_prepare@4.14.0
+        with:
+          node-version: ${{ inputs.node-version }}
+          clean-install: false
+          registry-url: "https://registry.npmjs.org"
+      - name: Set version
+        shell: bash
+        run: |
+          npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version --allow-same-version
+      - uses: epam/ai-dial-ci/actions/docker_build@4.14.0
+        with:
+          maximize-build-space: ${{ inputs.maximize-build-space }}
+          platform: ${{ matrix.platform }}
+          pair: ${{ matrix.pair }}
+          dockerfile-path: ${{ inputs.dockerfile-path }}
+          build-args: ${{ inputs.build-args }}
+          bypass-checks: ${{ inputs.bypass-checks }}
+          trivy-enabled: ${{ inputs.trivy-enabled }}
+          trivy-bypassed: ${{ inputs.trivy-bypassed }}
+          trivy-severity: ${{ inputs.trivy-severity }}
+          trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
+          trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
+          push-enabled: "true"
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tags: type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || inputs.docker-development-tag }}
+          ghcr-username: ${{ github.actor }}
+          ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  # Assembles the multi-platform image. Runs only if every platform job
+  # (build + Trivy + push) succeeded.
+  docker_merge:
+    needs: [calculate_version, docker_build]
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    if: ${{ inputs.docker-build-enabled }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: epam/ai-dial-ci/actions/docker_merge@4.14.0
+        with:
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tags: |
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || inputs.docker-development-tag }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
+          ghcr-username: ${{ github.actor }}
+          ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  # npm publish and git tag / GitHub release. Runs after the Docker image is published
+  # (or when the Docker build is disabled / skipped).
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
       id-token: write # for trusted publishing to npmjs registry
       packages: write # for publishing to GitHub Packages registry
-      security-events: write # for uploading Trivy SARIF report to GitHub
     needs:
       - calculate_version
       - test
+      - docker_merge
+    if: ${{ !cancelled() && !failure() }}
     steps:
-      - name: Maximize build space
-        uses: nepalevov/maximize-build-space@046c48361370e2f3fa758bd2f10c6ce29109ef62 # v1.1.0
-        if: ${{ inputs.maximize-build-space }}
-        with:
-          remove-dotnet: "true"
-          remove-android: "true"
-          remove-haskell: "true"
-          remove-codeql: "true"
-          remove-large-packages: "true"
-          remove-cached-tools: "true"
-          remove-swapfile: "true"
-          remove-java: "true"
-          remove-swift: "true"
-          remove-julia: "true"
-          remove-browsers: "true"
-          remove-cloud-tools: "true"
-          remove-kubernetes-tools: "true"
-          remove-powershell: "true"
-          remove-container-tools: "true"
-          remove-rust: "true"
-          remove-python: "true"
-          remove-node: "true"
-          remove-go: "true"
-          remove-ruby: "true"
-          docker-cleanup: "true"
-          set-tmpdir: "true"
-      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.12.0
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.14.0
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
           use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
@@ -212,7 +275,7 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
-      - uses: epam/ai-dial-ci/actions/node_prepare@4.12.0
+      - uses: epam/ai-dial-ci/actions/node_prepare@4.14.0
         with:
           node-version: ${{ inputs.node-version }}
           clean-install: true
@@ -221,31 +284,6 @@ jobs:
         shell: bash
         run: |
           npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version --allow-same-version
-      # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
-      - if: ${{ inputs.docker-build-enabled && (hashFiles(inputs.dockerfile-path) != '') }}
-        uses: epam/ai-dial-ci/actions/build_docker@4.12.0
-        with:
-          ghcr-username: ${{ github.actor }}
-          ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
-          dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
-          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          image-names: |
-            ${{ env.IMAGE_NAME }}
-            ghcr.io/${{ env.IMAGE_NAME }}
-          image-tags: |
-            type=raw,value=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.next-version || inputs.docker-development-tag }}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/heads/release-') && needs.calculate_version.outputs.is-latest == 'true' }}
-          push-enabled: true
-          trivy-enabled: ${{ inputs.trivy-enabled }}
-          bypass-checks: ${{ inputs.trivy-bypassed }}
-          trivy-severity: ${{ inputs.trivy-severity }}
-          trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
-          trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
-          platforms: ${{ inputs.platforms }}
-          dockerfile-path: ${{ inputs.dockerfile-path }}
-          build-args: ${{ inputs.build-args }}
-        env:
-          IMAGE_NAME: ${{ github.repository }}
       - name: Publish packages to npmjs
         if: ${{ inputs.publish-enabled }}
         shell: bash
@@ -303,7 +341,7 @@ jobs:
           IS_RELEASE: ${{ needs.calculate_version.outputs.is-release == 'true' }}
           IS_LATEST: ${{ needs.calculate_version.outputs.is-latest == 'true' }}
           RELEASE_LINE: ${{ needs.calculate_version.outputs.release-line }}
-      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.12.0
+      - uses: epam/ai-dial-ci/actions/publish_tag_release@4.14.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
           git-user-name: ${{ vars.ACTIONS_BOT_NAME || 'ai-dial-actions' }}

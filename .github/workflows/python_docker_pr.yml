@@ -89,7 +89,7 @@ on:
         default: '["ubuntu-24.04"]'
       platforms:
         type: string
-        description: Docker build platforms
+        description: Docker build platforms (comma-separated). Each platform is built on its own native runner (supported - linux/amd64, linux/arm64)
         default: "linux/amd64"
       build-args:
         type: string
@@ -119,48 +119,43 @@ jobs:
       runs-on: ${{ inputs.runs-on }}
       maximize-build-space: ${{ inputs.maximize-build-space }}
 
-  docker_build:
+  # Builds the per-platform matrix for the Docker build.
+  docker_plan:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
     steps:
-      - name: Maximize build space
-        uses: nepalevov/maximize-build-space@046c48361370e2f3fa758bd2f10c6ce29109ef62 # v1.1.0
-        if: ${{ inputs.maximize-build-space }}
+      - name: Plan Docker build
+        id: plan
+        uses: epam/ai-dial-ci/actions/docker_plan@4.14.0
         with:
-          remove-dotnet: "true"
-          remove-android: "true"
-          remove-haskell: "true"
-          remove-codeql: "true"
-          remove-large-packages: "true"
-          remove-cached-tools: "true"
-          remove-swapfile: "true"
-          remove-java: "true"
-          remove-swift: "true"
-          remove-julia: "true"
-          remove-browsers: "true"
-          remove-cloud-tools: "true"
-          remove-kubernetes-tools: "true"
-          remove-powershell: "true"
-          remove-container-tools: "true"
-          remove-rust: "true"
-          remove-python: "true"
-          remove-node: "true"
-          remove-go: "true"
-          remove-ruby: "true"
-          docker-cleanup: "true"
-          set-tmpdir: "true"
+          platforms: ${{ inputs.platforms }}
+          runs-on: ${{ inputs.runs-on }}
+
+  # One job per platform on a native runner: build -> Trivy. Validation only, nothing is pushed.
+  docker_build:
+    name: docker_build (${{ matrix.platform }})
+    needs: docker_plan
+    strategy:
+      fail-fast: false # report Trivy results for every platform even if another one failed
+      matrix: ${{ fromJSON(needs.docker_plan.outputs.matrix) }}
+    runs-on: ${{ fromJSON(matrix.runner) }}
+    permissions:
+      contents: read
+      security-events: write # upload Trivy SARIF
+    steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@4.12.0
+      - uses: epam/ai-dial-ci/actions/docker_build@4.14.0
         with:
-          image-names: ghcr.io/${{ env.IMAGE_NAME }}
-          image-tags: test
+          maximize-build-space: ${{ inputs.maximize-build-space }}
+          platform: ${{ matrix.platform }}
+          pair: ${{ matrix.pair }}
+          build-args: ${{ inputs.build-args }}
+          bypass-checks: ${{ inputs.bypass-checks }}
           trivy-enabled: ${{ inputs.trivy-enabled }}
-          bypass-checks: ${{ inputs.trivy-bypassed }}
+          trivy-bypassed: ${{ inputs.trivy-bypassed }}
           trivy-severity: ${{ inputs.trivy-severity }}
           trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
           trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
-          platforms: ${{ inputs.platforms }}
-          build-args: ${{ inputs.build-args }}
-        env:
-          IMAGE_NAME: ${{ github.repository }}
