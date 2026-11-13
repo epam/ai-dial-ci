@@ -55,6 +55,10 @@ on:
         type: string
         description: The GitHub environment name to use for the tests. An abstraction to conveniently store secrets and variables
         default: "e2e-test"
+      runs-on:
+        type: string
+        description: Overrides jobs runs-on settings (json-encoded list)
+        default: '["ubuntu-26.04"]'
     secrets:
       E2E_ADMIN:
         required: true
@@ -74,7 +78,7 @@ concurrency:
 jobs:
   e2e-tests:
     name: ${{ matrix.target }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     environment:
       name: ${{ inputs.environment-name }}
     timeout-minutes: ${{ inputs.timeout-minutes }}

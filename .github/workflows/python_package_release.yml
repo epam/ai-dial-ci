@@ -94,7 +94,7 @@ on:
       runs-on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
-        default: '["ubuntu-24.04"]'
+        default: '["ubuntu-26.04"]'
       filter-version:
         type: string
         description: Operate within versions matched regex
