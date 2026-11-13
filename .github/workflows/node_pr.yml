@@ -158,8 +158,6 @@ jobs:
           pair: ${{ matrix.pair }}
           dockerfile-path: ${{ inputs.dockerfile-path }}
           build-args: ${{ inputs.build-args }}
-          gpr-username: ${{ github.actor }}
-          gpr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
           bypass-checks: ${{ inputs.bypass-checks }}
           trivy-enabled: ${{ inputs.trivy-enabled }}
           trivy-bypassed: ${{ inputs.trivy-bypassed }}
