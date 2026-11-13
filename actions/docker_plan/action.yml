@@ -1,0 +1,51 @@
+name: Plan Docker build
+description: Build the per-platform matrix (one native runner per platform) for a multi-platform Docker build
+inputs:
+  platforms:
+    description: Docker build platforms (comma-separated). Supported - linux/amd64, linux/arm64
+    default: "linux/amd64"
+  runs-on:
+    description: Runner for linux/amd64 (json-encoded list)
+    default: '["ubuntu-24.04"]'
+  repo-private:
+    description: Whether the repository is private (no free native arm64 runners there)
+    default: ${{ github.event.repository.private }}
+outputs:
+  matrix:
+    description: JSON matrix with platform, runner and pair for the Docker build jobs
+    value: ${{ steps.plan.outputs.matrix }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Plan Docker build
+      id: plan
+      shell: bash
+      env:
+        PLATFORMS: ${{ inputs.platforms }}
+        RUNS_ON: ${{ inputs.runs-on }}
+        REPO_PRIVATE: ${{ inputs.repo-private }}
+      run: |
+        set -euo pipefail
+        matrix='[]'
+        IFS=',' read -ra platforms <<< "$PLATFORMS"
+        for platform in "${platforms[@]}"; do
+          platform="$(echo "$platform" | xargs)"
+          case "$platform" in
+            linux/amd64) runner="$RUNS_ON" ;;
+            linux/arm64)
+              if [ "$REPO_PRIVATE" = "true" ]; then
+                echo "::error::linux/arm64 is not available for private repositories (no free native arm64 runners)."
+                exit 1
+              fi
+              runner='["ubuntu-24.04-arm"]'
+              ;;
+            *) echo "::error::Unsupported platform '$platform': only linux/amd64 and linux/arm64 have native runners"; exit 1 ;;
+          esac
+          matrix="$(jq -c --arg p "$platform" --arg r "$runner" '. + [{platform: $p, runner: $r, pair: ($p | gsub("/"; "-"))}]' <<< "$matrix")"
+        done
+        if [ "$matrix" = '[]' ]; then
+          echo "::error::No buildable platforms left in '$PLATFORMS' for this repository"
+          exit 1
+        fi
+        echo "matrix=$(jq -c '{include: .}' <<< "$matrix")" >> "$GITHUB_OUTPUT"
