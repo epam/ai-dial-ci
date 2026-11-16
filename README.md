@@ -14,6 +14,7 @@
       - [Requirements](#requirements)
       - [PR Workflow](#pr-workflow)
       - [Release Workflow](#release-workflow)
+      - [Publishing a package (npm)](#publishing-a-package-npm)
     - [Java (gradle)](#java-gradle)
       - [Requirements](#requirements-1)
       - [PR Workflow](#pr-workflow-1)
@@ -160,7 +161,7 @@ Changelog is automatically generated based on git commit history (commit message
 ### NodeJS (npm)
 
 > [!tip]
-> Workflows allow independent choices of build artifacts: container image, npm package, or both (default). Can be controlled via `docker-build-enabled` and `publish-enabled` inputs respectively. Set inputs values to match your repository needs.
+> Workflows allow independent choices of build artifacts: container image (default), npm package, or both. Can be controlled via `docker-build-enabled` and `publish-enabled` inputs respectively. Set inputs values to match your repository needs.
 
 #### Requirements
 
@@ -189,17 +190,7 @@ Consumer repository **must** have:
 
     > [!tip]
     > If a `build:publishable` script exists, it takes precedence over `build` for building the package. Useful in monorepos to avoid building the whole repository when only subset should be published, e.g. `"build:publishable": "nx run-many -t build --projects=tag:publishable"`
-
-    > [!tip]
-    > If a `publish:npm` script exists, it takes precedence over regular `npm publish` command for publishing the package. This allows to implement any custom publish logic. The custom script will receive desired distribution tag as a `--tag` argument
   </details>
-
-- Authentication to npm registry
-
-  While publishing a package to [npm registry](https://npmjs.com), we support 2 options how to provide credentials.
-
-  - (recommended) [Trusted publishing](https://docs.npmjs.com/trusted-publishers): grant release GitHub workflow `id-token: write` permission (see [example](#release-workflow))
-  - [Granular access token](https://docs.npmjs.com/creating-and-viewing-access-tokens): create a token and store it as `NPM_TOKEN` [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
 
 #### PR Workflow
 
@@ -256,6 +247,19 @@ jobs:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
     secrets: inherit
 ```
+
+#### Publishing a package (npm)
+
+Disabled by default, can be configured by `publish-enabled: true` input
+
+While publishing a package to [npm registry](https://npmjs.com), we support 2 options how to provide credentials:
+
+- (recommended) [Trusted publishing](https://docs.npmjs.com/trusted-publishers): grant release workflow `id-token: write` permission (see [example](#release-workflow))
+- [Granular access token](https://docs.npmjs.com/creating-and-viewing-access-tokens): store it as `NPM_TOKEN` [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
+
+Optional `package.json` scripts:
+
+- `publish:npm` - used instead of `npm publish`, receives the distribution tag as `--tag` argument
 
 ### Java (gradle)
 
