@@ -31,12 +31,12 @@
 
 ## Version Scheme
 
-| Event                                        | Version format           | Example        | Python (no hyphens) |
-| -------------------------------------------- | ------------------------ | -------------- | ------------------- |
-| Push to `development`                        | `{next-minor}.0-dev.<n>` | `1.1.0-dev.42` | `1.1.0.dev42`       |
-| Push to `release-X.Y`, no stable yet         | `X.Y.0-rc.<n>`           | `1.0.0-rc.2`   | `1.0.0rc2`          |
-| `promote=true` on `release-X.Y`              | `X.Y.0`                  | `1.0.0`        | `1.0.0`             |
-| Push to `release-X.Y`, stable `X.Y.0` exists | `X.Y.<n+1>` (patch)      | `1.0.2`        | `1.0.2`             |
+| Event                                        | Version format           | Example        | Python (`next-version-python`) | Maven/Gradle (`next-version-maven`) |
+| -------------------------------------------- | ------------------------ | -------------- | ------------------------------ | ----------------------------------- |
+| Push to `development`                        | `{next-minor}.0-dev.<n>` | `1.1.0-dev.42` | `1.1.0.dev42`                  | `1.1.0-SNAPSHOT`                    |
+| Push to `release-X.Y`, no stable yet         | `X.Y.0-rc.<n>`           | `1.0.0-rc.2`   | `1.0.0rc2`                     | `1.0.0-rc.2`                        |
+| `promote=true` on `release-X.Y`              | `X.Y.0`                  | `1.0.0`        | `1.0.0`                        | `1.0.0`                             |
+| Push to `release-X.Y`, stable `X.Y.0` exists | `X.Y.<n+1>` (patch)      | `1.0.2`        | `1.0.2`                        | `1.0.2`                             |
 
 > [!note]
 > The RC phase applies **only** to `X.Y.0`

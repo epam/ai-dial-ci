@@ -43,6 +43,10 @@ on:
         type: string
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
         description: ORT config revision to use
+      docker-build-enabled:
+        type: boolean
+        default: true
+        description: Enable Docker build
       trivy-enabled:
         type: boolean
         default: true
@@ -147,6 +151,7 @@ jobs:
           GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
   docker_build:
+    if: ${{ inputs.docker-build-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - name: Maximize build space
