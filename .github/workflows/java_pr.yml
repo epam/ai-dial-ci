@@ -157,7 +157,6 @@ jobs:
         uses: epam/ai-dial-ci/actions/docker_plan@4.14.0
         with:
           platforms: ${{ inputs.platforms }}
-          runs-on: ${{ inputs.runs-on }}
 
   # One job per platform on a native runner: build -> Trivy. Validation only, nothing is pushed.
   docker_build:
