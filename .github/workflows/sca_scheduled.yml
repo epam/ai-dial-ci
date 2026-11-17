@@ -231,7 +231,7 @@ jobs:
       - name: Login to GitHub Container Registry
         id: login
         if: ${{ matrix.target.kind == 'image' && inputs.registry == 'ghcr.io' }}
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -354,7 +354,7 @@ jobs:
       # The image scan of the osv targets pulls through docker; one login serves every target (the job has no matrix)
       - name: Login to GitHub Container Registry
         if: ${{ inputs.registry == 'ghcr.io' }}
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
