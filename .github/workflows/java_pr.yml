@@ -43,6 +43,10 @@ on:
         type: string
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
         description: ORT config revision to use
+      docker-build-enabled:
+        type: boolean
+        default: true
+        description: Enable Docker build
       trivy-enabled:
         type: boolean
         default: true
@@ -83,6 +87,10 @@ on:
         type: string
         description: Docker build platforms
         default: "linux/amd64"
+      dockerfile-path:
+        type: string
+        default: "Dockerfile"
+        description: Path to the Dockerfile
       build-args:
         type: string
         description: |
@@ -118,7 +126,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.12.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@5.0.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -136,7 +144,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/java_prepare@4.12.0
+      - uses: epam/ai-dial-ci/actions/java_prepare@5.0.0
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -147,6 +155,7 @@ jobs:
           GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
   docker_build:
+    if: ${{ inputs.docker-build-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     steps:
       - name: Maximize build space
@@ -178,7 +187,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
-      - uses: epam/ai-dial-ci/actions/build_docker@4.12.0
+      # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
+      - if: ${{ (hashFiles(inputs.dockerfile-path) != '') }}
+        uses: epam/ai-dial-ci/actions/build_docker@5.0.0
         with:
           image-names: ghcr.io/${{ env.IMAGE_NAME }}
           image-tags: test
@@ -190,6 +201,7 @@ jobs:
           gpr-username: ${{ github.actor }}
           gpr-password: ${{ secrets.GITHUB_TOKEN }}
           platforms: ${{ inputs.platforms }}
+          dockerfile-path: ${{ inputs.dockerfile-path }}
           build-args: ${{ inputs.build-args }}
         env:
           IMAGE_NAME: ${{ github.repository }}

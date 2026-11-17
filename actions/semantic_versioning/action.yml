@@ -23,9 +23,12 @@ outputs:
   next-version:
     description: Next computed version
     value: ${{ steps.calculate-version.outputs.next-version }}
-  next-version-without-hyphens:
-    description: Next computed version without hyphens (e.g. `0.1.0rc` instead of `0.1.0-rc`), for non-semver consumers (e.g. Python PEP 440)
-    value: ${{ steps.calculate-version.outputs.next-version-without-hyphens }}
+  next-version-python:
+    description: Next computed version in Python PEP 440 format (without hyphens, e.g. `1.0.0rc2` instead of `1.0.0-rc.2`)
+    value: ${{ steps.calculate-version.outputs.next-version-python }}
+  next-version-maven:
+    description: Next computed version in Maven/Gradle format - development versions are `-SNAPSHOT` (e.g. `1.1.0-SNAPSHOT` instead of `1.1.0-dev.42`)
+    value: ${{ steps.calculate-version.outputs.next-version-maven }}
   latest-stable-tag:
     description: Semantically latest stable (`X.Y.Z`, ignores `X.Y.Z-rc`) git tag in the repository
     value: ${{ steps.calculate-version.outputs.latest-stable-tag }}
@@ -222,30 +225,37 @@ runs:
           exit 2
         fi
 
-        # Sanitize next version for non-semver consumers by:
+        # Convert next version for Python (PEP 440) by:
         # 1. Replaces `-dev.` with `.dev` (to match PEP 440 release format)
         # 2. Replaces `-rc.` with `rc`
         # 3. Remove all hyphens
         # e.g. 1.0.0 --> 1.0.0, 1.1.0-dev.42 --> 1.1.0.dev42, 1.0.0-rc.1 --> 1.0.0rc1
-        NEXT_VERSION_WITHOUT_HYPHENS=$(echo "${NEXT_VERSION}" |
+        NEXT_VERSION_PYTHON=$(echo "${NEXT_VERSION}" |
           sed 's/-dev\./\.dev/g' |
           sed 's/-rc\./rc/g' |
           sed 's/-//g')
 
+        # Convert next version for Maven/Gradle by:
+        # 1. Replaces `-dev.N` with `-SNAPSHOT` (development builds are mutable in Maven repositories, so no need in commit counter)
+        # e.g. 1.1.0-dev.42 --> 1.1.0-SNAPSHOT
+        NEXT_VERSION_MAVEN=$(echo "${NEXT_VERSION}" |
+          sed -E 's/-dev\.[0-9]+$/-SNAPSHOT/')
+
         # Outputs to stdout and job summary
         OUTPUTS_SUMMARY=$(
           cat <<EOF
-        | Parameter                    | Value                         |
-        | ---------------------------- | ----------------------------- |
-        | current-version              | $CURRENT_VERSION              |
-        | next-version                 | $NEXT_VERSION                 |
-        | next-version-without-hyphens | $NEXT_VERSION_WITHOUT_HYPHENS |
-        | latest-stable-tag            | $LATEST_STABLE_TAG            |
-        | is-release-candidate         | $IS_RELEASE_CANDIDATE         |
-        | is-release                   | $IS_RELEASE                   |
-        | is-latest                    | $IS_LATEST                    |
-        | release-line                 | $RELEASE_LINE                 |
-        | changelog-mode               | $CHANGELOG_MODE               |
+        | Parameter            | Value                 |
+        | -------------------- | --------------------- |
+        | current-version      | $CURRENT_VERSION      |
+        | next-version         | $NEXT_VERSION         |
+        | next-version-python  | $NEXT_VERSION_PYTHON  |
+        | next-version-maven   | $NEXT_VERSION_MAVEN   |
+        | latest-stable-tag    | $LATEST_STABLE_TAG    |
+        | is-release-candidate | $IS_RELEASE_CANDIDATE |
+        | is-release           | $IS_RELEASE           |
+        | is-latest            | $IS_LATEST            |
+        | release-line         | $RELEASE_LINE         |
+        | changelog-mode       | $CHANGELOG_MODE       |
         EOF
         )
         echo "$OUTPUTS_SUMMARY"
@@ -255,7 +265,8 @@ runs:
         cat <<EOF >>"${GITHUB_OUTPUT}"
         current-version=${CURRENT_VERSION}
         next-version=${NEXT_VERSION}
-        next-version-without-hyphens=${NEXT_VERSION_WITHOUT_HYPHENS}
+        next-version-python=${NEXT_VERSION_PYTHON}
+        next-version-maven=${NEXT_VERSION_MAVEN}
         latest-stable-tag=${LATEST_STABLE_TAG}
         is-release-candidate=${IS_RELEASE_CANDIDATE}
         is-release=${IS_RELEASE}
