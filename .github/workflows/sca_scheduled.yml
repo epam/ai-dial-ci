@@ -81,7 +81,7 @@ jobs:
           scan-tag: ${{ inputs.scan-tag }}
           osv-image-scan: ${{ inputs.osv-image-scan }}
           force-image-scan: ${{ inputs.force-image-scan }}
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sca-part-targets
           path: ${{ steps.targets.outputs.targets-file }}
@@ -125,7 +125,7 @@ jobs:
           echo "db-info=$db_info" >> "$GITHUB_OUTPUT"
           echo "Trivy DB snapshot: $db_info" >> "$GITHUB_STEP_SUMMARY"
       # Artifacts are scoped to the run, so the name is the same for every run
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sca-trivy-db
           path: ${{ runner.temp }}/trivy-cache
@@ -315,7 +315,7 @@ jobs:
             + (if $ignorefile == "" then {} else {ignorefile: ($ignorefile | fromjson)} end)' \
             > "$out/$TARGET_ID.status.json"
           cat "$out/$TARGET_ID.status.json"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ always() }}
         with:
           name: sca-part-trivy-${{ matrix.target.id }}
@@ -365,7 +365,7 @@ jobs:
           parts-dir: ${{ runner.temp }}/sca-parts
           output-dir: ${{ runner.temp }}/sca-out
           trivy-version: ${{ inputs.trivy-version }}
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ always() }}
         with:
           name: sca-part-osv
@@ -397,7 +397,7 @@ jobs:
           parts-dir: ${{ runner.temp }}/sca-parts
           output-dir: ${{ runner.temp }}/sca
           trivy-db-info: ${{ needs.trivy-db.outputs.db-info }}
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ always() }}
         with:
           name: sca-report
