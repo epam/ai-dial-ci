@@ -1,5 +1,5 @@
 name: Merge Docker platform images
-description: Assemble a multi-platform image from per-platform digests (digests-* artifacts) and push it to Docker Hub and GHCR
+description: Assemble a multi-platform image from per-platform digests (docker-digests-* artifacts) and push it to Docker Hub and GHCR
 inputs:
   image-name:
     description: Image name without registry and tag (pushed to Docker Hub as is and to ghcr.io/<image-name>)
@@ -29,7 +29,7 @@ runs:
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         path: ${{ runner.temp }}/digests
-        pattern: digests-*
+        pattern: docker-digests-*
         merge-multiple: true
     - name: Setup Docker Buildx
       uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
@@ -63,6 +63,12 @@ runs:
         IMAGE_NAME: ${{ inputs.image-name }}
       run: |
         set -euo pipefail
+        shopt -s nullglob
+        digests=(*)
+        if [ "${#digests[@]}" -eq 0 ]; then
+          echo "::error::No digests found (expected docker-digests-* artifacts from the build jobs)"
+          exit 1
+        fi
         annotations=()
         while IFS= read -r a; do
           [ -n "$a" ] && annotations+=(--annotation "$a")
@@ -73,7 +79,7 @@ runs:
           while IFS= read -r t; do tags+=(-t "$t"); done \
             < <(jq -r --arg img "$image:" '.tags[] | select(startswith($img))' <<< "$DOCKER_METADATA_OUTPUT_JSON")
           sources=()
-          for d in *; do sources+=("${image}@sha256:${d}"); done
+          for d in "${digests[@]}"; do sources+=("${image}@sha256:${d}"); done
           docker buildx imagetools create "${annotations[@]}" "${tags[@]}" "${sources[@]}"
         done
     - name: Inspect images

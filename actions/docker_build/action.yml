@@ -43,7 +43,7 @@ inputs:
     description: By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter
     default: "true"
   push-enabled:
-    description: Push the image by digest to registry(ies). The digest is uploaded as the digests-<pair> artifact
+    description: Push the image by digest to registry(ies). The digest is uploaded as the docker-digests-<pair> artifact
     default: "false"
   image-name:
     description: Image name without registry and tag (pushed to Docker Hub as is and to ghcr.io/<image-name>). Required for pushing
@@ -219,7 +219,7 @@ runs:
       if: ${{ inputs.push-enabled == 'true' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: digests-${{ inputs.pair }}
+        name: docker-digests-${{ inputs.pair }}
         path: ${{ runner.temp }}/digests/*
         if-no-files-found: error
         retention-days: 1
