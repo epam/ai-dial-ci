@@ -61,7 +61,7 @@ on:
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
       docker-build-enabled:
         type: boolean
-        description: "Enable Docker build"
+        description: Enable Docker build
         default: true
       trivy-enabled:
         type: boolean
@@ -86,7 +86,7 @@ on:
       publish-enabled:
         type: boolean
         description: Enable publish to npmjs
-        default: true
+        default: false
       node-version:
         type: string
         description: NodeJS version to use

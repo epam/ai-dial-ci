@@ -138,7 +138,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
       next-version: ${{ steps.semantic_versioning.outputs.next-version }}
-      next-version-without-hyphens: ${{ steps.semantic_versioning.outputs.next-version-without-hyphens }}
+      next-version-python: ${{ steps.semantic_versioning.outputs.next-version-python }}
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
@@ -178,7 +178,7 @@ jobs:
       - name: Set version
         shell: bash
         run: |
-          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-without-hyphens }}\"/g" pyproject.toml
+          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-python }}\"/g" pyproject.toml
       - name: Publish to pypi
         shell: bash
         run: |

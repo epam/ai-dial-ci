@@ -51,6 +51,10 @@ on:
         type: string
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
         description: ORT config revision to use
+      docker-build-enabled:
+        type: boolean
+        default: true
+        description: Enable Docker build
       trivy-enabled:
         type: boolean
         default: true
@@ -91,6 +95,10 @@ on:
         type: string
         description: Docker build platforms (comma-separated). Each platform is built on its own native runner (supported - linux/amd64, linux/arm64)
         default: "linux/amd64"
+      dockerfile-path:
+        type: string
+        default: "Dockerfile"
+        description: Path to the Dockerfile
       filter-version:
         type: string
         description: Operate within versions matched regex
@@ -113,6 +121,10 @@ on:
           Docker build arguments (newline-separated list-like string)
           ref: https://github.com/docker/build-push-action#inputs
         default: ""
+      publish-enabled:
+        type: boolean
+        default: false
+        description: Enable Maven packages publish
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -160,6 +172,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
       next-version: ${{ steps.semantic_versioning.outputs.next-version }}
+      next-version-maven: ${{ steps.semantic_versioning.outputs.next-version-maven }}
       is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
       latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
       changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}

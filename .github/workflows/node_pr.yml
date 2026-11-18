@@ -53,7 +53,7 @@ on:
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
       docker-build-enabled:
         type: boolean
-        description: "Enable Docker build"
+        description: Enable Docker build
         default: true
       trivy-enabled:
         type: boolean
@@ -69,7 +69,7 @@ on:
         default: "CRITICAL,HIGH"
       trivy-severity-for-sarif:
         type: string
-        description: "Severities of vulnerabilities in SARIF report"
+        description: Severities of vulnerabilities in SARIF report
         default: "CRITICAL,HIGH"
       trivy-limit-severities-for-sarif:
         type: boolean
@@ -85,7 +85,7 @@ on:
         default: false
       runs-on:
         type: string
-        description: "Overrides jobs runs-on settings (json-encoded list)"
+        description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
       platforms:
         type: string

@@ -43,6 +43,10 @@ on:
         type: string
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
         description: ORT config revision to use
+      docker-build-enabled:
+        type: boolean
+        default: true
+        description: Enable Docker build
       trivy-enabled:
         type: boolean
         default: true
@@ -83,6 +87,10 @@ on:
         type: string
         description: Docker build platforms (comma-separated). Each platform is built on its own native runner (supported - linux/amd64, linux/arm64)
         default: "linux/amd64"
+      dockerfile-path:
+        type: string
+        default: "Dockerfile"
+        description: Path to the Dockerfile
       build-args:
         type: string
         description: |

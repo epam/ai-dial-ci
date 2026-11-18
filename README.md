@@ -14,27 +14,29 @@
       - [Requirements](#requirements)
       - [PR Workflow](#pr-workflow)
       - [Release Workflow](#release-workflow)
+      - [Publishing a package (npm)](#publishing-a-package-npm)
     - [Java (gradle)](#java-gradle)
       - [Requirements](#requirements-1)
-      - [PR Workflow (Docker)](#pr-workflow-docker)
-      - [Release Workflow (Docker)](#release-workflow-docker)
+      - [PR Workflow](#pr-workflow-1)
+      - [Release Workflow](#release-workflow-1)
+      - [Publishing a package (Maven)](#publishing-a-package-maven)
       - [Dependency Review](#dependency-review)
     - [Python (Poetry)](#python-poetry)
       - [Requirements](#requirements-2)
-      - [PR Workflow (Docker)](#pr-workflow-docker-1)
-      - [Release Workflow (Docker)](#release-workflow-docker-1)
+      - [PR Workflow (Docker)](#pr-workflow-docker)
+      - [Release Workflow (Docker)](#release-workflow-docker)
       - [PR Workflow (package)](#pr-workflow-package)
       - [Release Workflow (package)](#release-workflow-package)
     - [Python (UV)](#python-uv)
       - [Requirements](#requirements-3)
-      - [PR Workflow (Docker)](#pr-workflow-docker-2)
-      - [Release Workflow (Docker)](#release-workflow-docker-2)
+      - [PR Workflow (Docker)](#pr-workflow-docker-1)
+      - [Release Workflow (Docker)](#release-workflow-docker-1)
       - [PR Workflow (package)](#pr-workflow-package-1)
       - [Release Workflow (package)](#release-workflow-package-1)
     - [Generic Docker](#generic-docker)
       - [Requirements](#requirements-4)
-      - [PR Workflow](#pr-workflow-1)
-      - [Release Workflow](#release-workflow-1)
+      - [PR Workflow](#pr-workflow-2)
+      - [Release Workflow](#release-workflow-2)
     - [Others](#others)
       - [Validate PR title](#validate-pr-title)
       - [Deploy review environment](#deploy-review-environment)
@@ -159,7 +161,7 @@ Changelog is automatically generated based on git commit history (commit message
 ### NodeJS (npm)
 
 > [!tip]
-> Workflows allow independent choices of build artifacts: container image, npm package, or both (default). Can be controlled via `docker-build-enabled` and `publish-enabled` inputs respectively. Set inputs values to match your repository needs.
+> Workflows allow independent choices of build artifacts: container image (default), npm package, or both. Can be controlled via `docker-build-enabled` and `publish-enabled` inputs respectively. Set inputs values to match your repository needs.
 
 #### Requirements
 
@@ -188,17 +190,7 @@ Consumer repository **must** have:
 
     > [!tip]
     > If a `build:publishable` script exists, it takes precedence over `build` for building the package. Useful in monorepos to avoid building the whole repository when only subset should be published, e.g. `"build:publishable": "nx run-many -t build --projects=tag:publishable"`
-
-    > [!tip]
-    > If a `publish:npm` script exists, it takes precedence over regular `npm publish` command for publishing the package. This allows to implement any custom publish logic. The custom script will receive desired distribution tag as a `--tag` argument
   </details>
-
-- Authentication to npm registry
-
-  While publishing a package to [npm registry](https://npmjs.com), we support 2 options how to provide credentials.
-
-  - (recommended) [Trusted publishing](https://docs.npmjs.com/trusted-publishers): grant release GitHub workflow `id-token: write` permission (see [example](#release-workflow))
-  - [Granular access token](https://docs.npmjs.com/creating-and-viewing-access-tokens): create a token and store it as `NPM_TOKEN` [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
 
 #### PR Workflow
 
@@ -256,7 +248,23 @@ jobs:
     secrets: inherit
 ```
 
+#### Publishing a package (npm)
+
+Disabled by default, can be configured by `publish-enabled: true` input
+
+While publishing a package to [npm registry](https://npmjs.com), we support 2 options how to provide credentials:
+
+- (recommended) [Trusted publishing](https://docs.npmjs.com/trusted-publishers): grant release workflow `id-token: write` permission (see [example](#release-workflow))
+- [Granular access token](https://docs.npmjs.com/creating-and-viewing-access-tokens): store it as `NPM_TOKEN` [repository secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
+
+Optional `package.json` scripts:
+
+- `publish:npm` - used instead of `npm publish`, receives the distribution tag as `--tag` argument
+
 ### Java (gradle)
+
+> [!tip]
+> Workflows allow independent choices of build artifacts: container image (default), Maven package, or both. Can be controlled via `docker-build-enabled` and `publish-enabled` inputs respectively. Set inputs values to match your repository needs.
 
 #### Requirements
 
@@ -281,7 +289,7 @@ Consumer repository **must** have:
   > The `version` value is updated by CI/CD automation - please do not modify it manually. See more details in [Branching](#branching) section
   </details>
 
-#### PR Workflow (Docker)
+#### PR Workflow
 
 `pr.yml`
 
@@ -302,7 +310,7 @@ jobs:
     secrets: inherit
 ```
 
-#### Release Workflow (Docker)
+#### Release Workflow
 
 `release.yml`
 
@@ -331,10 +339,47 @@ jobs:
     secrets: inherit
 ```
 
+#### Publishing a package (Maven)
+
+Disabled by default, can be configured by `publish-enabled: true` input
+
+Packages are published to the Maven registry of the repository's GitHub Packages (see [Working with the Gradle registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry)). Consumer repository **must**:
+
+- apply `maven-publish` plugin in the `build.gradle` files of the modules to publish. Credentials will be provided by the workflow
+
+  <details>
+    <summary>Example</summary>
+
+  ```groovy
+  plugins {
+      id "maven-publish"
+  }
+
+  publishing {
+      repositories {
+          maven {
+              name = "GitHubPackages"
+              url = uri("https://maven.pkg.github.com/OWNER/REPOSITORY")
+              credentials {
+                  username = System.getenv("GPR_USERNAME")
+                  password = System.getenv("GPR_PASSWORD")
+              }
+          }
+      }
+      publications {
+          gpr(MavenPublication) {
+              from(components.java)
+          }
+      }
+  }
+  ```
+
+  </details>
+
 #### Dependency Review
 
 Without a dependency graph, GitHub has no visibility into what packages the Java project uses - so it can't warn when one of them has a known vulnerability (CVE).\
-The dependency graph snapshot is generated automatically as part of [PR Workflow](#pr-workflow-docker) and [Release Workflow](#release-workflow-docker) via integration with the [GitHub Dependency Graph Gradle Plugin](https://plugins.gradle.org/plugin/org.gradle.github-dependency-graph-gradle-plugin), and submitted via the [GitHub Dependency Submission API](https://docs.github.com/en/rest/dependency-graph/dependency-submission).\
+The dependency graph snapshot is generated automatically as part of [PR Workflow](#pr-workflow-1) and [Release Workflow](#release-workflow-1) via integration with the [GitHub Dependency Graph Gradle Plugin](https://plugins.gradle.org/plugin/org.gradle.github-dependency-graph-gradle-plugin), and submitted via the [GitHub Dependency Submission API](https://docs.github.com/en/rest/dependency-graph/dependency-submission).\
 The generated dependency graph includes all of the dependencies, and is used by GitHub to generate [Dependabot Alerts](https://docs.github.com/en/code-security/dependabot/dependabot-alerts/about-dependabot-alerts) for vulnerable dependencies, as well as to populate the [Dependency Graph insights view](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/exploring-the-dependencies-of-a-repository#viewing-the-dependency-graph).
 
 Configuration:

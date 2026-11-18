@@ -77,6 +77,8 @@ run_calc() {
   fi
 
   export CALC_NEXT_VERSION=$(read_output_key "next-version")
+  export CALC_NEXT_VERSION_PYTHON=$(read_output_key "next-version-python")
+  export CALC_NEXT_VERSION_MAVEN=$(read_output_key "next-version-maven")
   export CALC_IS_RELEASE_CANDIDATE=$(read_output_key "is-release-candidate")
   export CALC_IS_RELEASE=$(read_output_key "is-release")
   export CALC_IS_LATEST=$(read_output_key "is-latest")
@@ -814,4 +816,39 @@ assert_calc() {
   git checkout -q development
   commit_msg "feat: 6"
   assert_calc "S11" "development" "" "false" "^development$" "^release-[0-9]+\.[0-9]+" "1.1.0-dev.5" "false" "false" "false" "" "tag"
+}
+
+@test "Ecosystem-specific version formats" {
+  init_dummy_repo "${BATS_TEST_TMPDIR}/version-formats"
+
+  local PRIMARY_PATTERN="^development$"
+  local RELEASE_PATTERN="^release-[0-9]+\.[0-9]+$"
+  local FILTER_VERSION="[0-9]+\.[0-9]+"
+
+  assert_formats() {
+    local scenario="${1}" branch="${2}" promote="${3}" expected_next="${4}" expected_python="${5}" expected_maven="${6}"
+    git checkout -q "${branch}"
+    run_calc "${FILTER_VERSION}" "${promote}" "${PRIMARY_PATTERN}" "${RELEASE_PATTERN}"
+    [ "${expected_next}" = "${CALC_NEXT_VERSION}" ] || { echo "FAIL ${scenario}: Expected next-version '${expected_next}', got '${CALC_NEXT_VERSION}'" >&3; return 1; }
+    [ "${expected_python}" = "${CALC_NEXT_VERSION_PYTHON}" ] || { echo "FAIL ${scenario}: Expected next-version-python '${expected_python}', got '${CALC_NEXT_VERSION_PYTHON}'" >&3; return 1; }
+    [ "${expected_maven}" = "${CALC_NEXT_VERSION_MAVEN}" ] || { echo "FAIL ${scenario}: Expected next-version-maven '${expected_maven}', got '${CALC_NEXT_VERSION_MAVEN}'" >&3; return 1; }
+  }
+
+  commit_msg "chore: initial commit"
+  assert_formats "F0" "development" "false" "0.1.0-dev.1" "0.1.0.dev1" "0.1.0-SNAPSHOT"
+
+  git checkout -q -b release-1.0
+  assert_formats "F1" "release-1.0" "false" "1.0.0-rc.0" "1.0.0rc0" "1.0.0-rc.0"
+  commit_msg "[skip ci] Update version"
+  git tag 1.0.0-rc.0
+
+  assert_formats "F2" "release-1.0" "true" "1.0.0" "1.0.0" "1.0.0"
+  commit_msg "[skip ci] Update version"
+  git tag 1.0.0
+
+  assert_formats "F3" "release-1.0" "false" "1.0.1" "1.0.1" "1.0.1"
+
+  git checkout -q development
+  commit_msg "feat: 1"
+  assert_formats "F4" "development" "false" "1.1.0-dev.1" "1.1.0.dev1" "1.1.0-SNAPSHOT"
 }
