@@ -107,6 +107,14 @@ on:
         type: string
         description: Path to the Dockerfile
         default: "Dockerfile"
+      context:
+        type: string
+        description: Docker build context path
+        default: "."
+      target:
+        type: string
+        description: Docker build target stage (the last stage is built if empty)
+        default: ""
       filter-version:
         type: string
         description: Operate within versions matched regex
@@ -216,6 +224,8 @@ jobs:
           platform: ${{ matrix.platform }}
           pair: ${{ matrix.pair }}
           dockerfile-path: ${{ inputs.dockerfile-path }}
+          context: ${{ inputs.context }}
+          target: ${{ inputs.target }}
           build-args: ${{ inputs.build-args }}
           bypass-checks: ${{ inputs.bypass-checks }}
           trivy-enabled: ${{ inputs.trivy-enabled }}

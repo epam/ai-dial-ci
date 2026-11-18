@@ -91,6 +91,18 @@ on:
         type: string
         description: Development tag for docker images
         default: 'development'
+      dockerfile-path:
+        type: string
+        description: Path to the Dockerfile
+        default: "Dockerfile"
+      context:
+        type: string
+        description: Docker build context path
+        default: "."
+      target:
+        type: string
+        description: Docker build target stage (the last stage is built if empty)
+        default: ""
       build-args:
         type: string
         description: |
@@ -164,6 +176,9 @@ jobs:
           maximize-build-space: ${{ inputs.maximize-build-space }}
           platform: ${{ matrix.platform }}
           pair: ${{ matrix.pair }}
+          dockerfile-path: ${{ inputs.dockerfile-path }}
+          context: ${{ inputs.context }}
+          target: ${{ inputs.target }}
           build-args: ${{ inputs.build-args }}
           bypass-checks: ${{ inputs.bypass-checks }}
           trivy-enabled: ${{ inputs.trivy-enabled }}

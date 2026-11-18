@@ -91,6 +91,14 @@ on:
         type: string
         default: "Dockerfile"
         description: Path to the Dockerfile
+      context:
+        type: string
+        description: Docker build context path
+        default: "."
+      target:
+        type: string
+        description: Docker build target stage (the last stage is built if empty)
+        default: ""
       build-args:
         type: string
         description: |
@@ -190,6 +198,8 @@ jobs:
           platform: ${{ matrix.platform }}
           pair: ${{ matrix.pair }}
           dockerfile-path: ${{ inputs.dockerfile-path }}
+          context: ${{ inputs.context }}
+          target: ${{ inputs.target }}
           build-args: ${{ inputs.build-args }}
           gpr-username: ${{ github.actor }}
           gpr-password: ${{ secrets.GITHUB_TOKEN }}

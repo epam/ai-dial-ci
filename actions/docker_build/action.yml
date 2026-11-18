@@ -13,6 +13,12 @@ inputs:
   dockerfile-path:
     description: Path to the Dockerfile
     default: "Dockerfile"
+  context:
+    description: Docker build context path
+    default: "."
+  target:
+    description: Docker build target stage (the last stage is built if empty)
+    default: ""
   build-args:
     description: |
       Docker build arguments (newline-separated list-like string)
@@ -129,8 +135,9 @@ runs:
       if: ${{ inputs.trivy-enabled == 'true' || inputs.push-enabled != 'true' }}
       uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
       with:
-        context: .
+        context: ${{ inputs.context }}
         file: ${{ inputs.dockerfile-path }}
+        target: ${{ inputs.target }}
         load: true
         platforms: ${{ inputs.platform }}
         tags: scan/${{ inputs.pair }}:${{ github.sha }}
@@ -194,8 +201,9 @@ runs:
       if: ${{ inputs.push-enabled == 'true' }}
       uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
       with:
-        context: .
+        context: ${{ inputs.context }}
         file: ${{ inputs.dockerfile-path }}
+        target: ${{ inputs.target }}
         platforms: ${{ inputs.platform }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
