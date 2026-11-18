@@ -86,6 +86,14 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        while IFS= read -r t; do
-          docker buildx imagetools inspect "$t"
-        done < <(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+        # The metadata only lists the references to look up, every value below comes from the registry
+        {
+          echo "### Docker image(s)"
+          echo
+          echo "| Tag | Digest | Platforms |"
+          echo "| --- | --- | --- |"
+          while IFS= read -r t; do
+            manifest="$(docker buildx imagetools inspect "$t" --format '{{json .Manifest}}')"
+            jq -r --arg t "$t" '"| `\($t)` | `\(.digest)` | \([.manifests[].platform | select(.os != "unknown") | "\(.os)/\(.architecture)"] | unique | join(", ")) |"' <<< "$manifest"
+          done < <(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+        } | tee -a "$GITHUB_STEP_SUMMARY"
