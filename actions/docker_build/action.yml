@@ -208,6 +208,7 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
         build-args: ${{ inputs.build-args }}
+        sbom: true # Provenance attestation is added by default (mode=max for public, mode=min for private repositories). SBOM must be enabled explicitly
         # See https://github.com/docker/docs/blob/main/content/manuals/build/exporters/image-registry.md
         # push-by-digest - Push image without name
         # name-canonical - Add additional canonical name name@<digest>
