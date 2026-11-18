@@ -156,6 +156,7 @@ jobs:
 
   # Builds the per-platform matrix for the Docker build.
   docker_plan:
+    if: ${{ inputs.docker-build-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
@@ -170,6 +171,7 @@ jobs:
   docker_build:
     name: docker_build (${{ matrix.platform }})
     needs: docker_plan
+    if: ${{ inputs.docker-build-enabled }}
     strategy:
       fail-fast: false # report Trivy results for every platform even if another one failed
       matrix: ${{ fromJSON(needs.docker_plan.outputs.matrix) }}
@@ -186,6 +188,7 @@ jobs:
           maximize-build-space: ${{ inputs.maximize-build-space }}
           platform: ${{ matrix.platform }}
           pair: ${{ matrix.pair }}
+          dockerfile-path: ${{ inputs.dockerfile-path }}
           build-args: ${{ inputs.build-args }}
           gpr-username: ${{ github.actor }}
           gpr-password: ${{ secrets.GITHUB_TOKEN }}

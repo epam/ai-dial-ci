@@ -194,7 +194,7 @@ jobs:
       - name: Set version
         shell: bash
         run: |
-          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-without-hyphens }}\"/g" pyproject.toml
+          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-python }}\"/g" pyproject.toml
       - uses: epam/ai-dial-ci/actions/docker_build@5.1.0
         with:
           maximize-build-space: ${{ inputs.maximize-build-space }}
@@ -256,7 +256,7 @@ jobs:
       - name: Set version
         shell: bash
         run: |
-          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-without-hyphens }}\"/g" pyproject.toml
+          sed -i "s/^version = .*/version = \"${{ needs.calculate_version.outputs.next-version-python }}\"/g" pyproject.toml
       - uses: epam/ai-dial-ci/actions/publish_tag_release@5.1.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:

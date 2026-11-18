@@ -187,6 +187,7 @@ jobs:
 
   # Builds the per-platform matrix for the Docker build.
   docker_plan:
+    if: ${{ inputs.docker-build-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
@@ -201,6 +202,7 @@ jobs:
   docker_build:
     name: docker_build (${{ matrix.platform }})
     needs: [test, calculate_version, docker_plan]
+    if: ${{ inputs.docker-build-enabled }}
     strategy:
       fail-fast: false # report Trivy results for every platform even if another one failed
       matrix: ${{ fromJSON(needs.docker_plan.outputs.matrix) }}
@@ -220,12 +222,17 @@ jobs:
       - name: Set version
         shell: bash
         run: |
-          sed -i -E "s/^([ \t]*version[ \t]*=[ \t]*)[\"'].*[\"']/\1\"${{ needs.calculate_version.outputs.next-version }}\"/g" build.gradle
+          if ! grep -qE "^[[:space:]]*version[[:space:]]*=[[:space:]]*[\"'][^\"']*[\"']" build.gradle; then
+            echo "::error file=build.gradle::No 'version = \"...\"' line found, can't set the version"
+            exit 1
+          fi
+          sed -i -E "s/^([[:space:]]*version[[:space:]]*=[[:space:]]*)[\"'][^\"']*[\"']/\1\"${{ needs.calculate_version.outputs.next-version-maven }}\"/" build.gradle
       - uses: epam/ai-dial-ci/actions/docker_build@5.1.0
         with:
           maximize-build-space: ${{ inputs.maximize-build-space }}
           platform: ${{ matrix.platform }}
           pair: ${{ matrix.pair }}
+          dockerfile-path: ${{ inputs.dockerfile-path }}
           build-args: ${{ inputs.build-args }}
           gpr-username: ${{ github.actor }}
           gpr-password: ${{ secrets.GITHUB_TOKEN }}
@@ -247,6 +254,7 @@ jobs:
   # (build + Trivy + push) succeeded.
   docker_merge:
     needs: [calculate_version, docker_build]
+    if: ${{ inputs.docker-build-enabled }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: read
@@ -263,15 +271,18 @@ jobs:
           dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  # Git tag / GitHub release. Runs after the Docker image is published.
+  # Maven packages publish and git tag / GitHub release. Runs after the Docker image is published
+  # (or when the Docker build is disabled / skipped).
   release:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
+      packages: write # for publishing to GitHub Packages registry
     needs:
       - calculate_version
       - test
       - docker_merge
+    if: ${{ !cancelled() && !failure() }}
     steps:
       - uses: epam/ai-dial-ci/actions/generate_release_notes@5.1.0
         with:
@@ -281,10 +292,25 @@ jobs:
         with:
           lfs: true
           token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+      - uses: epam/ai-dial-ci/actions/java_prepare@5.1.0
+        with:
+          java-version: ${{ inputs.java-version }}
+          java-distribution: ${{ inputs.java-distribution }}
       - name: Set version
         shell: bash
         run: |
-          sed -i -E "s/^([ \t]*version[ \t]*=[ \t]*)[\"'].*[\"']/\1\"${{ needs.calculate_version.outputs.next-version }}\"/g" build.gradle
+          if ! grep -qE "^[[:space:]]*version[[:space:]]*=[[:space:]]*[\"'][^\"']*[\"']" build.gradle; then
+            echo "::error file=build.gradle::No 'version = \"...\"' line found, can't set the version"
+            exit 1
+          fi
+          sed -i -E "s/^([[:space:]]*version[[:space:]]*=[[:space:]]*)[\"'][^\"']*[\"']/\1\"${{ needs.calculate_version.outputs.next-version-maven }}\"/" build.gradle
+      - name: Publish packages
+        if: ${{ inputs.publish-enabled }}
+        shell: bash
+        run: ./gradlew publish
+        env:
+          GPR_USERNAME: ${{ github.actor }}
+          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       - uses: epam/ai-dial-ci/actions/publish_tag_release@5.1.0
         if: ${{ startsWith(github.ref, 'refs/heads/release-') }}
         with:
