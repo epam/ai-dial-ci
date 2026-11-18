@@ -178,6 +178,7 @@ jobs:
     runs-on: ${{ fromJSON(matrix.runner) }}
     permissions:
       contents: read
+      packages: read # GITHUB_TOKEN is passed as gpr-password to pull private GitHub Packages
       security-events: write # upload Trivy SARIF
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
