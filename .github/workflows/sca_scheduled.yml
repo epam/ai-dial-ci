@@ -158,7 +158,7 @@ jobs:
       # The scan reads the reference of its target from targets.json
       - name: Download the targets
         id: targets
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: sca-part-targets
@@ -213,7 +213,7 @@ jobs:
       # The first step before the scan that broke is the reason of a failed target
       - name: Find the failed step
         id: prior
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         env:
           DB_OUTCOME: ${{ steps.db.outcome }}
           DB_JOB_RESULT: ${{ needs.trivy-db.result }}
@@ -241,7 +241,7 @@ jobs:
       # Images in other registries are expected to be public and are pulled anonymously: only ghcr.io gets the token
       - name: Run Trivy scanner
         id: scan
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         uses: epam/ai-dial-sec-sca/actions/sca_scan@v0.10.0
         with:
           targets-file: ${{ runner.temp }}/sca-targets/targets.json
@@ -261,7 +261,7 @@ jobs:
           trivy-version: ${{ inputs.trivy-version }}
           trivy-sha256: ${{ inputs.trivy-sha256 }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         with:
           name: sca-part-trivy-${{ matrix.target.id }}
           path: ${{ runner.temp }}/sca-out/
@@ -307,7 +307,7 @@ jobs:
           registry-user: ${{ inputs.registry == 'ghcr.io' && github.actor || '' }}
           registry-password: ${{ inputs.registry == 'ghcr.io' && secrets.GITHUB_TOKEN || '' }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         with:
           name: sca-part-osv
           path: ${{ runner.temp }}/sca-out/
@@ -318,7 +318,7 @@ jobs:
   report:
     needs: [targets, trivy-db, trivy, osv]
     # Without the targets result there is nothing to report on; the run is red anyway because the targets job failed
-    if: ${{ always() && needs.targets.result == 'success' }}
+    if: ${{ !cancelled() && needs.targets.result == 'success' }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: read
@@ -339,7 +339,7 @@ jobs:
           output-dir: ${{ runner.temp }}/sca
           trivy-db-info: ${{ needs.trivy-db.outputs.db-info }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         with:
           name: sca-report
           path: ${{ runner.temp }}/sca/

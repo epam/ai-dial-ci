@@ -342,7 +342,7 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
       # After the publish step, also when it failed: the result is what the summary job reads
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         with:
           name: fix-result-${{ matrix.line.slug }}
           path: ${{ runner.temp }}/fix-result/
@@ -352,7 +352,7 @@ jobs:
 
   summary:
     needs: [plan, apply]
-    if: ${{ always() && needs.plan.result == 'success' }}
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: read
