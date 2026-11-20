@@ -1,7 +1,9 @@
 name: SCA fix
 
-# Plans the dependency fixes of the newest release lines from SCA reports and delivers them as one pull request per
-# release line: Dependabot jobs applied to the branch, a rescan as the gate, a base image bump for the OS findings.
+# Delivers security fixes to the release branches, where Dependabot security updates cannot run: they cover only the
+# default branch, which stays with Dependabot. Plans the fixes of the newest release lines from SCA reports and opens
+# one pull request per release line: Dependabot jobs applied to the branch, a rescan as the gate, a base image bump for
+# the OS findings.
 # The actions and the tools come from one ref of epam/ai-dial-sec-sca (a release tag, the same in every `uses:` below).
 # The push and the pull request always use a GitHub App installation token (input app-client-id, secret
 # app-private-key, both required), so the workflow token stays read-only.
