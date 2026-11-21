@@ -1205,7 +1205,7 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       github.event.registry_package.package_version.container_metadata.tag.name == 'development' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
-    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@main
+    uses: epam/ai-dial-ci/.github/workflows/trigger-gitlab-pipeline.yml@main
     with:
       gitlab-project-id: "1487"
     secrets:
@@ -1249,7 +1249,7 @@ jobs:
             gitlab-project-id: "1337"
 
     name: Deploy to ${{ matrix.environment-name }}
-    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@main
+    uses: epam/ai-dial-ci/.github/workflows/trigger-gitlab-pipeline.yml@main
     with:
       gitlab-project-id: ${{ matrix.gitlab-project-id }}
       environment-name: ${{ matrix.environment-name }}
