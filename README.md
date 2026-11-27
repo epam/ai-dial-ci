@@ -55,6 +55,12 @@
         - [Configuration](#configuration)
           - [Global config repository](#global-config-repository)
           - [.ort.yml](#ortyml)
+      - [Docker workflow](#docker-workflow)
+        - [Inputs](#inputs)
+        - [Secrets](#secrets)
+        - [Outputs](#outputs)
+        - [Multiple images](#multiple-images)
+      - [Docker Hub](#docker-hub)
   - [Contributing](#contributing)
 
 ## Overview
@@ -84,9 +90,11 @@ These workflows could be imported to any repository under EPAM GitHub organizati
 > [!tip]
 > [Creating secrets for a repository](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets#creating-secrets-for-a-repository)
 
-| Name                | Example value                    | Required | Description                                                                          |
-| ------------------- | -------------------------------- | -------- | ------------------------------------------------------------------------------------ |
-| `ACTIONS_BOT_TOKEN` | `ghp_1234567890abcdef1234567890` | true     | Personal access token for CI/CD automation user with `repo`, `write:packages` scopes |
+| Name                | Example value                    | Required | Description                                                                                               |
+| ------------------- | -------------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| `ACTIONS_BOT_TOKEN` | `ghp_1234567890abcdef1234567890` | true     | Personal access token for CI/CD automation user with `repo`, `write:packages` scopes                      |
+| `DOCKERHUB_LOGIN`   | `ai-dial-bot`                    | false    | Docker Hub username. Required only if `dockerhub-enabled: true` is set, see [Docker Hub](#docker-hub)     |
+| `DOCKERHUB_TOKEN`   | `dckr_pat_1234567890abcdef`      | false    | Docker Hub access token. Required only if `dockerhub-enabled: true` is set, see [Docker Hub](#docker-hub) |
 
 ### Branching
 
@@ -338,6 +346,9 @@ jobs:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
     secrets: inherit
 ```
+
+> [!tip]
+> Also check [Docker Hub](#docker-hub) section
 
 #### Publishing a package (Maven)
 
@@ -615,6 +626,9 @@ jobs:
     secrets: inherit
 ```
 
+> [!tip]
+> Also check [Docker Hub](#docker-hub) section
+
 #### PR Workflow (package)
 
 `pr.yml`
@@ -782,6 +796,9 @@ jobs:
     secrets: inherit
 ```
 
+> [!tip]
+> Also check [Docker Hub](#docker-hub) section
+
 #### PR Workflow (package)
 
 `pr.yml`
@@ -920,6 +937,9 @@ jobs:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
     secrets: inherit
 ```
+
+> [!tip]
+> Also check [Docker Hub](#docker-hub) section
 
 ### Others
 
@@ -1175,7 +1195,11 @@ jobs:
           delete-ghost-images: true # Delete indexes with no manifests
           delete-partial-images: true # Delete indexes which refer to at least one non-existent manifest
           delete-orphaned-images: true # Delete dangling referrers, e.g. SBOMs, signatures, etc. that refer to non-existent digest
+          older-than: 1 day
 ```
+
+> [!note]
+> `older-than` is not mandatory, but it handles (rare) race condition for container images that are currently in process of publishing by [Docker workflow](#docker-workflow)
 
 #### Trigger deployment of development environment in GitLab
 
@@ -1656,6 +1680,133 @@ Add an `.ort.yml` to the repository root for [project-specific configuration](ht
   ```
 
   </details>
+
+#### Docker workflow
+
+`docker.yml` is a reusable workflow to build (with native parallelization for multi-platform builds), scan with Trivy (security gate) and publish container image(s).
+
+We use it in language-specific workflows, but it can be called by consumers directly without adopting a specific releases workflow, e.g.
+
+`docker.yml`
+
+```yml
+name: Docker
+
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+  docker:
+    permissions:
+      contents: read
+      security-events: write # upload Trivy SARIF
+    uses: epam/ai-dial-ci/.github/workflows/docker.yml@main
+    with:
+      push: true
+      platforms: linux/amd64,linux/arm64
+      meta-images: |
+        ghcr.io/${{ github.repository }}
+        docker.io/${{ github.repository }}
+      meta-tags: |
+        type=ref,event=tag
+    secrets:
+      registry-auths: |
+        - registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.ACTIONS_BOT_TOKEN }}
+        - registry: docker.io
+          username: ${{ secrets.DOCKERHUB_LOGIN }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+```
+
+##### Inputs
+
+| Input                              | Description                                                                                                                                                                                                                                                                                                | Type      | Required | Default             |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------- | ------------------- |
+| `meta-images`                      | A newline-separated list of image references, e.g. `ghcr.io/owner/app`. Attributes can be used: `name=<string>` - image base name, `enable=<bool>` - enable this entry (default `true`). Required for pushing. See [docker/metadata-action images](https://github.com/docker/metadata-action#images-input) | `string`  | `false`  | `""`                |
+| `meta-tags`                        | A newline-separated list of image tags (or tag rules). Attributes can be used, see [docker/metadata-action tags](https://github.com/docker/metadata-action#tags-input). Required for pushing                                                                                                               | `string`  | `false`  | `""`                |
+| `push`                             | Push image(s) to registries. If `false`, only plan, build and Trivy are run                                                                                                                                                                                                                                | `boolean` | `false`  | `false`             |
+| `registry-login`                   | Log in to the registries specified in `registry-auths` secret (one of `auto`, `true`, `false`). The `auto` logs in only when `push` is `true`                                                                                                                                                              | `string`  | `false`  | `auto`              |
+| `platforms`                        | Docker build platforms (comma-separated). Each platform is built on its own native runner                                                                                                                                                                                                                  | `string`  | `false`  | `linux/amd64`       |
+| `dockerfile-path`                  | Path to the Dockerfile                                                                                                                                                                                                                                                                                     | `string`  | `false`  | `Dockerfile`        |
+| `context`                          | Docker build context path                                                                                                                                                                                                                                                                                  | `string`  | `false`  | `.`                 |
+| `target`                           | Docker build target stage (the last stage is built if empty)                                                                                                                                                                                                                                               | `string`  | `false`  | `""`                |
+| `build-args`                       | A newline-separated list of Docker build arguments, e.g. `FOO=bar`. See [docker buildx build](https://docs.docker.com/reference/cli/docker/buildx/build/#build-arg)                                                                                                                                        | `string`  | `false`  | `""`                |
+| `pre-build-script`                 | Bash script to run in every build job after checkout and before the Docker build (e.g. to set the version). Only the tools preinstalled on the GitHub-hosted runner are available                                                                                                                          | `string`  | `false`  | `""`                |
+| `maximize-build-space`             | Maximize build space by removing unwanted software                                                                                                                                                                                                                                                         | `boolean` | `false`  | `false`             |
+| `trivy-enabled`                    | Enable Trivy scanning                                                                                                                                                                                                                                                                                      | `boolean` | `false`  | `true`              |
+| `trivy-bypassed`                   | Do not fail pipeline if Trivy failed                                                                                                                                                                                                                                                                       | `boolean` | `false`  | `false`             |
+| `trivy-severity`                   | Severities of vulnerabilities to fail the build                                                                                                                                                                                                                                                            | `string`  | `false`  | `CRITICAL,HIGH`     |
+| `trivy-severity-for-sarif`         | Severities of vulnerabilities in SARIF report                                                                                                                                                                                                                                                              | `string`  | `false`  | `CRITICAL,HIGH`     |
+| `trivy-limit-severities-for-sarif` | By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to `true` and specify desired severities in the `trivy-severity-for-sarif` parameter                                                                      | `boolean` | `false`  | `true`              |
+| `trivy-vuln-type`                  | Type of vulnerabilities to scan                                                                                                                                                                                                                                                                            | `string`  | `false`  | `os,library`        |
+| `trivy-scanners`                   | Comma-separated list of what security issues to detect                                                                                                                                                                                                                                                     | `string`  | `false`  | `vuln,secret`       |
+| `trivy-ignore-unfixed`             | Ignore unpatched/unfixed vulnerabilities                                                                                                                                                                                                                                                                   | `boolean` | `false`  | `true`              |
+| `runs-on`                          | Overrides jobs runs-on settings (JSON-encoded list) for the plan and merge jobs. No effect on `build` jobs - they always run on native runners of their platforms                                                                                                                                          | `string`  | `false`  | `["ubuntu-latest"]` |
+
+##### Secrets
+
+| Secret           | Description                                                                                                                                                                                                                      | Required |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `registry-auths` | Registry credentials (YAML list of `registry`, `username` and `password`) for [docker/login-action registry-auth](https://github.com/docker/login-action#registry-auth) input, used to log in to the registries of `meta-images` | `false`  |
+| `build-secrets`  | A newline-separated list of [BuildKit secrets](https://docs.docker.com/build/building/secrets/) as `id=value` (single-line values), e.g. `GPR_USERNAME` and `GPR_PASSWORD`                                                       | `false`  |
+
+> [!important]
+>
+> - A registry listed in `meta-images` with missing or empty credentials fails at login or push
+> - Add `packages: write` if `GITHUB_TOKEN` is used in `registry-auths` instead of `ACTIONS_BOT_TOKEN`
+> - Publishing is not atomic across images and registries: tags are applied at merge, so a failure can leave some already tagged. Re-run the failed jobs to publish the rest
+
+##### Outputs
+
+| Output   | Description                                                                                 |
+| -------- | ------------------------------------------------------------------------------------------- |
+| `digest` | Digest of the merged image (empty when nothing is pushed)                                   |
+| `tags`   | Published image references with tags (newline-separated list, empty when nothing is pushed) |
+
+##### Multiple images
+
+Put `strategy.matrix` on the calling job. `meta-images` of every entry names its artifacts and SARIF categories, so entries must have different first images.
+
+```yml
+jobs:
+  docker:
+    strategy:
+      matrix:
+        image:
+          - name: frontend
+            dockerfile: frontend/Dockerfile
+            platforms: linux/amd64,linux/arm64
+          - name: backend
+            dockerfile: backend/Dockerfile
+            platforms: linux/amd64
+    permissions:
+      contents: read
+      security-events: write
+    uses: epam/ai-dial-ci/.github/workflows/docker.yml@main
+    with:
+      push: true
+      platforms: ${{ matrix.image.platforms }}
+      dockerfile-path: ${{ matrix.image.dockerfile }}
+      meta-images: ghcr.io/${{ github.repository }}-${{ matrix.image.name }}
+      meta-tags: type=ref,event=tag
+    secrets:
+      registry-auths: |
+        - registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.ACTIONS_BOT_TOKEN }}
+```
+
+#### Docker Hub
+
+Release workflows can publish images to Docker Hub (`docker.io`) registry in addition to GitHub Container Registry (GHCR). Disabled by default, can be enabled by `dockerhub-enabled: true` input.
+
+To make publishing work:
+
+1. Add `DOCKERHUB_LOGIN` and `DOCKERHUB_TOKEN` [repository secrets](#repository-secrets)
+
+Docker Hub repository visibility cannot be set during push. Thus, in contradiction to GHCR, image visibility is not synchronized with GitHub repository visibility. New repositories inherit the org default visibility (currently **private**). To make an image public, ask administrator to [change the repository visibility](https://docs.docker.com/docker-hub/repos/manage/access/)
 
 ## Contributing
 

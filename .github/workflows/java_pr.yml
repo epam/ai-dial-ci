@@ -43,30 +43,6 @@ on:
         type: string
         default: ${{ vars.ORT_CONFIG_VCS_REVISION || '92.5.0' }}
         description: ORT config revision to use
-      docker-build-enabled:
-        type: boolean
-        default: true
-        description: Enable Docker build
-      trivy-enabled:
-        type: boolean
-        default: true
-        description: Enable Trivy scanning
-      trivy-bypassed:
-        type: boolean
-        default: false
-        description: Do not fail pipeline if Trivy failed
-      trivy-severity:
-        type: string
-        default: "CRITICAL,HIGH"
-        description: Severities of vulnerabilities to fail the build
-      trivy-severity-for-sarif:
-        type: string
-        default: "CRITICAL,HIGH"
-        description: Severities of vulnerabilities in SARIF report
-      trivy-limit-severities-for-sarif:
-        type: boolean
-        default: true
-        description: By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter
       java-version:
         type: string
         default: "17"
@@ -83,6 +59,10 @@ on:
         type: string
         description: Overrides jobs runs-on settings (json-encoded list)
         default: '["ubuntu-24.04"]'
+      docker-build-enabled:
+        type: boolean
+        default: true
+        description: Enable Docker build
       platforms:
         type: string
         description: Docker build platforms (comma-separated). Each platform is built on its own native runner (supported - linux/amd64, linux/arm64)
@@ -105,6 +85,38 @@ on:
           Docker build arguments (newline-separated list-like string)
           ref: https://github.com/docker/build-push-action#inputs
         default: ""
+      trivy-enabled:
+        type: boolean
+        default: true
+        description: Enable Trivy scanning
+      trivy-bypassed:
+        type: boolean
+        default: false
+        description: Do not fail pipeline if Trivy failed
+      trivy-severity:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: Severities of vulnerabilities to fail the build
+      trivy-severity-for-sarif:
+        type: string
+        default: "CRITICAL,HIGH"
+        description: Severities of vulnerabilities in SARIF report
+      trivy-limit-severities-for-sarif:
+        type: boolean
+        default: true
+        description: By default SARIF format enforces output of all vulnerabilities regardless of configured severities. To override this behavior set this parameter to true and specify desired severities in the `trivy-severity-for-sarif` parameter
+      trivy-vuln-type:
+        type: string
+        description: Type of vulnerabilities to scan
+        default: "os,library"
+      trivy-scanners:
+        type: string
+        description: Comma-separated list of what security issues to detect
+        default: "vuln,secret"
+      trivy-ignore-unfixed:
+        type: boolean
+        description: Ignore unpatched/unfixed vulnerabilities
+        default: true
 
 jobs:
   test:
@@ -162,50 +174,32 @@ jobs:
           GPR_USERNAME: ${{ github.actor }}
           GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
-  # Builds the per-platform matrix for the Docker build.
-  docker_plan:
+  docker:
     if: ${{ inputs.docker-build-enabled }}
-    runs-on: ${{ fromJSON(inputs.runs-on) }}
-    outputs:
-      matrix: ${{ steps.plan.outputs.matrix }}
-    steps:
-      - name: Plan Docker build
-        id: plan
-        uses: epam/ai-dial-ci/actions/docker_plan@5.1.0
-        with:
-          platforms: ${{ inputs.platforms }}
-
-  # One job per platform on a native runner: build -> Trivy. Validation only, nothing is pushed.
-  docker_build:
-    name: docker_build (${{ matrix.platform }})
-    needs: docker_plan
-    if: ${{ inputs.docker-build-enabled }}
-    strategy:
-      fail-fast: false # report Trivy results for every platform even if another one failed
-      matrix: ${{ fromJSON(needs.docker_plan.outputs.matrix) }}
-    runs-on: ${{ fromJSON(matrix.runner) }}
     permissions:
       contents: read
-      packages: read # GITHUB_TOKEN is passed as gpr-password to pull private GitHub Packages
+      packages: read # GITHUB_TOKEN is passed as GPR_PASSWORD to pull private GitHub Packages
       security-events: write # upload Trivy SARIF
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          lfs: true
-      - uses: epam/ai-dial-ci/actions/docker_build@5.1.0
-        with:
-          maximize-build-space: ${{ inputs.maximize-build-space }}
-          platform: ${{ matrix.platform }}
-          pair: ${{ matrix.pair }}
-          dockerfile-path: ${{ inputs.dockerfile-path }}
-          context: ${{ inputs.context }}
-          target: ${{ inputs.target }}
-          build-args: ${{ inputs.build-args }}
-          gpr-username: ${{ github.actor }}
-          gpr-password: ${{ secrets.GITHUB_TOKEN }}
-          bypass-checks: ${{ inputs.bypass-checks }}
-          trivy-enabled: ${{ inputs.trivy-enabled }}
-          trivy-bypassed: ${{ inputs.trivy-bypassed }}
-          trivy-severity: ${{ inputs.trivy-severity }}
-          trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
-          trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
+    uses: ./.github/workflows/docker.yml
+    with:
+      push: false
+      meta-images: ghcr.io/${{ github.repository }}
+      platforms: ${{ inputs.platforms }}
+      dockerfile-path: ${{ inputs.dockerfile-path }}
+      context: ${{ inputs.context }}
+      target: ${{ inputs.target }}
+      build-args: ${{ inputs.build-args }}
+      maximize-build-space: ${{ inputs.maximize-build-space }}
+      trivy-enabled: ${{ inputs.trivy-enabled }}
+      trivy-bypassed: ${{ inputs.bypass-checks || inputs.trivy-bypassed }}
+      trivy-severity: ${{ inputs.trivy-severity }}
+      trivy-severity-for-sarif: ${{ inputs.trivy-severity-for-sarif }}
+      trivy-limit-severities-for-sarif: ${{ inputs.trivy-limit-severities-for-sarif }}
+      trivy-vuln-type: ${{ inputs.trivy-vuln-type }}
+      trivy-scanners: ${{ inputs.trivy-scanners }}
+      trivy-ignore-unfixed: ${{ inputs.trivy-ignore-unfixed }}
+      runs-on: ${{ inputs.runs-on }}
+    secrets:
+      build-secrets: |
+        GPR_USERNAME=${{ github.actor }}
+        GPR_PASSWORD=${{ secrets.GITHUB_TOKEN }}
