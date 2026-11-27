@@ -1333,7 +1333,6 @@ jobs:
     with:
       images: |
         ${{ github.repository }}
-      java-version: "21"
       scan-tag: ${{ inputs.scan-tag }}
       force-image-scan: ${{ inputs.force-image-scan || false }}
 ```
@@ -1351,13 +1350,15 @@ Inputs:
 | `osv-image-scan`           | boolean | `true`                       | OSV scan of the image OS packages. Turn off if the image does not fit the runner disk |
 | `scan-tag`                 | string  | `""`                         | Manual run: scan only this git tag                                                    |
 | `force-image-scan`         | boolean | `false`                      | Manual run: run the OSV image scan even if `osv-image-scan` is off                    |
-| `java-version`             | string  | `21`                         | Java version for Gradle projects                                                      |
-| `java-distribution`        | string  | `temurin`                    | Java distribution for Gradle projects                                                 |
+| `java-version`             | string  | `21`                         | Deprecated, no effect (a non-default value prints a warning). See below               |
+| `java-distribution`        | string  | `temurin`                    | Deprecated, no effect (a non-default value prints a warning). See below               |
 | `trivy-version`            | string  | `v0.75.0`                    | Trivy version                                                                         |
 | `trivy-db-repository`      | string  | mirrors of `trivy-db:2`      | Trivy DB repositories, comma-separated                                                |
 | `trivy-java-db-repository` | string  | mirrors of `trivy-java-db:1` | Trivy Java DB repositories, comma-separated                                           |
 | `retention-days`           | number  | `90`                         | Retention of the `sca-report` artifact                                                |
 | `runs-on`                  | string  | `["ubuntu-24.04"]`           | JSON list of runner labels. The runner needs docker for the image scan                |
+
+Gradle projects: Temurin 11, 17, 21 and 25 are installed, and for every scanned ref the lockfile step of the engine picks the newest of them that the Gradle of the ref's wrapper can run on. A repository that needs a specific Gradle JVM declares it in `gradle/gradle-daemon-jvm.properties`. A ref without a parseable wrapper Gradle version fails with that reason.
 
 To keep paths that are not shipped (tests, examples) out of the scan, list them in `trivy.yaml` in the repository root:
 
