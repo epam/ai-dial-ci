@@ -135,6 +135,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  security-events: write
+
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/python_package_release.yml@main
@@ -215,6 +219,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read # checkout
+  security-events: write # Trivy SARIF upload
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@main
@@ -243,10 +251,10 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
-  packages: write
-  security-events: write
-  id-token: write
+  contents: write # version commit, tag, GitHub release
+  packages: write # image push
+  security-events: write # Trivy SARIF upload
+  id-token: write # npm trusted publishing
 
 jobs:
   release:
@@ -312,6 +320,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read # checkout
+  packages: read # private GitHub Packages dependencies
+  security-events: write # Trivy SARIF upload
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/java_pr.yml@main
@@ -338,6 +351,11 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write # version commit, tag, GitHub release, dependency graph
+  packages: write # image push, package publish
+  security-events: write # Trivy SARIF upload
 
 jobs:
   release:
@@ -591,6 +609,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read # checkout
+  security-events: write # Trivy SARIF upload
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
@@ -618,6 +640,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write # version commit, tag, GitHub release
+  packages: write # image push
+  security-events: write # Trivy SARIF upload
+
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_release.yml@main
@@ -643,6 +670,10 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+
+permissions:
+  contents: read # checkout
+  security-events: write # Trivy SARIF upload
 
 jobs:
   run_tests:
@@ -670,6 +701,10 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write # version commit, tag, GitHub release
+  security-events: write # Trivy SARIF upload
 
 jobs:
   release:
@@ -758,6 +793,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read # checkout
+  security-events: write # Trivy SARIF upload
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_pr.yml@main
@@ -787,6 +826,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write # version commit, tag, GitHub release
+  packages: write # image push
+  security-events: write # Trivy SARIF upload
+
 jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/python_docker_release.yml@main
@@ -813,6 +857,10 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+
+permissions:
+  contents: read # checkout
+  security-events: write # Trivy SARIF upload
 
 jobs:
   run_tests:
@@ -842,6 +890,10 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write # version commit, tag, GitHub release
+  security-events: write # Trivy SARIF upload
 
 jobs:
   release:
@@ -903,6 +955,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read # checkout
+  security-events: write # Trivy SARIF upload
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/generic_docker_pr.yml@main
@@ -929,6 +985,11 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write # version commit, tag, GitHub release
+  packages: write # image push
+  security-events: write # Trivy SARIF upload
 
 jobs:
   release:
@@ -979,6 +1040,9 @@ name: Slash Command Dispatch
 on:
   issue_comment:
     types: [created]
+
+permissions: {} # ACTIONS_BOT_TOKEN is used instead of GITHUB_TOKEN
+
 jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
@@ -1223,6 +1287,8 @@ on:
     types:
       - completed
 
+permissions: {}
+
 jobs:
   gitlab-dev-deploy:
     if: |
@@ -1252,6 +1318,8 @@ on:
     workflows: ["Release Workflow"]
     types:
       - completed
+
+permissions: {}
 
 jobs:
   trigger:

@@ -154,7 +154,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
-      packages: write
       security-events: write
     needs:
       - calculate_version
